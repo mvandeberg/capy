@@ -734,7 +734,9 @@ public:
         // Guard closes peer on fuse error so no deadlock.
         fuse f;
         auto r = f.armed([&](fuse&) -> task<> {
-            auto [a, b] = make_stream_pair(f);
+            auto pair = make_stream_pair(f);
+            auto& a = pair.first;
+            auto& b = pair.second;
 
             co_await when_all(
                 [&a]() -> task<> {
@@ -951,7 +953,9 @@ public:
     {
         fuse f;
         auto r = f.armed([&](fuse&) -> task<> {
-            auto [a, b] = make_stream_pair(f);
+            auto pair = make_stream_pair(f);
+            auto& a = pair.first;
+            auto& b = pair.second;
 
             co_await when_all(
                 [&a]() -> task<> {
@@ -1097,7 +1101,9 @@ public:
         // Fuse error on writer closes the suspended reader
         fuse f;
         auto r = f.armed([&](fuse&) -> task<> {
-            auto [a, b] = make_stream_pair(f);
+            auto pair = make_stream_pair(f);
+            auto& a = pair.first;
+            auto& b = pair.second;
 
             co_await when_all(
                 [&a]() -> task<> {
