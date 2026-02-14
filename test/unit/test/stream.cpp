@@ -734,6 +734,8 @@ public:
         // Guard closes peer on fuse error so no deadlock.
         fuse f;
         auto r = f.armed([&](fuse&) -> task<> {
+            // Avoid structured bindings here; GCC fails to
+            // destroy them in coroutine frames after suspension.
             auto pair = make_stream_pair(f);
             auto& a = pair.first;
             auto& b = pair.second;
@@ -953,6 +955,8 @@ public:
     {
         fuse f;
         auto r = f.armed([&](fuse&) -> task<> {
+            // Avoid structured bindings here; GCC fails to
+            // destroy them in coroutine frames after suspension.
             auto pair = make_stream_pair(f);
             auto& a = pair.first;
             auto& b = pair.second;
@@ -1044,7 +1048,11 @@ public:
         // close() resumes a suspended reader with eof
         fuse f;
         run_blocking()([&]() -> task<> {
-            auto [a, b] = make_stream_pair(f);
+            // Avoid structured bindings here; GCC fails to
+            // destroy them in coroutine frames after suspension.
+            auto pair = make_stream_pair(f);
+            auto& a = pair.first;
+            auto& b = pair.second;
 
             co_await when_all(
                 [&a]() -> task<> {
@@ -1101,6 +1109,8 @@ public:
         // Fuse error on writer closes the suspended reader
         fuse f;
         auto r = f.armed([&](fuse&) -> task<> {
+            // Avoid structured bindings here; GCC fails to
+            // destroy them in coroutine frames after suspension.
             auto pair = make_stream_pair(f);
             auto& a = pair.first;
             auto& b = pair.second;
