@@ -10,21 +10,23 @@
 //
 // Allocation Example
 //
-// Compares the performance of three frame allocators: the default
-// recycling allocator, mimalloc, and std::allocator (no recycling).
+// Compares the performance of frame allocators: the default recycling
+// allocator, std::allocator (no recycling), and on Windows, mimalloc.
 // A 4-deep coroutine chain is invoked 2 million times with each.
 //
 
 #include <boost/capy.hpp>
 #include <boost/capy/test/run_blocking.hpp>
-#include <mimalloc.h>
+#ifdef CAPY_HAS_MIMALLOC
+# include <mimalloc.h>
+# include <memory_resource>
+#endif
 #include <atomic>
 #include <chrono>
 #include <cmath>
 #include <cstddef>
 #include <iomanip>
 #include <iostream>
-#include <memory_resource>
 
 // Prevent HALO from eliding coroutine frame allocations
 #if defined(_MSC_VER)
@@ -39,6 +41,7 @@ using namespace boost::capy;
 
 std::atomic<std::size_t> counter{0};
 
+#ifdef CAPY_HAS_MIMALLOC
 // Adapts mimalloc to std::pmr::memory_resource
 class mi_memory_resource
     : public std::pmr::memory_resource
@@ -71,6 +74,7 @@ protected:
         return this == &other;
     }
 };
+#endif
 
 // These coroutines simulate a "composed operation"
 // consisting of layered APIs. For example a user's
@@ -124,6 +128,7 @@ int main()
     }
     auto t1 = std::chrono::steady_clock::now();
 
+#ifdef CAPY_HAS_MIMALLOC
     // With mimalloc
     counter.store(0);
     mi_memory_resource mi_mr;
@@ -137,6 +142,7 @@ int main()
         ctx.run();
     }
     auto t3 = std::chrono::steady_clock::now();
+#endif
 
     // With std::allocator (no recycling)
     counter.store(0);
@@ -152,17 +158,20 @@ int main()
 
     auto ms_recycling =
         std::chrono::duration<double, std::milli>(t1 - t0).count();
-    auto ms_mimalloc =
-        std::chrono::duration<double, std::milli>(t3 - t2).count();
     auto ms_standard =
         std::chrono::duration<double, std::milli>(t5 - t4).count();
 
     auto pct_rc_std = std::round(
         (ms_standard / ms_recycling - 1.0) * 1000.0) / 10.0;
+
+#ifdef CAPY_HAS_MIMALLOC
+    auto ms_mimalloc =
+        std::chrono::duration<double, std::milli>(t3 - t2).count();
     auto pct_mi_std = std::round(
         (ms_standard / ms_mimalloc - 1.0) * 1000.0) / 10.0;
     auto pct_rc_mi = std::round(
         (ms_mimalloc / ms_recycling - 1.0) * 1000.0) / 10.0;
+#endif
 
     std::cout
         << iterations << " iterations, "
@@ -170,11 +179,16 @@ int main()
         << std::fixed << std::setprecision(1)
         << "  Recycling allocator: "
         << ms_recycling << " ms  (+"
-        << pct_rc_std << "% vs std, +"
-        << pct_rc_mi << "% vs mimalloc)\n"
+        << pct_rc_std << "% vs std"
+#ifdef CAPY_HAS_MIMALLOC
+        << ", +" << pct_rc_mi << "% vs mimalloc"
+#endif
+        << ")\n"
+#ifdef CAPY_HAS_MIMALLOC
         << "  mimalloc:            "
         << ms_mimalloc << " ms  (+"
         << pct_mi_std << "% vs std)\n"
+#endif
         << "  std::allocator:      "
         << ms_standard << " ms\n";
 
