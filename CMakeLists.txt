@@ -4,6 +4,7 @@
 # Copyright (c) 2022 Alan de Freitas (alandefreitas@gmail.com)
 # Copyright (c) 2025 Mohammad Nejati
 # Copyright (c) 2026 Steve Gerbino
+# Copyright (c) 2026 Michael Vandeberg
 #
 # Distributed under the Boost Software License, Version 1.0. (See accompanying
 # file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -11,7 +12,7 @@
 # Official repository: https://github.com/cppalliance/capy
 #
 
-cmake_minimum_required(VERSION 3.8...3.31)
+cmake_minimum_required(VERSION 3.13...3.31)
 
 set(BOOST_CAPY_VERSION 1)
 if (BOOST_SUPERPROJECT_VERSION)
@@ -23,6 +24,16 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     set(BOOST_CAPY_IS_ROOT ON)
 endif ()
 set(__ignore__ ${CMAKE_C_COMPILER})
+
+# FreeBSD and macOS ship libc++ without full std::stop_token support;
+# -fexperimental-library enables it and links libc++experimental.
+include(CheckCXXCompilerFlag)
+set(BOOST_CAPY_HAS_EXPERIMENTAL_LIBRARY OFF)
+if((APPLE OR CMAKE_SYSTEM_NAME STREQUAL "FreeBSD") AND
+    CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    check_cxx_compiler_flag(-fexperimental-library
+        BOOST_CAPY_HAS_EXPERIMENTAL_LIBRARY)
+endif()
 
 option(BOOST_CAPY_BUILD_TESTS "Build boost::capy tests" ${BOOST_CAPY_IS_ROOT})
 if (BOOST_CAPY_BUILD_TESTS)
@@ -49,6 +60,10 @@ function(boost_capy_setup_properties target)
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>)
     target_compile_definitions(${target} PUBLIC BOOST_CAPY_NO_LIB)
     target_compile_definitions(${target} PRIVATE BOOST_CAPY_SOURCE)
+    if(BOOST_CAPY_HAS_EXPERIMENTAL_LIBRARY)
+        target_compile_options(${target} PUBLIC -fexperimental-library)
+        target_link_options(${target} PUBLIC -fexperimental-library)
+    endif()
     if (BUILD_SHARED_LIBS)
         target_compile_definitions(${target} PUBLIC BOOST_CAPY_DYN_LINK)
     else ()
