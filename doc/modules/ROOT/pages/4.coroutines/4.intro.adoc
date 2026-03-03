@@ -1,0 +1,18 @@
+//
+// Copyright (c) 2025 Vinnie Falco (vinnie.falco@gmail.com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+// Official repository: https://github.com/cppalliance/capy
+//
+
+= Coroutines in Capy
+
+You know how {cpp}20 coroutines work at the language level. You understand threads, synchronization, and the problems that concurrency introduces. Now it is time to see how Capy brings these together into a practical, high-performance library.
+
+Capy's coroutine model is built around a single principle: asynchronous code should look like synchronous code. You write a function that reads from a socket, processes the data, and writes a response--top to bottom, with local variables and normal control flow. Capy handles suspension, resumption, thread scheduling, and cancellation behind the scenes. The result is code that is both easier to read and harder to get wrong.
+
+But this is not magic, and it is not a black box. Every piece of Capy's coroutine infrastructure is designed to be transparent. You can see how tasks are scheduled, control where they run, propagate cancellation, compose concurrent operations, and tune memory allocation. Understanding these mechanisms is what separates someone who uses the library from someone who uses it _well_.
+
+This section is the bridge between theory and practice. You will see how Capy turns C++20 coroutines into a complete async programming model--from launching and scheduling tasks, through cancellation and concurrent composition, to fine-grained control over memory allocation. Each topic builds on the last, and by the end you will be writing real asynchronous programs with Capy.

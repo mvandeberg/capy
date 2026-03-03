@@ -1,0 +1,30 @@
+#
+# Copyright (c) 2025 Vinnie Falco (vinnie.falco@gmail.com)
+#
+# Distributed under the Boost Software License, Version 1.0. (See accompanying
+# file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+# Official repository: https://github.com/cppalliance/capy
+#
+
+project
+    : requirements
+      <library>/boost/capy//boost_capy
+      <library>/boost/asio//boost_asio
+      <include>.
+    ;
+
+exe any_stream :
+    any_stream.cpp
+    api/capy_streams.cpp
+    ;
+
+exe asio_callbacks :
+    asio_callbacks.cpp
+    api/capy_streams.cpp
+    ;
+
+exe use_capy_example :
+    use_capy_example.cpp
+    api/capy_streams.cpp
+    ;

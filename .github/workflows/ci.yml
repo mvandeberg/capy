@@ -1,0 +1,316 @@
+#
+# Copyright (c) 2026 Michael Vandeberg
+# Copyright (c) 2023 Christian Mazakas
+# Copyright (c) 2023 Alan de Freitas
+# Copyright (c) 2021-2023 Sam Darwin
+# Copyright (c) 2020-2021 Peter Dimov
+# Copyright (c) 2021 Andrey Semashev
+#
+# Distributed under the Boost Software License, Version 1.0. (See accompanying
+# file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+# Official repository: https://github.com/cppalliance/capy/
+#
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - develop
+      - bugfix/**
+      - feature/**
+      - fix/**
+      - pr/**
+
+
+concurrency:
+  group: ${{format('{0}:{1}', github.repository, github.ref)}}
+  cancel-in-progress: true
+
+env:
+  GIT_FETCH_JOBS: 8
+  NET_RETRY_COUNT: 5
+  DEFAULT_BUILD_VARIANT: debug,release
+  UBSAN_OPTIONS: "print_stacktrace=1"
+  DEBIAN_FRONTEND: "noninteractive"
+  TZ: "Europe/London"
+
+jobs:
+  generate-matrix:
+    name: Generate Matrix
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.generate.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: generate
+        run: |
+          matrix=$(python3 .github/generate-matrix.py)
+          echo "matrix={\"include\":$matrix}" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: [generate-matrix]
+    defaults:
+      run:
+        shell: bash
+
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.generate-matrix.outputs.matrix) }}
+
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runs-on }}
+    container:
+      image: ${{ matrix.container }}
+      options: --privileged
+
+    timeout-minutes: 120
+
+    steps:
+      - name: Clone Boost.Capy
+        uses: actions/checkout@v4
+        with:
+          path: capy-root
+
+      - name: Setup C++
+        uses: alandefreitas/cpp-actions/setup-cpp@v1.9.0
+        id: setup-cpp
+        with:
+          compiler: ${{ matrix.compiler }}
+          version: ${{ matrix.version }}
+          check-latest: true
+          trace-commands: true
+
+      - name: Install packages
+        uses: alandefreitas/cpp-actions/package-install@v1.9.0
+        id: package-install
+        with:
+          apt-get-add-architecture: ${{ matrix.x86 && 'i386' || '' }}
+          apt-get: >-
+            ${{ matrix.install }}
+            build-essential
+
+      - name: Setup MSYS2 (MinGW Clang)
+        if: matrix.compiler == 'mingw'
+        shell: bash
+        run: |
+          /c/msys64/usr/bin/pacman.exe -S --noconfirm mingw-w64-clang-x86_64-clang
+          echo "C:/msys64/clang64/bin" >> "$GITHUB_PATH"
+
+      - name: Clone Boost
+        uses: alandefreitas/cpp-actions/boost-clone@v1.9.0
+        id: boost-clone
+        with:
+          branch: ${{ (github.ref_name == 'master' && github.ref_name) || 'develop' }}
+          boost-dir: boost-source
+          modules-exclude-paths: ''
+          scan-modules-dir: capy-root
+          scan-modules-ignore: capy
+
+      - name: ASLR Fix
+        if: ${{ startsWith(matrix.runs-on, 'ubuntu' )}}
+        run: |
+          sysctl vm.mmap_rnd_bits=28
+
+      - name: Patch Boost
+        id: patch
+        shell: bash
+        run: |
+          set -xe
+          pwd
+          ls
+          ls -lah boost-source
+
+          # Identify boost module being tested
+          module=${GITHUB_REPOSITORY#*/}
+          echo "module=$module" >> $GITHUB_OUTPUT
+
+          # Identify GitHub workspace root
+          workspace_root=$(echo "$GITHUB_WORKSPACE" | sed 's/\\/\//g')
+          echo -E "workspace_root=$workspace_root" >> $GITHUB_OUTPUT
+
+          # Remove module from boost-source
+          rm -r "boost-source/libs/$module" || true
+
+          # Copy cached boost-source to an isolated boost-root
+          cp -rL boost-source boost-root
+
+          # Set boost-root output
+          cd boost-root
+          boost_root="$(pwd)"
+          boost_root=$(echo "$boost_root" | sed 's/\\/\//g')
+          echo -E "boost_root=$boost_root" >> $GITHUB_OUTPUT
+
+          # Patch boost-root with workspace module
+          cp -r "$workspace_root"/capy-root "libs/$module"
+
+      - name: Boost B2 Workflow
+        uses: alandefreitas/cpp-actions/b2-workflow@v1.9.0
+        if: ${{ !matrix.coverage && !matrix.time-trace }}
+        env:
+          ASAN_OPTIONS: ${{ ((matrix.compiler == 'apple-clang' || matrix.compiler == 'clang' || matrix.compiler == 'mingw') && 'detect_invalid_pointer_pairs=0:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1') || 'detect_invalid_pointer_pairs=2:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1' }}
+        with:
+          source-dir: boost-root
+          modules: capy
+          toolset: ${{ matrix.b2-toolset }}
+          build-variant: ${{ (matrix.compiler == 'msvc' && 'debug,release') || matrix.build-type }}
+          cxx: ${{ matrix.cxx || steps.setup-cpp.outputs.cxx || '' }}
+          cxxstd: ${{ matrix.cxxstd }}
+          address-model: ${{ (matrix.x86 && '32') || '64' }}
+          asan: ${{ matrix.asan }}
+          ubsan: ${{ matrix.ubsan }}
+          shared: ${{ matrix.shared }}
+          rtti: on
+          cxxflags: ${{ (matrix.asan && matrix.compiler != 'msvc' && matrix.compiler != 'clang-cl' && '-fsanitize-address-use-after-scope -fsanitize=pointer-subtract') || '' }}
+          stop-on-error: true
+          extra-args: ${{ (matrix.valgrind && 'testing.launcher=valgrind' || '' )}}
+
+      - name: CMake Workflow
+        uses: alandefreitas/cpp-actions/cmake-workflow@v1.9.0
+        if: ${{ matrix.coverage || matrix.time-trace || matrix.build-cmake || matrix.is-earliest }}
+        with:
+          source-dir: capy-root
+          build-dir: __build__
+          generator: ${{ matrix.generator }}
+          generator-toolset: ${{ matrix.generator-toolset }}
+          build-type: ${{ matrix.build-type }}
+          build-target: boost_capy_tests
+          run-tests: true
+          cxxstd: ${{ matrix.cmake-cxxstd || matrix.cxxstd }}
+          cc:  ${{ steps.setup-cpp.outputs.cc || matrix.cc }}
+          ccflags: ${{ matrix.ccflags }}
+          cxx: ${{ steps.setup-cpp.outputs.cxx || matrix.cxx }}
+          cxxflags: ${{ matrix.cxxflags }}
+          shared: ${{ matrix.shared }}
+          cmake-version: '>=3.20'
+          install: false
+          package: false
+          package-artifact: false
+          ref-source-dir: capy-root
+
+      - name: FlameGraph
+        uses: alandefreitas/cpp-actions/flamegraph@v1.9.0
+        if: matrix.time-trace
+        with:
+          source-dir: capy-root
+          build-dir: __build__
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Codecov
+        if: ${{ matrix.coverage }}
+        run: |
+          set -x
+
+          # Generate report
+          gcov_tool="gcov"
+          if command -v "gcov-${{ steps.setup-cpp.outputs.version-major }}.${{ steps.setup-cpp.outputs.version-minor }}" &> /dev/null; then
+              gcov_tool="gcov"
+          elif command -v "gcov-${{ steps.setup-cpp.outputs.version-major }}" &> /dev/null; then
+              gcov_tool="gcov-${{ steps.setup-cpp.outputs.version-major }}"
+          fi
+          lcov -c -q -o "capy-root/__build__/coverage.info" -d "capy-root/__build__" --include "$(pwd)/capy-root/*" --gcov-tool "$gcov_tool"
+
+          # Upload to codecov
+          bash <(curl -s https://codecov.io/bash) -f "capy-root/__build__/coverage.info"
+
+          # Summary
+          echo "# Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "[![codecov](https://codecov.io/github/$GITHUB_REPOSITORY/commit/$GITHUB_SHA/graphs/sunburst.svg)](https://codecov.io/github/$GITHUB_REPOSITORY/commit/$GITHUB_SHA)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Commit: [![codecov](https://codecov.io/github/$GITHUB_REPOSITORY/commit/$GITHUB_SHA/graph/badge.svg)](https://codecov.io/github/$GITHUB_REPOSITORY/commit/$GITHUB_SHA)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Branch: [![codecov](https://codecov.io/github/$GITHUB_REPOSITORY/branch/$GITHUB_REF_NAME/graph/badge.svg)](https://codecov.io/github/$GITHUB_REPOSITORY/commit/$GITHUB_SHA)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+  freebsd:
+    defaults:
+      run:
+        shell: bash
+
+    name: "FreeBSD 15 (Clang): C++20"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+
+    steps:
+      - name: Clone Boost.Capy
+        uses: actions/checkout@v4
+        with:
+          path: capy-root
+
+      - name: Clone Boost
+        uses: alandefreitas/cpp-actions/boost-clone@v1.9.0
+        id: boost-clone
+        with:
+          branch: ${{ (github.ref_name == 'master' && github.ref_name) || 'develop' }}
+          boost-dir: boost-source
+          modules-exclude-paths: ''
+          scan-modules-dir: capy-root
+          scan-modules-ignore: capy
+
+      - name: Patch Boost
+        id: patch
+        run: |
+          set -xe
+          module=${GITHUB_REPOSITORY#*/}
+          echo "module=$module" >> $GITHUB_OUTPUT
+          workspace_root=$(echo "$GITHUB_WORKSPACE" | sed 's/\\/\//g')
+
+          rm -r "boost-source/libs/$module" || true
+          cp -rL boost-source boost-root
+          cd boost-root
+          boost_root="$(pwd)"
+          echo -E "boost_root=$boost_root" >> $GITHUB_OUTPUT
+          cp -r "$workspace_root"/capy-root "libs/$module"
+
+      - name: Test on FreeBSD
+        uses: cross-platform-actions/action@v0.32.0
+        with:
+          operating_system: freebsd
+          version: '15.0'
+          run: |
+            set -xe
+
+            sudo pkg install -y bash git python3 cmake curl
+
+            # B2 build
+            cd boost-root
+            ./bootstrap.sh
+            ./b2 headers
+            ./b2 libs/capy/test toolset=clang cxxstd=20 variant=debug,release
+
+            # CMake build
+            cd ..
+            mkdir __build__
+            cd __build__
+            cmake ../capy-root -DCMAKE_CXX_STANDARD=20 -DBUILD_TESTING=ON
+            cmake --build .
+            ctest --output-on-failure
+
+  changelog:
+    defaults:
+      run:
+        shell: bash
+
+    name: Changelog Summary
+    runs-on: 'ubuntu-22.04'
+    timeout-minutes: 120
+
+    steps:
+      - name: Clone Boost.Capy
+        uses: actions/checkout@v4
+        with:
+          # Avoid the common API rate limit exceeded error in boostorg by including 100 latest commits in any case
+          fetch-depth: 100
+
+      - name: Changelog
+        uses: alandefreitas/cpp-actions/create-changelog@v1.9.0
+        with:
+          thank-non-regular: ${{ startsWith(github.ref, 'refs/tags/') }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          limit: 200
+          tag-pattern: 'boost-.*\..*\..*'

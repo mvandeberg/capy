@@ -1,0 +1,14 @@
+//
+// Copyright (c) 2025 Vinnie Falco (vinnie.falco@gmail.com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+// Official repository: https://github.com/cppalliance/capy
+//
+
+= Example Programs
+
+The best way to learn a library is to watch it solve real problems. This section is a collection of complete, working programs that demonstrate how the pieces you have learned--tasks, buffers, streams, cancellation, composition--fit together in practice.
+
+Every example is self-contained and compiles as a standalone program. The code is followed by detailed explanations of what it does, why it is structured that way, and what happens at each step. The examples range from minimal starting points to fully featured servers, covering real-world integration with Corosio. Start with whatever interests you most, or work through them in order for a guided tour of Capy's capabilities.

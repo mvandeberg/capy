@@ -1,0 +1,124 @@
+//
+// Copyright (c) 2025 Vinnie Falco (vinnie.falco@gmail.com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+// Official repository: https://github.com/cppalliance/capy
+//
+
+#ifndef BOOST_CAPY_TEST_CUSTOM_TASK_HPP
+#define BOOST_CAPY_TEST_CUSTOM_TASK_HPP
+
+#include <boost/capy/concept/io_runnable.hpp>
+#include <boost/capy/ex/io_awaitable_promise_base.hpp>
+#include <boost/capy/ex/io_env.hpp>
+
+#include <coroutine>
+#include <exception>
+#include <optional>
+#include <stop_token>
+#include <type_traits>
+#include <utility>
+
+namespace boost {
+namespace capy {
+namespace test {
+
+template<typename T>
+struct custom_task_result_base
+{
+    std::optional<T> result_;
+
+    void return_value(T value) { result_ = std::move(value); }
+    T&& result() noexcept { return std::move(*result_); }
+};
+
+template<>
+struct custom_task_result_base<void>
+{
+    void return_void() {}
+};
+
+/** A custom task type that satisfies IoRunnable.
+
+    This task is intentionally NOT capy::task to prove that
+    run_async and run work with any IoRunnable type.
+*/
+template<typename T>
+struct custom_task
+{
+    struct promise_type
+        : io_awaitable_promise_base<promise_type>
+        , custom_task_result_base<T>
+    {
+        std::exception_ptr ep_;
+
+        custom_task get_return_object()
+        {
+            return custom_task{
+                std::coroutine_handle<promise_type>::from_promise(*this)};
+        }
+
+        std::suspend_always initial_suspend() noexcept { return {}; }
+
+        auto final_suspend() noexcept
+        {
+            struct awaiter
+            {
+                promise_type* p_;
+                bool await_ready() const noexcept { return false; }
+                std::coroutine_handle<> await_suspend(std::coroutine_handle<>) const noexcept { return p_->continuation(); }
+                void await_resume() const noexcept {}
+            };
+            return awaiter{this};
+        }
+
+        void unhandled_exception() { ep_ = std::current_exception(); }
+        std::exception_ptr exception() const noexcept { return ep_; }
+    };
+
+    std::coroutine_handle<promise_type> h_;
+
+    explicit custom_task(std::coroutine_handle<promise_type> h) : h_(h) {}
+
+    ~custom_task() { if(h_) h_.destroy(); }
+
+    custom_task(custom_task const&) = delete;
+    custom_task& operator=(custom_task const&) = delete;
+    custom_task(custom_task&& o) noexcept : h_(std::exchange(o.h_, nullptr)) {}
+    custom_task& operator=(custom_task&& o) noexcept
+    {
+        if(this != &o) { if(h_) h_.destroy(); h_ = std::exchange(o.h_, nullptr); }
+        return *this;
+    }
+
+    bool await_ready() const noexcept { return false; }
+
+    auto await_resume()
+    {
+        if(auto ep = h_.promise().exception())
+            std::rethrow_exception(ep);
+        if constexpr (!std::is_void_v<T>)
+            return std::move(*h_.promise().result_);
+    }
+
+    std::coroutine_handle<> await_suspend(std::coroutine_handle<> cont, io_env const* env)
+    {
+        h_.promise().set_continuation(cont);
+        h_.promise().set_environment(*env);
+        return h_;
+    }
+
+    std::coroutine_handle<promise_type> handle() const noexcept { return h_; }
+    void release() noexcept { h_ = nullptr; }
+};
+
+static_assert(IoRunnable<custom_task<int>>);
+static_assert(IoRunnable<custom_task<void>>);
+
+} // namespace test
+} // namespace capy
+} // namespace boost
+
+#endif

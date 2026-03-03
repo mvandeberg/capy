@@ -1,0 +1,14 @@
+//
+// Copyright (c) 2025 Vinnie Falco (vinnie.falco@gmail.com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+// Official repository: https://github.com/cppalliance/capy
+//
+
+= Design
+
+Capy's public interface--tasks, buffers, streams--is intentionally small. Behind that interface are design decisions that determine how concepts compose, where responsibility boundaries fall, and what guarantees the library can make. This section documents those decisions.
+
+Each page examines one concept or facility in depth: its formal definition, the rationale behind its design, the alternatives that were considered, and the tradeoffs that were made. If you have ever wondered _why_ a particular concept requires a specific primitive, or why certain abstractions exist as separate concepts, the answers are here. These documents are reference material for library contributors and advanced users. They assume familiarity with the tutorial sections and focus on design reasoning rather than usage.
