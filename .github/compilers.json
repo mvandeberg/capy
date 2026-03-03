@@ -117,8 +117,8 @@
       "cxx": "clang++-cl",
       "cc": "clang-cl",
       "b2_toolset": "clang-win",
+      "generator": "Visual Studio 17 2022",
       "generator_toolset": "ClangCL",
-      "build_cmake": false,
       "is_latest": true
     }
   ],
