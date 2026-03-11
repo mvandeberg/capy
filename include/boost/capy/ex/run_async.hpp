@@ -154,9 +154,23 @@ struct run_async_trampoline
             return {};
         }
 
-        std::suspend_never final_suspend() noexcept
+        auto final_suspend() noexcept
         {
-            return {};
+            // Explicitly destroy the frame rather than using suspend_never.
+            // MSVC's symmetric transfer trampoline loop can mishandle
+            // suspend_never at final_suspend, leading to frame
+            // double-destruction and premature work count drain.
+            struct destroyer
+            {
+                bool await_ready() noexcept { return false; }
+                void await_suspend(
+                    std::coroutine_handle<> h) noexcept
+                {
+                    h.destroy();
+                }
+                void await_resume() noexcept {}
+            };
+            return destroyer{};
         }
 
         void return_void() noexcept
@@ -245,9 +259,19 @@ struct run_async_trampoline<Ex, Handlers, std::pmr::memory_resource*>
             return {};
         }
 
-        std::suspend_never final_suspend() noexcept
+        auto final_suspend() noexcept
         {
-            return {};
+            struct destroyer
+            {
+                bool await_ready() noexcept { return false; }
+                void await_suspend(
+                    std::coroutine_handle<> h) noexcept
+                {
+                    h.destroy();
+                }
+                void await_resume() noexcept {}
+            };
+            return destroyer{};
         }
 
         void return_void() noexcept
