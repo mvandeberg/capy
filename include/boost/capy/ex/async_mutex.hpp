@@ -149,7 +149,9 @@ class async_mutex
 public:
     class lock_awaiter;
     class lock_guard;
+#if !BOOST_CAPY_WORKAROUND(__GNUC__, >= 15)
     class lock_guard_awaiter;
+#endif
 
 private:
     bool locked_ = false;
@@ -332,6 +334,7 @@ public:
         lock_guard& operator=(lock_guard const&) = delete;
     };
 
+#if !BOOST_CAPY_WORKAROUND(__GNUC__, >= 15)
     /** Awaiter returned by scoped_lock() that returns a lock_guard on resume.
     */
     class lock_guard_awaiter
@@ -368,6 +371,7 @@ public:
             return {{}, lock_guard(m_)};
         }
     };
+#endif
 
     /// Construct an unlocked mutex.
     async_mutex() = default;
@@ -393,6 +397,22 @@ public:
         return lock_awaiter{this};
     }
 
+    /* GCC 15 coroutine codegen bug: tuple-protocol structured
+       bindings from co_await fail to destroy the hidden binding
+       variable at scope exit when a second co_await suspends in
+       the same scope (at -O1+). This causes lock_guard destructors
+       to never run, deadlocking the mutex.
+
+       Workaround — use lock() with a manual lock_guard:
+
+         auto [ec] = co_await mutex.lock();
+         if(ec)
+             co_return ec;
+         async_mutex::lock_guard guard(&mutex);
+         // ... critical section ...
+         // guard unlocks automatically at scope exit
+    */
+#if !BOOST_CAPY_WORKAROUND(__GNUC__, >= 15)
     /** Returns an awaiter that acquires the mutex with RAII.
 
         @return An awaitable that await-returns `(error_code,lock_guard)`.
@@ -401,6 +421,7 @@ public:
     {
         return lock_guard_awaiter(this);
     }
+#endif
 
     /** Releases the mutex.
 
