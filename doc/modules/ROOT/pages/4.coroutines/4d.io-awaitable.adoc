@@ -73,16 +73,18 @@ The key difference from standard awaitables is the two-argument `await_suspend` 
 
 == IoRunnable Concept
 
-For tasks that can be launched from non-coroutine contexts, the `IoRunnable` concept refines `IoAwaitable` with:
+For tasks that can be launched from non-coroutine contexts, the `IoRunnable` concept refines `IoAwaitable` with operations on the task and its `promise_type`:
 
 * `handle()` — Access the typed coroutine handle
 * `release()` — Transfer ownership of the frame
 * `exception()` — Check for captured exceptions
 * `result()` — Access the result value (non-void tasks)
+* `promise_type::set_continuation()` — Wire the continuation handle (`noexcept`)
+* `promise_type::set_environment()` — Inject the `io_env` pointer (`noexcept`)
 
-These methods exist because launch functions like `run_async` cannot `co_await` the task directly. The trampoline must be allocated before the task type is known, so it type-erases the task through function pointers and needs a common API to manage lifetime and extract results.
+These operations exist because launch functions like `run_async` cannot `co_await` the task directly. The trampoline must be allocated before the task type is known, so it type-erases the task through function pointers and needs a common API to manage lifetime, inject context, and extract results.
 
-Context injection methods (`set_environment`, `set_continuation`) are internal to the promise and not part of any concept. Launch functions access them through the typed handle provided by `handle()`.
+The context-injection methods (`set_environment`, `set_continuation`) are `noexcept` requirements that `IoRunnable` places on `T::promise_type` rather than on `T` itself; launch functions reach them through the typed handle provided by `handle()`.
 
 Capy's `task<T>` satisfies this concept.
 
