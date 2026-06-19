@@ -57,19 +57,18 @@ The return type enables symmetric transfer.
 
 == IoAwaitable Concept
 
-An awaitable satisfies `IoAwaitable` if:
+An awaitable satisfies `IoAwaitable` if it provides the two-argument `await_suspend` that receives the `io_env`:
 
 [source,cpp]
 ----
-template<typename T>
-concept IoAwaitable = requires(T& t, std::coroutine_handle<> h, io_env const* env) {
-    { t.await_ready() } -> std::convertible_to<bool>;
-    { t.await_suspend(h, env) } -> std::same_as<std::coroutine_handle<>>;
-    t.await_resume();
-};
+template<typename A>
+concept IoAwaitable =
+    requires(A a, std::coroutine_handle<> h, io_env const* env) {
+        a.await_suspend(h, env);
+    };
 ----
 
-The key difference from standard awaitables is the two-argument `await_suspend` that receives the `io_env`.
+The concept constrains only that `a.await_suspend(h, env)` is a valid expression—the two-argument form that receives the `io_env`. It deliberately does *not* constrain the return type, nor does it check `await_ready`/`await_resume`: an `IoAwaitable`'s `await_suspend` may return `void`, `bool`, or `std::coroutine_handle<>`, and the library's `await_transform` machinery adapts to whichever form is used. (`await_ready` and `await_resume` are of course still required to actually `co_await` the type; they simply are not part of this concept's checked requirements.)
 
 == IoRunnable Concept
 

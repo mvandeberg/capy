@@ -9,15 +9,26 @@ This section explains executors and execution contexts—the mechanisms that con
 
 == The Executor Concept
 
-An *executor* is an object that can schedule work for execution. In Capy, executors must provide three methods:
+An *executor* is an object that can schedule work for execution. Beyond the two scheduling operations (`dispatch` and `post`), the concept also requires work tracking, equality comparison, access to the owning context, and nothrow copy/move:
 
 [source,cpp]
 ----
-concept Executor = requires(E ex, continuation& c) {
-    { ex.dispatch(c) } -> std::same_as<std::coroutine_handle<>>;
-    { ex.post(c) } -> std::same_as<void>;
-    { ex.context() } -> std::convertible_to<execution_context&>;
-};
+template<class E>
+concept Executor =
+    std::is_nothrow_copy_constructible_v<E> &&
+    std::is_nothrow_move_constructible_v<E> &&
+    requires(E const& ce, E const& ce2, continuation c) {
+        { ce == ce2 } noexcept -> std::convertible_to<bool>;
+        { ce.context() } noexcept;
+        requires std::is_lvalue_reference_v<decltype(ce.context())> &&
+            std::derived_from<
+                std::remove_reference_t<decltype(ce.context())>,
+                execution_context>;
+        { ce.on_work_started() } noexcept;
+        { ce.on_work_finished() } noexcept;
+        { ce.dispatch(c) } -> std::same_as<std::coroutine_handle<>>;
+        { ce.post(c) };
+    };
 ----
 
 === dispatch() vs post()
@@ -33,6 +44,10 @@ Always queues the continuation for later execution. Never executes inline. Retur
 === context()
 
 Returns a reference to the execution context that owns this executor. The context provides resources like frame allocators.
+
+=== Work tracking and equality
+
+`on_work_started()` and `on_work_finished()` maintain the context's outstanding-work count. Calls must be paired, and the context uses the count to decide when a graceful shutdown is complete. Ordinary user code does not call these directly—work guards invoke them. Two executors compare equal (`==`, `noexcept`) when they schedule onto the same context, and every executor is nothrow copy- and move-constructible.
 
 == executor_ref: Type-Erased Executor
 
