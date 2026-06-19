@@ -93,7 +93,7 @@ Type erasure decouples your code from specific transport implementations:
 task<> send_message(any_write_sink& sink, message const& msg)
 {
     co_await sink.write(make_buffer(msg.header));
-    co_await sink.write(make_buffer(msg.body), true);
+    co_await sink.write_eof(make_buffer(msg.body));
 }
 ----
 

@@ -85,14 +85,14 @@ The third pair inverts buffer ownership:
 [source,cpp]
 ----
 // BufferSource: callee provides read-only buffers
-const_buffer bufs[8];
-auto [ec, count] = co_await source.pull(bufs, 8);
-// bufs[0..count-1] now point to source's internal data
+const_buffer src_arr[16];
+auto [ec, bufs] = co_await source.pull(src_arr);
+// bufs point into the source's internal data; call source.consume(n) when done
 
 // BufferSink: callee provides writable buffers
-mutable_buffer bufs[8];
-std::size_t count = sink.prepare(bufs, 8);
-// Write into bufs[0..count-1], then commit
+mutable_buffer dst_arr[16];
+auto wbufs = sink.prepare(dst_arr);
+// Write into wbufs, then commit the number of bytes written
 co_await sink.commit(bytes_written);
 ----
 

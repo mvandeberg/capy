@@ -159,31 +159,33 @@ Instead, compose with an intermediate stage:
 // Transform: BufferSource → processing → BufferSink
 task<> process_pipeline(any_buffer_source& source, any_buffer_sink& sink)
 {
-    const_buffer src_bufs[8];
-    
-    while (true)
+    const_buffer src_arr[16];
+    mutable_buffer dst_arr[16];
+
+    for (;;)
     {
-        auto [ec, count] = co_await source.pull(src_bufs, 8);
-        if (count == 0)
+        auto [ec, src_bufs] = co_await source.pull(src_arr);
+        if (ec == cond::eof)
             break;
-        
-        for (std::size_t i = 0; i < count; ++i)
+        if (ec)
+            throw std::system_error(ec);
+
+        std::size_t consumed = 0;
+        for (const_buffer src : src_bufs)
         {
-            auto processed = transform(src_bufs[i]);
-            
-            // Write processed data to sink
-            mutable_buffer dst_bufs[8];
-            std::size_t dst_count = sink.prepare(dst_bufs, 8);
-            
-            std::size_t copied = buffer_copy(
-                std::span(dst_bufs, dst_count),
-                make_buffer(processed));
-            
+            auto processed = transform(src);
+
+            // Write processed data into the sink's own storage
+            auto dst_bufs = sink.prepare(dst_arr);
+            std::size_t copied = buffer_copy(dst_bufs, make_buffer(processed));
+
             co_await sink.commit(copied);
+            consumed += src.size();
         }
+        source.consume(consumed);
     }
-    
-    co_await sink.commit_eof();
+
+    co_await sink.commit_eof(0);
 }
 ----
 

@@ -25,8 +25,8 @@ With buffer sources/sinks, the *callee* provides buffers:
 [source,cpp]
 ----
 // Callee owns the buffers
-const_buffer bufs[8];
-auto [ec, count] = co_await source.pull(bufs, 8);
+const_buffer arr[16];
+auto [ec, bufs] = co_await source.pull(arr);
 // bufs now point into source's internal storage
 ----
 
@@ -34,71 +34,86 @@ Data flows: source's internal buffer → processing (no copy!)
 
 == BufferSource
 
-A `BufferSource` provides read-only buffers from its internal storage:
+A `BufferSource` provides read-only buffers from its internal storage and a `consume` operation to advance past data the caller has used:
 
 [source,cpp]
 ----
 template<typename T>
 concept BufferSource =
-    requires(T& source, const_buffer* arr, std::size_t max_count) {
-        { source.pull(arr, max_count) } -> IoAwaitable;
+    requires(T& src, std::span<const_buffer> dest, std::size_t n) {
+        { src.pull(dest) } -> IoAwaitable;
+        requires awaitable_decomposes_to<
+            decltype(src.pull(dest)),
+            std::error_code, std::span<const_buffer>>;
+        src.consume(n);
     };
 ----
 
-=== pull Semantics
+=== pull and consume Semantics
 
 [source,cpp]
 ----
-IoAwaitable auto pull(const_buffer* arr, std::size_t max_count);
+IoAwaitable auto pull(std::span<const_buffer> dest);
+void           consume(std::size_t n) noexcept;
 ----
 
-Await-returns `(error_code, std::size_t)`:
+`pull` fills the caller-provided span `dest` with buffer descriptors and await-returns `(error_code, std::span<const_buffer>)`. On return exactly one of the following holds:
 
-* On success: `!ec`, fills `arr[0..count-1]` with buffer descriptors
-* On exhausted: `count == 0` indicates no more data
-* On error: `ec`
+* *Data available* — `!ec` and the returned span is non-empty. The descriptors point into the source's internal storage.
+* *Source exhausted* — `ec == cond::eof` and the returned span is empty. No more data is available.
+* *Error* — `ec` is set and `ec != cond::eof`.
 
-The buffers point into the source's internal storage. You must consume all returned data before calling `pull()` again—the previous buffers become invalid.
+Calling `pull` again without an intervening `consume` returns the *same* unconsumed data. `consume(n)` advances the read position by `n` bytes; the next `pull` returns data starting after the consumed bytes. The descriptors stay valid until the next call to `pull`, `consume`, or until the source is destroyed.
 
 === Example
 
 [source,cpp]
 ----
 template<BufferSource Source>
-task<> process_source(Source& source)
+io_task<std::size_t> process_source(Source& source)
 {
-    const_buffer bufs[8];
-    
+    const_buffer arr[16];
+    std::size_t total = 0;
+
     for (;;)
     {
-        auto [ec, count] = co_await source.pull(bufs, 8);
-        
+        auto [ec, bufs] = co_await source.pull(arr);
+
+        if (ec == cond::eof)
+            co_return {{}, total};   // Source exhausted
+
         if (ec)
-            throw std::system_error(ec);
-        
-        if (count == 0)
-            break;  // Source exhausted
-        
-        // Process buffers (zero-copy!)
-        for (std::size_t i = 0; i < count; ++i)
-            process_data(bufs[i].data(), bufs[i].size());
+            co_return {ec, total};
+
+        std::size_t n = 0;
+        for (const_buffer b : bufs)  // Process buffers (zero-copy!)
+        {
+            process_data(b.data(), b.size());
+            n += b.size();
+        }
+
+        source.consume(n);           // Advance past the bytes we used
+        total += n;
     }
 }
 ----
 
 == BufferSink
 
-A `BufferSink` provides writable buffers for direct write access:
+A `BufferSink` exposes writable buffers from its internal storage. The caller writes directly into them, then commits:
 
 [source,cpp]
 ----
 template<typename T>
 concept BufferSink =
-    requires(T& sink, mutable_buffer* arr, std::size_t max_count, std::size_t n) {
-        { sink.prepare(arr, max_count) } -> std::same_as<std::size_t>;
+    requires(T& sink, std::span<mutable_buffer> dest, std::size_t n) {
+        { sink.prepare(dest) } -> std::same_as<std::span<mutable_buffer>>;
         { sink.commit(n) } -> IoAwaitable;
-        { sink.commit(n, bool{}) } -> IoAwaitable;
-        { sink.commit_eof() } -> IoAwaitable;
+        requires awaitable_decomposes_to<
+            decltype(sink.commit(n)), std::error_code>;
+        { sink.commit_eof(n) } -> IoAwaitable;
+        requires awaitable_decomposes_to<
+            decltype(sink.commit_eof(n)), std::error_code>;
     };
 ----
 
@@ -106,54 +121,50 @@ concept BufferSink =
 
 [source,cpp]
 ----
-std::size_t prepare(mutable_buffer* arr, std::size_t max_count);
+std::span<mutable_buffer> prepare(std::span<mutable_buffer> dest);
 ----
 
-Synchronous operation. Returns the number of buffers prepared (may be less than `max_count`). Fills `arr[0..count-1]` with writable buffer descriptors.
+Synchronous. `prepare` fills `dest` with writable buffer descriptors pointing into the sink's internal storage and returns the sub-span that was filled. An empty returned span means the sink has no space available right now; commit pending data and try again.
 
-=== commit Semantics
+=== commit and commit_eof Semantics
 
 [source,cpp]
 ----
 IoAwaitable auto commit(std::size_t n);
-IoAwaitable auto commit(std::size_t n, bool eof);
-IoAwaitable auto commit_eof();
+IoAwaitable auto commit_eof(std::size_t n);
 ----
 
-Finalizes `n` bytes of prepared data. The `eof` flag or `commit_eof()` signals end-of-stream.
+Both await-return `(error_code)`. `commit(n)` finalizes `n` bytes written into the most recent `prepare` buffers and may trigger underlying I/O. `commit_eof(n)` commits a final `n` bytes and signals end-of-stream; after it succeeds, no further operations are permitted. Buffers returned by `prepare` stay valid until the next call to `prepare`, `commit`, `commit_eof`, or until the sink is destroyed.
 
 === Example
 
 [source,cpp]
 ----
 template<BufferSink Sink>
-task<> write_to_sink(Sink& sink, std::span<char const> data)
+io_task<std::size_t> write_to_sink(Sink& sink, std::span<char const> data)
 {
+    mutable_buffer arr[16];
+    const_buffer remaining = make_buffer(data.data(), data.size());
     std::size_t written = 0;
-    
-    while (written < data.size())
+
+    while (buffer_size(remaining) > 0)
     {
-        mutable_buffer bufs[8];
-        std::size_t count = sink.prepare(bufs, 8);
-        
-        if (count == 0)
-            throw std::runtime_error("sink full");
-        
-        // Copy into sink's buffers
-        std::size_t copied = 0;
-        for (std::size_t i = 0; i < count && written < data.size(); ++i)
-        {
-            std::size_t chunk = (std::min)(
-                bufs[i].size(),
-                data.size() - written);
-            std::memcpy(bufs[i].data(), data.data() + written, chunk);
-            written += chunk;
-            copied += chunk;
-        }
-        
-        bool eof = (written == data.size());
-        co_await sink.commit(copied, eof);
+        auto bufs = sink.prepare(arr);         // writable space owned by the sink
+        if (bufs.empty())
+            break;                             // no space available right now
+
+        std::size_t n = buffer_copy(bufs, remaining);
+        remaining += n;                        // advance past the copied bytes
+
+        auto [ec] = co_await sink.commit(n);   // hand the bytes to the sink
+        if (ec)
+            co_return {ec, written};
+
+        written += n;
     }
+
+    auto [ec] = co_await sink.commit_eof(0);   // commit final bytes + signal EOF
+    co_return {ec, written};
 }
 ----
 
@@ -165,26 +176,27 @@ Buffer sources/sinks enable true zero-copy I/O:
 
 [source,cpp]
 ----
-class mmap_source : public BufferSource
+// A type models BufferSource by satisfying the concept — it does not
+// inherit from it.
+class mmap_source
 {
-    void* mapped_region_;
+    char* mapped_region_;
     std::size_t size_;
     std::size_t offset_ = 0;
-    
+
 public:
-    io_result<std::size_t> pull(const_buffer* arr, std::size_t max_count)
+    io_task<std::span<const_buffer>>
+    pull(std::span<const_buffer> dest)
     {
         if (offset_ >= size_)
-            co_return {error_code{}, 0};  // Exhausted
-        
-        // Return pointer into mapped memory—no copy!
-        arr[0] = const_buffer(
-            static_cast<char*>(mapped_region_) + offset_,
-            size_ - offset_);
-        offset_ = size_;
-        
-        co_return {error_code{}, 1};
+            co_return {error::eof, {}};  // Exhausted: empty span
+
+        // Hand back a descriptor into the mapped memory—no copy!
+        dest[0] = const_buffer(mapped_region_ + offset_, size_ - offset_);
+        co_return {error_code{}, dest.subspan(0, 1)};
     }
+
+    void consume(std::size_t n) noexcept { offset_ += n; }
 };
 ----
 
@@ -223,23 +235,26 @@ any_buffer_sink(S& sink);
 
 task<> decompress_stream(any_buffer_source& compressed, any_write_sink& output)
 {
-    const_buffer bufs[8];
-    
+    const_buffer arr[16];
+
     for (;;)
     {
-        auto [ec, count] = co_await compressed.pull(bufs, 8);
+        auto [ec, bufs] = co_await compressed.pull(arr);
+        if (ec == cond::eof)
+            break;
         if (ec)
             throw std::system_error(ec);
-        if (count == 0)
-            break;
-        
-        for (std::size_t i = 0; i < count; ++i)
+
+        std::size_t n = 0;
+        for (const_buffer b : bufs)
         {
-            auto decompressed = decompress_block(bufs[i]);
+            auto decompressed = decompress_block(b);
             co_await output.write(make_buffer(decompressed));
+            n += b.size();
         }
+        compressed.consume(n);
     }
-    
+
     co_await output.write_eof();
 }
 ----
