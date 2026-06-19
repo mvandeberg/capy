@@ -269,7 +269,7 @@ task<> relay_decompressed(Source& inflater, Sink& dest)
     {
         // read_some: decompress whatever is available
         auto [ec, n] = co_await inflater.read_some(
-            mutable_buffer(buf));
+            make_buffer(buf));
         if(ec == cond::eof)
         {
             auto [wec] = co_await dest.write_eof();
@@ -299,7 +299,7 @@ task<> relay(Src& src, Sink& dest)
     for(;;)
     {
         auto [ec, n] = co_await src.read_some(
-            mutable_buffer(buf));
+            make_buffer(buf));
 
         auto [wec, nw] = co_await dest.write(
             const_buffer(buf, n));

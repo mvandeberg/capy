@@ -35,7 +35,7 @@ Example:
 [source,cpp]
 ----
 char buf[1024];
-auto [ec, n] = co_await read(stream, mutable_buffer(buf));
+auto [ec, n] = co_await read(stream, make_buffer(buf));
 // n == 1024, or ec indicates why not
 ----
 

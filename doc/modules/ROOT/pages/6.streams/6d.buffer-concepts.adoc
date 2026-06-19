@@ -15,7 +15,7 @@ With streams and sources/sinks, the *caller* provides buffers:
 ----
 // Caller owns the buffer
 char my_buffer[1024];
-co_await stream.read_some(mutable_buffer(my_buffer));
+co_await stream.read_some(make_buffer(my_buffer));
 ----
 
 Data flows: source → caller's buffer → processing

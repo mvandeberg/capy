@@ -104,7 +104,7 @@ task<> read_header(Stream& stream)
 {
     char header[16];
     auto [ec, n] = co_await read(
-        stream, mutable_buffer(header));
+        stream, make_buffer(header));
     if(ec == cond::eof)
         co_return;  // clean shutdown
     if(ec)
@@ -172,7 +172,7 @@ task<> echo(Stream& stream, WriteStream auto& dest)
     for(;;)
     {
         auto [ec, n] = co_await stream.read_some(
-            mutable_buffer(buf));
+            make_buffer(buf));
 
         auto [wec, nw] = co_await dest.write_some(
             const_buffer(buf, n));
@@ -273,7 +273,7 @@ This flexibility permits zero-length operations to serve as probes (fd validatio
 
 EOF is reported as an error code (`cond::eof`) rather than as a success with `n == 0`, for two reasons:
 
-*Composed operations need EOF-as-error to report early termination.* The composed `read(stream, buffer(buf, 100))` promises to fill exactly 100 bytes. If the stream ends after 50, the operation did not fulfill its contract. Reporting `{success, 50}` would be misleading. Reporting `{eof, 50}` tells the caller both what happened (50 bytes landed in the buffer) and why the operation stopped (the stream ended).
+*Composed operations need EOF-as-error to report early termination.* The composed `read(stream, make_buffer(buf, 100))` promises to fill exactly 100 bytes. If the stream ends after 50, the operation did not fulfill its contract. Reporting `{success, 50}` would be misleading. Reporting `{eof, 50}` tells the caller both what happened (50 bytes landed in the buffer) and why the operation stopped (the stream ended).
 
 *EOF-as-error disambiguates the empty-buffer case from the end of a stream.* Without EOF-as-error, both `read_some(empty_buffer)` on a live stream and `read_some(non_empty_buffer)` on an exhausted stream could produce `{success, 0}`. The caller could not distinguish "I passed no buffer" from "the stream is done."
 

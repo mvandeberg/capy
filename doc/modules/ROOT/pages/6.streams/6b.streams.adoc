@@ -48,7 +48,7 @@ I/O conditions from the underlying system are reported via `ec`. Failures in the
 [source,cpp]
 ----
 char buf[1024];
-auto [ec, n] = co_await stream.read_some(mutable_buffer(buf));
+auto [ec, n] = co_await stream.read_some(make_buffer(buf));
 // n might be 1, might be 500, might be 1024
 // if !ec, then n >= 1
 ----
@@ -66,7 +66,7 @@ task<> dump_stream(Stream& stream)
 
     for (;;)
     {
-        auto [ec, n] = co_await stream.read_some(mutable_buffer(buf));
+        auto [ec, n] = co_await stream.read_some(make_buffer(buf));
 
         std::cout.write(buf, n);
 
@@ -199,7 +199,7 @@ task<> handle_connection(any_stream& stream)
     
     for (;;)
     {
-        auto [ec, n] = co_await stream.read_some(mutable_buffer(buf));
+        auto [ec, n] = co_await stream.read_some(make_buffer(buf));
 
         auto [wec, wn] = co_await write(stream, const_buffer(buf, n));
 

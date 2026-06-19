@@ -179,7 +179,7 @@ task<> relay(Source& src, Sink& dest)
     for(;;)
     {
         auto [ec, n] = co_await src.read_some(
-            mutable_buffer(buf));
+            make_buffer(buf));
 
         // Forward whatever arrived before checking the error
         std::size_t written = 0;

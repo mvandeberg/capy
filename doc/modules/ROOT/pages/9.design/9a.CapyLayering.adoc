@@ -41,7 +41,7 @@ task<> echo(any_stream& stream)
     for(;;)
     {
         auto [ec, n] = co_await stream.read_some(
-            mutable_buffer(buf));
+            make_buffer(buf));
         if(ec)
             co_return;
         co_await write(stream, const_buffer(buf, n));
