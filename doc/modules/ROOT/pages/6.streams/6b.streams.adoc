@@ -33,7 +33,9 @@ Attempts to read up to `buffer_size(buffers)` bytes from the stream into the buf
 If `buffer_size(buffers) > 0`:
 
 * If `!ec`, then `n >= 1 && n \<= buffer_size(buffers)`. `n` bytes were read into the buffer sequence.
-* If `ec`, then `n >= 0 && n \<= buffer_size(buffers)`. `n` is the number of bytes read before the I/O condition arose.
+* If `ec`, then `n >= 0 && n \< buffer_size(buffers)`. `n` is the number of bytes read before the I/O condition arose.
+
+Equivalently, `n == buffer_size(buffers)` implies `!ec`: a fully satisfied transfer is always reported as success, with any condition (including EOF) deferred to the next call.
 
 If `buffer_empty(buffers)` is true, `n` is 0. The empty buffer is not itself a cause for error, but `ec` may reflect the state of the stream.
 
@@ -102,7 +104,9 @@ Attempts to write up to `buffer_size(buffers)` bytes from the buffer sequence to
 If `buffer_size(buffers) > 0`:
 
 * If `!ec`, then `n >= 1 && n \<= buffer_size(buffers)`. `n` bytes were written from the buffer sequence.
-* If `ec`, then `n >= 0 && n \<= buffer_size(buffers)`. `n` is the number of bytes written before the I/O condition arose.
+* If `ec`, then `n >= 0 && n \< buffer_size(buffers)`. `n` is the number of bytes written before the I/O condition arose.
+
+Equivalently, `n == buffer_size(buffers)` implies `!ec`: a fully satisfied transfer is always reported as success, with any condition deferred to the next call.
 
 If `buffer_empty(buffers)` is true, `n` is 0. The empty buffer is not itself a cause for error, but `ec` may reflect the state of the stream.
 

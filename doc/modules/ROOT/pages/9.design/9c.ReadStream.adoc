@@ -30,7 +30,9 @@ Attempts to read up to `buffer_size(buffers)` bytes from the stream into the buf
 If `buffer_size(buffers) > 0`:
 
 - If `!ec`, then `n >= 1 && n \<= buffer_size(buffers)`. `n` bytes were read into the buffer sequence.
-- If `ec`, then `n >= 0 && n \<= buffer_size(buffers)`. `n` is the number of bytes read before the I/O condition arose.
+- If `ec`, then `n >= 0 && n \< buffer_size(buffers)`. `n` is the number of bytes read before the I/O condition arose.
+
+Equivalently, `n == buffer_size(buffers)` implies `!ec`: a fully satisfied transfer is always reported as success, with any condition (including EOF) deferred to the next call.
 
 If `buffer_empty(buffers)` is true, `n` is 0. The empty buffer is not itself a cause for error, but `ec` may reflect the state of the stream.
 
@@ -247,7 +249,7 @@ Because `ReadSource` refines `ReadStream`, this relay function also accepts `Rea
 
 == Design Foundations: Why Errors May Accompany Data
 
-The `read_some` contract permits `n > 0` when `ec` is set. Data and errors are not mutually exclusive: the implementation reports exactly what happened. This is the most consequential design decision in the `ReadStream` concept, with implications for every consumer of `read_some` in the library. This section explains the design and its consequences.
+The `read_some` contract permits `n > 0` when `ec` is set. Data and errors are not mutually exclusive: the implementation reports exactly what happened. The one boundary is that a completely filled buffer (`n == buffer_size(buffers)`) is always reported as success, with any accompanying condition deferred to the next call. This is the most consequential design decision in the `ReadStream` concept, with implications for every consumer of `read_some` in the library. This section explains the design and its consequences.
 
 === The Return Type's Purpose
 
@@ -259,7 +261,7 @@ Asio's `AsyncReadStream` concept requires `bytes_transferred == 0` on error. Thi
 
 A TLS stream might decrypt 100 bytes into user space, then receive a fatal alert on the next record. Under the strict rule it must either report `(!ec, 100)` now and `(ec, 0)` on the next call (requiring deferred-error bookkeeping), or report `(ec, 0)` and discard 100 valid bytes. Neither is clean. Under the relaxed rule, the TLS stream reports `(ec, 100)` honestly: here are the bytes that arrived, and here is the condition that stopped the transfer.
 
-The `ReadStream` concept permits both behaviors. Streams that naturally produce `(ec, 0)` on error (such as POSIX socket wrappers) conform. Streams that report `(ec, n)` with `n > 0` (such as TLS or compression layers) also conform. The concept imposes the weakest postcondition that all conforming types can satisfy.
+The `ReadStream` concept permits both behaviors. Streams that naturally produce `(ec, 0)` on error (such as POSIX socket wrappers) conform. Streams that report `(ec, n)` with `n > 0` (such as TLS or compression layers) also conform. The one constraint is that a completely filled buffer is reported as success: if a transfer delivers exactly `buffer_size(buffers)` bytes, any accompanying condition is deferred to the next call rather than reported alongside the full count.
 
 === The Empty-Buffer Rule
 
@@ -306,9 +308,7 @@ Under the relaxed rule, the implementation reports what happened: `(ec, k)`. No 
 
 === Consistency from Primitives Through Composed Operations
 
-The strict postcondition on `read_some` does not propagate to composed operations. The composed `read` returns `(ec, m)` where `m > 0` on failure, because it accumulates data across multiple internal `read_some` calls. The `(ec, n > 0)` case that the strict rule eliminates from `read_some` is immediately reintroduced one layer up.
-
-The relaxed postcondition avoids this inconsistency. Partial progress alongside an error code is the same pattern at every level -- from `read_some` through composed `read` -- rather than being forbidden at the primitive level and required at the composed level.
+The same postcondition holds at every layer. Both `read_some` and the composed `read` report a completed transfer as success and attach a condition only to a partial transfer: on error, `n < buffer_size(buffers)`. A `read` that accumulates data across several internal `read_some` calls and then encounters EOF returns `(eof, m)` with `m < buffer_size(buffers)` -- the bytes that landed, plus the reason the fill stopped short. The shape of the result -- partial progress alongside an error code, and a full transfer reported as success -- is identical from the `read_some` primitive through the composed `read`.
 
 === Conforming Sources
 
