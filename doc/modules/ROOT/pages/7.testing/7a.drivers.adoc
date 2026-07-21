@@ -352,6 +352,20 @@ BOOST_TEST(r.success);
   at successive `maybe_fail()` sites. Accepts plain lambdas and coroutine
   lambdas returning `IoRunnable`.
 
+| `armed(run_one, fn) -> result`
+| Like `armed(fn)` for coroutine lambdas, but drives each iteration
+  through the caller-supplied `run_one` instead of `run_blocking`, so the
+  task runs on the caller's execution context (for example an
+  `io_context`, required by operations built on `corosio::timeout`).
+  `run_one` runs the task to completion and returns any escaped exception
+  as a `std::exception_ptr` (null on success); `armed` rethrows it. Use
+  `on_context` to build a conforming `run_one`.
+
+| `on_context(ctx) -> run_one`
+| Build a `run_one` that drives each iteration on `ctx` -- any type with
+  `get_executor()`, `run()`, and `restart()` (e.g. `corosio::io_context`).
+  Static; returns a `(IoRunnable) -> std::exception_ptr` callable.
+
 | `inert(fn) -> result`
 | Run `fn` once with no injection. `maybe_fail()` always returns `{}`.
   Accepts plain lambdas and coroutine lambdas returning `IoRunnable`.
@@ -459,6 +473,32 @@ void test_add()
     BOOST_TEST(r.success);
 }
 ----
+
+When the operation under test needs a specific execution context -- for
+example an `io_context`, which operations built on `corosio::timeout` or
+`corosio::delay` require and which `run_blocking` does not provide -- use the
+`armed(run_one, fn)` overload. The caller supplies `run_one`, which runs each
+iteration's task on that context; `fuse::on_context` builds one for any
+context exposing `get_executor()`, `run()`, and `restart()`:
+
+[source,cpp]
+----
+fuse f;
+corosio::io_context ioc;
+auto r = f.armed(
+    fuse::on_context(ioc),
+    [&](fuse&) -> task<void> {
+        co_await corosio::timeout(some_op(), 5s);
+    });
+BOOST_TEST(r.success);
+----
+
+A hand-rolled `run_one` must run the task to completion and *return* any
+exception the task raises as a `std::exception_ptr` (null on success);
+`armed` rethrows it. Returning the exception -- rather than rethrowing it
+from inside `run_async`'s completion handler, which would call
+`std::terminate` -- is exactly what `on_context` does, so prefer it unless
+you have an unusual drive loop.
 
 === Shared State Across Copies
 
