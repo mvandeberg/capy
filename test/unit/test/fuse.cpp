@@ -11,15 +11,49 @@
 #include <boost/capy/test/fuse.hpp>
 
 #include <boost/capy/error.hpp>
+#include <boost/capy/task.hpp>
 #include <system_error>
 #include <cstdint>
+#include <exception>
 #include <stdexcept>
+#include <utility>
 
 #include "test_suite.hpp"
+#include "../test_helpers.hpp"
 
 namespace boost {
 namespace capy {
 namespace test {
+
+namespace {
+
+// A conforming runner (runs the task to completion and returns the escaped
+// exception, never rethrowing), built on run_blocking so the runner
+// overloads can be exercised without a real io_context.
+inline std::exception_ptr
+run_blocking_runner(task<> t)
+{
+    try
+    {
+        run_blocking()(std::move(t));
+        return nullptr;
+    }
+    catch(...)
+    {
+        return std::current_exception();
+    }
+}
+
+// Minimal io_context-shaped context for exercising on_context(): work runs
+// inline through the executor, so run()/restart() are no-ops. Stands in for
+// a real corosio::io_context, which this library cannot depend on.
+struct immediate_context : test_io_context
+{
+    void run() noexcept {}
+    void restart() noexcept {}
+};
+
+} // (anonymous)
 
 class fuse_test
 {
@@ -669,6 +703,122 @@ public:
     }
 
     void
+    testRunnerOverload()
+    {
+        // armed(run_one, fn): the caller supplies how each iteration's
+        // task is driven to completion. run_one runs the task fully and
+        // *returns* any escaped exception (null on success) without
+        // rethrowing; armed rethrows it. Here run_blocking_runner stands
+        // in for burl's io_context-driven runner.
+        fuse f;
+        int iterations = 0;
+        int runner_calls = 0;
+
+        auto r = f.armed(
+            [&](task<> t) -> std::exception_ptr
+            {
+                ++runner_calls;
+                return run_blocking_runner(std::move(t));
+            },
+            [&](fuse& fu) -> task<>
+            {
+                ++iterations;
+                auto ec = fu.maybe_fail();
+                if(ec)
+                    co_return;
+            });
+
+        BOOST_TEST(r.success);
+        // One maybe_fail: phase 1 = 3 rounds (n=0,1 trigger, n=2 completes),
+        // phase 2 = 3 rounds. The runner is invoked once per round.
+        BOOST_TEST(iterations == 6);
+        BOOST_TEST(runner_calls == 6);
+    }
+
+    void
+    testRunnerStrayException()
+    {
+        // A stray (non-injected) exception the runner returns must be
+        // rethrown by armed and fail the result.
+        fuse f;
+
+        auto r = f.armed(
+            &run_blocking_runner,
+            [](fuse& fu) -> task<>
+            {
+                auto ec = fu.maybe_fail();
+                if(ec)
+                    co_return;
+                throw std::runtime_error("stray");
+            });
+
+        BOOST_TEST(!r.success);
+    }
+
+    void
+    testRunnerMatchesRunBlocking()
+    {
+        // The runner overload must drive the same round sequence as the
+        // built-in run_blocking coroutine overload.
+        fuse f1;
+        fuse f2;
+        int iterations1 = 0;
+        int iterations2 = 0;
+
+        auto r1 = f1.armed([&](fuse& fu) -> task<>
+        {
+            ++iterations1;
+            auto ec = fu.maybe_fail();
+            if(ec)
+                co_return;
+            ec = fu.maybe_fail();
+            if(ec)
+                co_return;
+        });
+
+        auto r2 = f2.armed(
+            &run_blocking_runner,
+            [&](fuse& fu) -> task<>
+            {
+                ++iterations2;
+                auto ec = fu.maybe_fail();
+                if(ec)
+                    co_return;
+                ec = fu.maybe_fail();
+                if(ec)
+                    co_return;
+            });
+
+        BOOST_TEST(r1.success);
+        BOOST_TEST(r2.success);
+        BOOST_TEST(iterations1 == iterations2);
+    }
+
+    void
+    testOnContext()
+    {
+        // on_context() builds a conforming runner from any context with
+        // get_executor()/run()/restart(). immediate_context runs work
+        // inline, standing in for a real corosio::io_context.
+        immediate_context ctx;
+        fuse f;
+        int iterations = 0;
+
+        auto r = f.armed(
+            fuse::on_context(ctx),
+            [&](fuse& fu) -> task<>
+            {
+                ++iterations;
+                auto ec = fu.maybe_fail();
+                if(ec)
+                    co_return;
+            });
+
+        BOOST_TEST(r.success);
+        BOOST_TEST(iterations == 6);
+    }
+
+    void
     run()
     {
         testInlineUsage();
@@ -697,6 +847,10 @@ public:
         testStandaloneAfterArmed();
         testStandaloneAfterInert();
         testDependencyInjectionPattern();
+        testRunnerOverload();
+        testRunnerStrayException();
+        testRunnerMatchesRunBlocking();
+        testOnContext();
     }
 };
 
