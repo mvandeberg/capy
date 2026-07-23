@@ -1,6 +1,6 @@
 = Capy
 
-Capy abstracts away sockets, files, and asynchrony with type-erased streams and buffer sequences—code compiles fast because the implementation is hidden. It provides the framework for concurrent algorithms that transact in buffers of memory: networking, serial ports, console, timers, and any platform I/O. This is only possible because Capy is coroutine-only, enabling optimizations and ergonomics that hybrid approaches must sacrifice.
+Capy abstracts away sockets, files, and asynchrony with type-erased streams and buffer sequences. Code compiles fast because the implementation is hidden. It provides the framework for concurrent algorithms that transact in buffers of memory: networking, serial ports, console, timers, and any platform I/O. This is only possible because Capy is coroutine-only. This enables optimizations and ergonomics that hybrid approaches must sacrifice.
 
 == What Capy Is
 
@@ -13,9 +13,9 @@ The protocol is the smaller, more general library living inside Capy. Without a 
 
 [IMPORTANT]
 ====
-*The core invariant: a coroutine always resumes on the executor it was launched with.*
+*The core invariant: a coroutine always resumes on the executor it started on.*
 
-Launch a coroutine on a strand, and every resumption—after every `co_await`—happens on that strand. Shared state touched between suspension points is free of data races without a mutex. A _plain_ awaitable can resume a coroutine on any thread and would break this guarantee, so Capy rejects it at compile time and provides an explicit way to bridge such awaitables when you need one.
+Start a coroutine on a strand. Every resumption—after every `co_await`—happens on that strand. Shared state touched between suspension points is free of data races without a mutex. A _plain_ awaitable can resume a coroutine on any thread, which would break this guarantee. Capy rejects it at compile time and provides an explicit way to bridge such awaitables when you need one.
 
 See xref:4.coroutines/4c.executors.adoc#the-same-executor-invariant[the same-executor invariant] for the rationale and xref:4.coroutines/4d.io-awaitable.adoc#bridging-a-foreign-awaitable[bridging a foreign awaitable] for the escape hatch.
 ====
@@ -49,7 +49,7 @@ Capy is _not_ an all-purpose coroutine framework, and it is _not_ an implementat
 * Users of *Beast2* — high-level HTTP/WebSocket servers
 * Users of *Burl* — high-level HTTP client
 
-All of these are built on Capy. Understanding its concepts—tasks, buffer sequences, streams, executors—unlocks the full power of the stack.
+All of these are built on Capy. Understanding its concepts—tasks, buffer sequences, streams, executors—lets you use the full stack.
 
 == The Library Family
 
@@ -65,7 +65,7 @@ Capy is the foundation of a family of coroutine libraries. Each builds on Capy's
 == Design Philosophy
 
 * *Use case first.* Buffer sequences, stream concepts, executor affinity—these exist because I/O code needs them, not because they're theoretically elegant.
-* *Coroutines-only.* No callbacks, futures, or sender/receiver. Hybrid support forces compromises; full commitment unlocks optimizations that adapted models cannot achieve.
+* *Coroutines-only.* No callbacks, futures, or sender/receiver. Hybrid support forces compromises. Full commitment unlocks optimizations that adapted models cannot achieve.
 * *Address the complaints of {cpp}.* Type erasure at boundaries, minimal dependencies, and hidden implementations keep builds fast and templates manageable.
 
 == Requirements
@@ -87,7 +87,7 @@ Capy is the foundation of a family of coroutine libraries. Each builds on Capy's
 
 None. Capy is self-contained and does not require Boost.
 
-=== Linking
+=== Link the Library
 
 Capy is a compiled library. Link against `capy`.
 
@@ -145,7 +145,7 @@ int main()
 
 The `echo` function accepts an `any_stream&`—a type-erased wrapper that works with any concrete stream implementation. The function reads data into a buffer, then writes it back. Both operations use `co_await` to suspend until the I/O completes.
 
-The `task<>` return type (equivalent to `task<void>`) creates a lazy coroutine that does not start executing until awaited or launched with `run_async`.
+The `task<>` return type (equivalent to `task<void>`) creates a lazy coroutine. The coroutine does not run until you await it or start it with `run_async`.
 
 == Next Steps
 

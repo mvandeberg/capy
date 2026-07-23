@@ -7,7 +7,7 @@ This section covers algorithms for measuring and manipulating buffer sequences.
 * Completed xref:5.buffers/5c.sequences.adoc[Buffer Sequences]
 * Understanding of `ConstBufferSequence` and iteration
 
-== Measuring Buffers
+== Measure Buffers
 
 === buffer_size
 
@@ -30,7 +30,7 @@ auto combined = std::array{buf1, buf2};
 std::size_t total = buffer_size(combined);  // 10
 ----
 
-Note: `buffer_size` returns the sum of bytes, not the count of buffers.
+`buffer_size` returns the sum of bytes, not the count of buffers.
 
 === buffer_empty
 
@@ -82,7 +82,7 @@ Note the distinction:
 * `buffer_size` — total bytes (data measurement)
 * `buffer_length` — number of buffers (sequence length)
 
-== Copying Buffers
+== Copy Buffers
 
 === buffer_copy
 
@@ -140,7 +140,7 @@ std::array<mutable_buffer, 2> dst = {large_buf, small_buf};
 std::size_t copied = buffer_copy(dst, src);
 ----
 
-The algorithm fills target buffers sequentially, reading from source buffers as needed, handling cases where a single source buffer spans multiple target buffers or vice versa.
+The algorithm fills target buffers sequentially and reads from source buffers as needed. It handles cases where a single source buffer spans multiple target buffers, or vice versa.
 
 == Real I/O Patterns
 
@@ -196,7 +196,7 @@ task<std::size_t> write_full(Stream& stream, Buffers buffers)
 
 === Zero-Copy I/O
 
-Data never moves unnecessarily. The buffer sequence points to existing data, and the OS reads directly from those locations:
+Data never moves unnecessarily. The buffer sequence points to existing data. The OS reads directly from those locations:
 
 [source,cpp]
 ----

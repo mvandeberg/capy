@@ -101,14 +101,14 @@ target_link_libraries(async_mutex PRIVATE Boost::capy)
 
 == Walkthrough
 
-=== Creating the Mutex
+=== Create the Mutex
 
 [source,cpp]
 ----
 capy::async_mutex mtx;
 ----
 
-`async_mutex` is a coroutine-aware mutex. Unlike `std::mutex`, it suspends the calling coroutine instead of blocking the thread, allowing other coroutines to run while waiting for the lock.
+`async_mutex` is a coroutine-aware mutex. Unlike `std::mutex`, it suspends the calling coroutine instead of blocking the thread. This lets other coroutines run while the caller waits for the lock.
 
 === Scoped Lock
 
@@ -122,7 +122,7 @@ if (ec)
 }
 ----
 
-`scoped_lock()` returns an `io_result` with an error code and an RAII guard. The guard automatically releases the lock when it goes out of scope. If the operation is canceled (e.g., via a stop token), `ec` will be set.
+`scoped_lock()` returns an `io_result` with an error code and an RAII guard. The guard automatically releases the lock when it goes out of scope. If the operation is canceled (e.g., via a stop token), `ec` is set.
 
 === FIFO Fairness
 
@@ -130,7 +130,7 @@ Workers acquire the lock in the order they request it. Unlike `std::mutex`, whic
 
 === Strand vs Async Mutex
 
-The strand serialization example showed how a strand can protect shared state by running all coroutines sequentially. `async_mutex` provides finer-grained control: coroutines run concurrently and only serialize when entering the critical section.
+The strand serialization example shows how a strand can protect shared state by running all coroutines sequentially. `async_mutex` provides finer-grained control: coroutines run concurrently and only serialize when entering the critical section.
 
 == Output
 

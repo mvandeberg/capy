@@ -21,12 +21,12 @@
 namespace boost {
 namespace capy {
 
-/** A pool of threads for executing work concurrently.
+/** A pool of threads that execute work concurrently.
 
     Use this when you need to run coroutines on multiple threads
     without the overhead of creating and destroying threads for
-    each task. Work items are distributed across the pool using
-    a shared queue.
+    each task. The pool distributes work items across a shared
+    queue.
 
     @par Thread Safety
     Distinct objects: Safe.
@@ -36,7 +36,7 @@ namespace capy {
     @code
     thread_pool pool(4);  // 4 worker threads
     auto ex = pool.get_executor();
-    run_async(ex)(some_task());  // launch work; tracked so join() waits for it
+    run_async(ex)(some_task());  // start work; tracked so join() waits for it
     pool.join();  // wait for outstanding work to complete
     // pool destructor stops the pool, discarding any pending work
     @endcode
@@ -64,9 +64,9 @@ public:
         @par Preconditions
         No thread outside this pool may post or dispatch work to it
         (or to a strand built on it) concurrently with, or after,
-        destruction; doing so is undefined behavior. Submit such work
-        through @ref run_async or @ref run and call @ref join before
-        the pool is destroyed, so it has completed first.
+        destruction. Such a call is undefined behavior. Submit that
+        work through @ref run_async or @ref run, and call @ref join
+        before you destroy the pool, so the work completes first.
     */
     ~thread_pool();
 
@@ -100,9 +100,9 @@ public:
         @ref executor_type::on_work_finished completes. After all
         work finishes, joins the worker threads.
 
-        If @ref stop is called while `join()` is blocking, the
-        pool stops without waiting for remaining work to
-        complete. Worker threads finish their current item and
+        If another thread calls @ref stop while `join()` is blocking,
+        the pool stops without waiting for the remaining work.
+        Worker threads finish their current item and
         exit; `join()` still waits for all threads to be joined
         before returning.
 
@@ -197,7 +197,7 @@ public:
 
         Decrements the outstanding work count. When the count
         reaches zero after @ref thread_pool::join has been called,
-        the pool's worker threads are signaled to stop.
+        the pool signals its worker threads to stop.
 
         @pre A preceding call to @ref on_work_started was made.
 
@@ -228,9 +228,9 @@ public:
 
     /** Post a continuation to the thread pool.
 
-        The continuation will be resumed on one of the pool's
-        worker threads. The continuation must remain at a stable
-        address until it is dequeued and resumed.
+        The pool resumes the continuation on one of its worker
+        threads. The continuation must remain at a stable address
+        until it is dequeued and resumed.
 
         @param c The continuation to execute.
     */

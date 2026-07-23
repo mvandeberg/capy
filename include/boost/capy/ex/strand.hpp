@@ -44,7 +44,7 @@ namespace capy {
     `std::make_shared` per strand.
 
     @par Executor Concept
-    This class satisfies the `Executor` concept, providing:
+    This class satisfies the `Executor` concept and provides:
     - `context()` - Returns the underlying execution context
     - `on_work_started()` / `on_work_finished()` - Work tracking
     - `dispatch(continuation&)` - May run immediately if already executing in this strand
@@ -53,15 +53,15 @@ namespace capy {
     @par Preconditions
     A strand holds only a non-owning reference to its inner executor's
     execution context (for example a `thread_pool`). That context must
-    outlive every post() and dispatch() call; posting or dispatching
-    concurrently with, or after, the context's destruction is undefined
-    behavior. To guarantee this, submit work through @ref run_async or
-    @ref run — whose operations are work-tracked, so the context's
-    `join()` waits for them — and call `join()` on the context before
-    destroying it, rather than posting to a strand from an external
-    thread the context does not track. Destroying the strand handle
-    itself is always safe, including after the context has been
-    destroyed.
+    outlive every `post()` and `dispatch()` call. A `post()` or
+    `dispatch()` that runs concurrently with, or after, the context's
+    destruction is undefined behavior. To prevent this, submit work
+    through @ref run_async or @ref run. Their operations are
+    work-tracked, so the context's `join()` waits for them. Call
+    `join()` on the context before you destroy it. Do not post to a
+    strand from an external thread that the context does not track.
+    Destroying the strand handle itself is always safe, even after the
+    context is destroyed.
 
     @par Thread Safety
     Distinct objects: Safe.

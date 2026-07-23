@@ -70,10 +70,10 @@ struct quitter_return_base<void>
 
 /** Stop-aware lazy coroutine task satisfying @ref IoRunnable.
 
-    When the stop token is triggered, the next `co_await` inside the
-    coroutine short-circuits: the body never sees the result and RAII
-    destructors run normally.  The parent observes a "stopped"
-    completion via @ref promise_type::stopped.
+    When a stop is requested, the next `co_await` inside the coroutine
+    short-circuits: the body never sees the result, and RAII destructors
+    run normally.  The parent observes a "stopped" completion via
+    @ref promise_type::stopped.
 
     Everything else — frame allocation, environment propagation,
     symmetric transfer, move semantics — is identical to @ref task.

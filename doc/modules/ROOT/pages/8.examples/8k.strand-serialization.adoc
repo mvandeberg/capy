@@ -107,9 +107,9 @@ auto increment = [&](int id) -> capy::io_task<> {
 };
 ----
 
-Multiple coroutines increment the same `counter` without any locks. The strand serializes execution so only one coroutine runs at a time, preventing data races.
+Multiple coroutines increment the same `counter` without any locks. The strand serializes execution so only one coroutine runs at a time. This prevents data races.
 
-=== Running on the Strand
+=== Run on the Strand
 
 [source,cpp]
 ----

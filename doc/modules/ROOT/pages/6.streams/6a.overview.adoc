@@ -1,6 +1,6 @@
 = Stream Concepts Overview
 
-This section introduces Capy's stream concepts—the abstractions that enable data to flow through your programs.
+This section introduces Capy's stream concepts—the abstractions that let data flow through your programs.
 
 == Prerequisites
 
@@ -44,7 +44,7 @@ auto [ec, n] = co_await stream.write_some(buffers);
 
 This matches raw OS behavior—syscalls return when data is available, not when buffers are full.
 
-== Type-Erasing Wrappers
+== Type-Erased Wrappers
 
 Each concept has a corresponding type-erasing wrapper:
 
@@ -68,7 +68,7 @@ These wrappers enable:
 * Compilation firewalls (fast incremental builds)
 * Runtime polymorphism without virtual inheritance in user code
 
-== Choosing the Right Abstraction
+== Choose the Right Abstraction
 
 === Use Streams When:
 

@@ -72,15 +72,16 @@ inline constexpr executor_vtable vtable_for = {
 
 /** A type-erased reference wrapper for executor objects.
 
-    This class provides type erasure for any executor type, enabling
-    runtime polymorphism without virtual functions or allocation.
+    This class provides type erasure for any executor type. It gives
+    you runtime polymorphism without virtual functions or allocation.
     It stores a pointer to the original executor and a pointer to a
-    static vtable, allowing executors of different types to be stored
-    uniformly while satisfying the full `Executor` concept.
+    static vtable. This lets you store executors of different types
+    uniformly, while the wrapper still satisfies the full `Executor`
+    concept.
 
     @par Reference Semantics
     This class has reference semantics: it does not allocate or own
-    the wrapped executor. Copy operations simply copy the internal
+    the wrapped executor. Copy operations copy the internal
     pointers. The caller must ensure the referenced executor outlives
     all `executor_ref` instances that wrap it.
 

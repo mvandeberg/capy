@@ -22,7 +22,7 @@
 namespace boost {
 namespace capy {
 
-/** Concept for types providing awaitable read operations.
+/** Concept for types that provide awaitable read operations.
 
     A type satisfies `ReadStream` if it provides a `read_some`
     member function template that accepts any @ref MutableBufferSequence
@@ -50,9 +50,9 @@ namespace capy {
     Equivalently, `n == buffer_size( buffers )` implies `!ec`: a
     completion that fills the buffer sequence is a success, even when
     the underlying operation also signals a condition such as
-    end-of-stream. That condition is reported on a subsequent read.
-    This lets generic composition algorithms such as `when_all` and
-    `when_any` distinguish a completed transfer from a failure.
+    end-of-stream. The stream reports that condition on a subsequent
+    read. This lets generic composition algorithms such as `when_all`
+    and `when_any` distinguish a completed transfer from a failure.
 
     If `buffer_empty( buffers )` is `true`, `n` is 0. The empty
     buffer is not itself a cause for error, but `ec` may reflect
@@ -61,11 +61,10 @@ namespace capy {
     Buffers in the sequence are filled in order.
 
     @par Error Reporting
-    I/O conditions arising from the underlying I/O system (EOF,
-    connection reset, broken pipe, etc.) are reported via the
-    `error_code` component of the return value. Failures in the
-    library wrapper itself (such as memory allocation failure)
-    are reported via exceptions.
+    The `error_code` component of the return value reports I/O
+    conditions from the underlying I/O system (EOF, connection reset,
+    broken pipe, and similar). The wrapper reports its own failures,
+    such as memory allocation failure, through exceptions.
 
     @throws std::bad_alloc If coroutine frame allocation fails.
 
@@ -79,14 +78,14 @@ namespace capy {
     IoAwaitable auto read_some( MB buffers );
     @endcode
 
-    @warning **Pass buffer sequences by value.** A by-value parameter
-    is copied into the coroutine frame (or the awaitable's state),
-    so the returned awaitable is self-contained and may be stored,
-    moved across threads, or wrapped into a sender without lifetime
-    concerns. A by-const-reference parameter binds to caller storage
-    and is only safe when the awaitable is consumed immediately by
-    `co_await` in the same scope; storing such an awaitable produces
-    a dangling reference.
+    @warning **Pass buffer sequences by value.** The coroutine frame
+    (or the awaitable's state) copies a by-value parameter. The
+    returned awaitable is therefore self-contained. You can store it,
+    move it across threads, or wrap it into a sender without lifetime
+    concerns. A by-const-reference parameter binds to caller storage.
+    It is safe only when `co_await` consumes the awaitable at once, in
+    the same scope. If you store such an awaitable, you get a dangling
+    reference.
 
     @note Callers who want to avoid copying an expensive buffer
     sequence (for example, a `std::vector<mutable_buffer>` with many

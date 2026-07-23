@@ -71,8 +71,8 @@ The answer is 42
 
 == What Just Happened?
 
-1. `answer()` creates a suspended coroutine that will return 42
-2. `greet()` creates a suspended coroutine that will await `answer()`
+1. `answer()` creates a suspended coroutine that returns 42
+2. `greet()` creates a suspended coroutine that awaits `answer()`
 3. `run_async(executor)(greet())` starts `greet()` on the pool's executor
 4. `greet()` runs until it hits `co_await answer()`
 5. `answer()` runs and returns 42
@@ -82,7 +82,7 @@ The answer is 42
 The key insight: both coroutines ran on the same executor because affinity
 propagated automatically through the `co_await`.
 
-== Handling Results
+== Receive a Result
 
 To receive a task's result outside a coroutine, provide a completion handler:
 
@@ -93,7 +93,7 @@ capy::run_async(executor)(answer(), [](int result) {
 });
 ----
 
-== Handling Errors
+== Handle Errors
 
 Exceptions propagate through coroutine chains. To handle them at the top level:
 
@@ -118,5 +118,5 @@ capy::run_async(executor)(might_fail(),
 Now that you have a working program:
 
 * xref:4.coroutines/4a.tasks.adoc[Tasks] — Learn how lazy tasks work
-* xref:4.coroutines/4b.launching.adoc[Launching Tasks] — Understand `run_async` in detail
+* xref:4.coroutines/4b.launching.adoc[Start a Coroutine] — Understand `run_async` in detail
 * xref:4.coroutines/4c.executors.adoc[Executors and Execution Contexts] — Control where coroutines execute

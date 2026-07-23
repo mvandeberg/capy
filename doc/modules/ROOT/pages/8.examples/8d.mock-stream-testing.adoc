@@ -187,7 +187,7 @@ b.provide("hello\n");  // supply read input on one end
 
 `test::stream` is a bidirectional mock that satisfies both `ReadStream` and `WriteStream`:
 
-* Streams are obtained in connected pairs from `make_stream_pair(f)`; the shared `fuse` enables error injection
+* You obtain streams in connected pairs from `make_stream_pair(f)`. The shared `fuse` enables error injection
 * `provide(data)` — Supplies data for the peer's reads
 * `data()` — Returns data written to this end
 * `set_max_read_size(n)` — Limits bytes returned per read, simulating chunked delivery
@@ -200,9 +200,9 @@ b.provide("hello\n");  // supply read input on one end
 capy::any_stream stream{&a};  // any_stream
 ----
 
-Use pointer construction (`&a`) so the `any_stream` wrapper references the stream end without taking ownership. This allows inspecting `b.data()` after operations.
+Use pointer construction (`&a`) so the `any_stream` wrapper references the stream end without taking ownership. This lets you inspect `b.data()` after operations.
 
-=== Synchronous Testing
+=== Test Synchronously
 
 [source,cpp]
 ----
@@ -210,7 +210,7 @@ bool result = false;  // bool
 capy::test::run_blocking([&](bool r) { result = r; })(echo_line_uppercase(stream));
 ----
 
-`run_blocking` executes a coroutine synchronously, blocking until complete. Pass a handler to capture the result.
+`run_blocking` executes a coroutine synchronously. It blocks until the coroutine completes. Pass a handler to capture the result.
 
 === Error Injection
 
@@ -223,7 +223,7 @@ auto r = f.armed([&](capy::test::fuse&) -> capy::task<> {
 });
 ----
 
-`fuse::armed` runs the test function repeatedly, injecting errors at each operation point:
+`fuse::armed` runs the test function repeatedly. It injects errors at each operation point:
 
 1. First run: error at operation 1
 2. Second run: error at operation 2

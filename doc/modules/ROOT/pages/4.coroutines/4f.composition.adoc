@@ -34,7 +34,7 @@ task<> concurrent()
 
 == when_all: Wait for All Tasks
 
-`when_all` launches multiple `io_task` children concurrently and waits for all of them to complete. It returns `task<io_result<R1, R2, ..., Rn>>`, a single `ec` plus the flattened payloads:
+`when_all` starts multiple `io_task` children concurrently and waits for all of them to complete. It returns `task<io_result<R1, R2, ..., Rn>>`, a single `ec` plus the flattened payloads:
 
 [source,cpp]
 ----
@@ -57,7 +57,7 @@ task<> example()
 
 === Result Type
 
-`when_all` returns `io_result<R1, ..., Rn>` where each `Ri` is the child's payload flattened: `io_result<T>` contributes `T`, `io_result<>` contributes `tuple<>`. Check `ec` first; values are only meaningful when `!ec`.
+`when_all` returns `io_result<R1, ..., Rn>` where each `Ri` is the child's payload flattened: `io_result<T>` contributes `T`, `io_result<>` contributes `tuple<>`. Check `ec` first. Values are only meaningful when `!ec`.
 
 === Void io_tasks
 
@@ -107,7 +107,7 @@ task<> example()
 }
 ----
 
-If a task throws an exception, it is captured and rethrown after all tasks complete. Exceptions take priority over `ec`.
+If a task throws an exception, `when_all` captures and rethrows it after all tasks complete. Exceptions take priority over `ec`.
 
 [source,cpp]
 ----
@@ -154,7 +154,7 @@ io_task<> long_running()
 
 == when_any: First-to-Succeed Wins
 
-`when_any` launches multiple `io_task` children concurrently and returns when the first one *succeeds* (`!ec`):
+`when_any` starts multiple `io_task` children concurrently and returns when the first one *succeeds* (`!ec`):
 
 [source,cpp]
 ----
@@ -173,17 +173,17 @@ task<> example()
 }
 ----
 
-The result is a `variant` with `error_code` at index 0 (failure/no winner) and one alternative per input task at indices 1..N. Only tasks returning `!ec` can win; errors and exceptions do not count as winning. When a winner is found, stop is requested for all siblings. All tasks complete before `when_any` returns.
+The result is a `variant` with `error_code` at index 0 (failure/no winner) and one alternative per input task at indices 1..N. Only tasks returning `!ec` can win. Errors and exceptions do not count as winning. When `when_any` finds a winner, it requests stop for all siblings. All tasks complete before `when_any` returns.
 
-When every task fails, `when_any` reports a failure, but *which* one is unspecified: the result either carries an `error_code` at index 0 or rethrows one of the children's exceptions. Unlike `when_all`, there is no priority between error codes and exceptions, and no guarantee about which task's failure surfaces (including no guarantee that it is the first or last to complete). Do not rely on receiving the failure from any particular task.
+When every task fails, `when_any` reports a failure. But *which* one is unspecified: the result either carries an `error_code` at index 0 or rethrows one of the children's exceptions. Unlike `when_all`, there is no priority between error codes and exceptions, and no guarantee about which task's failure surfaces (including no guarantee that it is the first or last to complete). Do not rely on receiving the failure from any particular task.
 
 === Errors Do Not Win (wait_for_one_success)
 
-A child that returns a non-zero `ec` (or throws) does *not* win, and it does *not* cancel its siblings. `when_any` keeps waiting until some child succeeds or until every child has finished. Only when *all* children fail does the result settle at index 0, holding an `error_code`.
+A child that returns a non-zero `ec` (or throws) does *not* win. It does *not* cancel its siblings. `when_any` keeps waiting until some child succeeds or until every child finishes. Only when *all* children fail does the result settle at index 0 with an `error_code`.
 
 If you need "complete on the first child to *finish*, success or error," that behavior is opt-in — wrap the child as shown below.
 
-=== Treating an Error as a Win
+=== Treat an Error as a Win
 
 To make a child win on an error, wrap it so the error becomes a success before `when_any` sees it.
 
@@ -201,7 +201,7 @@ io_task<> wrapped()
 }
 ----
 
-The second pattern lifts the inner `ec` into the payload. The wrapper always succeeds, so it wins on its first completion, carrying the original error code to the caller:
+The second pattern lifts the inner `ec` into the payload. The wrapper always succeeds, so it wins on its first completion and carries the original error code to the caller:
 
 [source,cpp]
 ----
@@ -245,7 +245,7 @@ io_task<page_data> fetch_page_data(std::string url)
 
 === Fan-Out/Fan-In
 
-Process items in parallel, then combine results using the range overload:
+Process items in parallel, then combine results with the range overload:
 
 [source,cpp]
 ----
@@ -268,7 +268,7 @@ task<int> process_all(std::vector<item> const& items)
 }
 ----
 
-=== Racing a Deadline
+=== Race a Deadline
 
 `when_any` is the tool for expressing a deadline race directly. Two waker waits, one completed by the operation itself, the other by whatever plays the clock, race as ordinary `when_any` children:
 
@@ -310,15 +310,15 @@ For timed I/O against a socket, prefer Corosio's own timed operations: they sche
 
 === Task Storage
 
-`when_all` stores all tasks in its coroutine frame. Tasks are moved from the arguments, so the original task objects become empty after the call.
+`when_all` stores all tasks in its coroutine frame. `when_all` moves tasks from the arguments, so the original task objects become empty after the call.
 
 === Completion Tracking
 
-A shared atomic counter tracks how many tasks remain. Each task completion decrements the counter. When it reaches zero, the parent coroutine is resumed.
+A shared atomic counter tracks how many tasks remain. Each task completion decrements the counter. When it reaches zero, the parent coroutine resumes.
 
 === Runner Coroutines
 
-Each child task is wrapped in a "runner" coroutine that:
+`when_all` wraps each child task in a "runner" coroutine that:
 
 1. Receives context (executor, stop token) from `when_all`
 2. Awaits the child task

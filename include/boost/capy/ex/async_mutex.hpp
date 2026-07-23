@@ -94,13 +94,13 @@ namespace capy {
 
     This mutex provides mutual exclusion for coroutines without blocking.
     When a coroutine attempts to acquire a locked mutex, it suspends and
-    is added to an intrusive wait queue. When the holder unlocks, the next
-    waiter is resumed with the lock held.
+    joins an intrusive wait queue. When the holder unlocks, the mutex
+    resumes the next waiter with the lock held.
 
     @par Cancellation
 
-    When a coroutine is suspended waiting for the mutex and its stop
-    token is triggered, the waiter completes with `error::canceled`
+    When a coroutine is suspended waiting for the mutex and a stop
+    is requested, the waiter completes with `error::canceled`
     instead of acquiring the lock.
 
     Cancellation only applies while the coroutine is suspended in the

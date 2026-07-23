@@ -170,7 +170,7 @@ target_link_libraries(custom_executor PRIVATE Boost::capy)
 
 == Walkthrough
 
-=== Inheriting execution_context
+=== Inherit from execution_context
 
 [source,cpp]
 ----
@@ -201,7 +201,7 @@ The nested `executor_type` must provide:
 static_assert(capy::Executor<run_loop::executor_type>);
 ----
 
-The `static_assert` verifies at compile time that all concept requirements are met.
+The `static_assert` verifies at compile time that the type meets all concept requirements.
 
 === Dispatch vs Post
 
@@ -221,7 +221,7 @@ std::coroutine_handle<> dispatch(
 
 `post` always enqueues, even if already on the right thread.
 
-=== Driving the Loop
+=== Drive the Loop
 
 [source,cpp]
 ----
@@ -229,9 +229,9 @@ capy::run_async(loop.get_executor())(run_tasks());
 loop.run();
 ----
 
-`run_async` enqueues the initial coroutine. `loop.run()` drains the queue, resuming coroutines one by one until all work completes. This is analogous to a GUI event loop or game tick loop.
+`run_async` enqueues the initial coroutine. `loop.run()` drains the queue. It resumes coroutines one by one until all work completes. This is analogous to a GUI event loop or game tick loop.
 
-Note that `run()` uses `capy::safe_resume(h)` instead of `h.resume()`. This saves and restores the thread-local frame allocator around each resumption, preventing coroutines from spoiling each other's allocator. All custom executor event loops must use `safe_resume` -- see xref:../4.coroutines/4g.allocators.adoc#_tls_preservation[TLS Preservation] for details.
+`run()` uses `capy::safe_resume(h)` instead of `h.resume()`. This saves and restores the thread-local frame allocator around each resumption. It prevents coroutines from spoiling each other's allocator. All custom executor event loops must use `safe_resume` -- see xref:../4.coroutines/4g.allocators.adoc#_tls_preservation[TLS Preservation] for details.
 
 == Output
 

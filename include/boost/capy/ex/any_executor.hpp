@@ -45,7 +45,7 @@ struct is_strand_type<strand<E>> : std::true_type {};
     @par Value Semantics
 
     This class has value semantics with shared ownership. Copy and
-    move operations are cheap, simply copying the internal shared
+    move operations are cheap; they copy the internal shared
     pointer. Multiple `any_executor` instances may share the same
     underlying executor. Move operations do not invalidate the
     source; there is no moved-from state.

@@ -20,7 +20,7 @@ concept ReadStream =
     };
 ----
 
-The `requires` clause names a single representative buffer (`mutable_buffer_archetype`) because a {cpp} concept cannot say "works with every buffer sequence." The real contract is that `read_some` accepts *any* `MutableBufferSequence`—one buffer or a range; the archetype only samples that requirement.
+The `requires` clause names a single representative buffer (`mutable_buffer_archetype`) because a {cpp} concept cannot say "works with every buffer sequence." The real contract is that `read_some` accepts *any* `MutableBufferSequence`—one buffer or a range. The archetype only samples that requirement.
 
 === read_some Semantics
 
@@ -37,7 +37,7 @@ If `buffer_size(buffers) > 0`:
 * If `!ec`, then `n >= 1 && n \<= buffer_size(buffers)`. `n` bytes were read into the buffer sequence.
 * If `ec`, then `n >= 0 && n < buffer_size(buffers)`. `n` is the number of bytes read before the I/O condition arose.
 
-Equivalently, `n == buffer_size(buffers)` implies `!ec`: a read that fills the buffer sequence is a success even when the underlying operation also signals a condition such as end-of-stream. That condition is reported on a subsequent read.
+Equivalently, `n == buffer_size(buffers)` implies `!ec`: a read that fills the buffer sequence is a success even when the underlying operation also signals a condition such as end-of-stream. A subsequent read reports that condition.
 
 If `buffer_empty(buffers)` is true, `n` is 0. The empty buffer is not itself a cause for error, but `ec` may reflect the state of the stream.
 
@@ -110,7 +110,7 @@ If `buffer_size(buffers) > 0`:
 * If `!ec`, then `n >= 1 && n \<= buffer_size(buffers)`. `n` bytes were written from the buffer sequence.
 * If `ec`, then `n >= 0 && n < buffer_size(buffers)`. `n` is the number of bytes written before the I/O condition arose.
 
-Equivalently, `n == buffer_size(buffers)` implies `!ec`: a write that drains the entire buffer sequence is a success even when the underlying operation also signals a condition. That condition is reported on a subsequent write.
+Equivalently, `n == buffer_size(buffers)` implies `!ec`: a write that drains the entire buffer sequence is a success even when the underlying operation also signals a condition. A subsequent write reports that condition.
 
 If `buffer_empty(buffers)` is true, `n` is 0. The empty buffer is not itself a cause for error, but `ec` may reflect the state of the stream.
 
@@ -130,7 +130,7 @@ auto [ec, n] = co_await stream.write_some(make_buffer(large_data));
 
 To write all data, loop until complete (or use the `write()` composed operation).
 
-== Type-Erasing Wrappers
+== Type-Erased Wrappers
 
 === any_read_stream
 
@@ -149,7 +149,7 @@ template<ReadStream S>
 any_read_stream(S* stream);
 ----
 
-Each wrapper has two construction modes. Passing an object by value takes ownership: the wrapper moves the stream into internally allocated storage. Passing a pointer wraps the pointed-to stream by reference, and that stream must outlive the wrapper.
+Each wrapper has two construction modes. Passing an object by value takes ownership: the wrapper moves the stream into internally allocated storage. Passing a pointer wraps the pointed-to stream by reference. That stream must outlive the wrapper.
 
 === any_write_stream
 

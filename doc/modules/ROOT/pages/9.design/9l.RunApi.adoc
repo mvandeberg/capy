@@ -310,7 +310,7 @@ static void* operator new(std::size_t size)
 }
 ----
 
-The wrapper is `[[nodiscard]]` and its `operator()` is rvalue-ref-qualified, preventing misuse:
+The wrapper is `[[nodiscard]]` and its `operator()` is rvalue-ref-qualified. This prevents misuse:
 
 [source,cpp]
 ----

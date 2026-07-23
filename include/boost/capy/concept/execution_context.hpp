@@ -19,12 +19,12 @@
 namespace boost {
 namespace capy {
 
-/** Concept for types that provide a place where work is executed.
+/** Concept for types that provide a place to execute work.
 
     An execution context owns the resources (threads, event loops,
-    completion ports) needed to execute function objects. It serves
-    as the factory for executors, which are lightweight handles used
-    to submit work. Multiple executors may reference the same context.
+    completion ports) needed to execute function objects. It is the
+    factory for executors, the lightweight handles that submit work.
+    Multiple executors may reference the same context.
 
     @tparam X The execution context type.
 

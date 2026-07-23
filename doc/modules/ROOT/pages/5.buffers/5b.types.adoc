@@ -16,7 +16,7 @@ This splits lifetime responsibility cleanly:
 * *You own the bytes.* The memory a buffer refers to—a stack array, a `std::string`, a slab from your allocator—is yours to keep alive. It must remain valid for the entire duration of any operation you hand the buffer to, including across the suspension points of a `co_await`-ed I/O operation.
 * *The library owns the handles.* Capy creates and manages buffer handles and handle-sequences on your behalf—the buffers a dynamic buffer exposes through `prepare`/`data`, the sub-range a `buffer_slice` produces, the descriptors a type-erased stream passes to the OS. Each such handle is valid only for the window its API documents, typically until the next call that mutates the owner.
 
-The library never copies or takes ownership of your bytes through a buffer; it only moves handles. This split explains every buffer-lifetime rule in this chapter.
+The library never copies or takes ownership of your bytes through a buffer. It only moves handles. This split explains every buffer-lifetime rule in this chapter.
 
 == Why `void*`, Not `std::byte`?
 
@@ -27,7 +27,7 @@ POSIX uses `void*` for buffers. This expresses semantic neutrality: "I move memo
 Two concrete forces favor `void*` specifically over `std::span<std::byte>`:
 
 * *Platform types already use it.* The OS structures Capy maps onto—`iovec`'s `iov_base`, `WSABUF`'s `buf`—are `void*`/`char*`. Erasing to `void*` makes conversion to those structures a layout match rather than a reinterpretation.
-* *Callers supply many element types.* User data arrives as `char[]`, `unsigned char[]`, `std::byte[]`, `std::string`, and more. A single neutral pointer erases all of them to one representation. `std::span<std::byte>` would force every caller to reinterpret their bytes first, and `std::span<void>` is ill-formed—{cpp} cannot express a type-agnostic buffer with `span`.
+* *Callers supply many element types.* User data arrives as `char[]`, `unsigned char[]`, `std::byte[]`, `std::string`, and more. A single neutral pointer erases all of them to one representation. `std::span<std::byte>` would force every caller to reinterpret their bytes first. `std::span<void>` is ill-formed—{cpp} cannot express a type-agnostic buffer with `span`.
 
 Capy provides `const_buffer` and `mutable_buffer` as semantically neutral buffer types with known layout.
 

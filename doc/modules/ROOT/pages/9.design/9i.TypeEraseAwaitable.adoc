@@ -1,4 +1,4 @@
-= Type-Erasing Awaitables
+= Type-Erased Awaitables
 
 == Overview
 

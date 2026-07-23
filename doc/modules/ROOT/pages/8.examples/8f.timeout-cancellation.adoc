@@ -271,19 +271,19 @@ target_link_libraries(timeout_cancellation PRIVATE capy)
 Capy is the coroutine layer: no reactor, no clock, no hidden threads.
 Every thread Capy touches is one you handed it, a `thread_pool` worker,
 or the thread that calls `run`. Timing needs a clock and something to
-sleep on it, and that belongs to the I/O layer, where a reactor and
-platform clock already exist for other reasons: Corosio provides
+sleep on it. That belongs to the I/O layer, where a reactor and
+platform clock already exist for other reasons. Corosio provides
 `delay()` and `timeout()` built on its event loop.
 
 In pure Capy, with no Corosio in the picture, the user's own thread
-plays the clock, and `async_waker` gives it a suspension point to wake.
+plays the clock. `async_waker` gives it a suspension point to wake.
 
 === The Escape Hatch: async_waker
 
 `async_waker` is Capy's answer to "how do I wait for something that isn't
 a coroutine?" It hands a single wakeup from any thread to one waiting
-coroutine: one coroutine suspends in `wait()`; any thread, including one
-you spun up yourself to play the role of a clock, wakes it with `wake()`:
+coroutine. One coroutine suspends in `wait()`. Then any thread wakes it
+with `wake()`, including a thread you spun up yourself to play the clock:
 
 [source,cpp]
 ----
@@ -297,14 +297,14 @@ struct fetch_channel
 
 `wait()` returns an `io_result<>` that is empty on wakeup and carries
 `cond::canceled` if the environment's stop token fires first. A wakeup
-with no waiter present is latched as one pending token, so the
-wake-before-wait race is benign; extra wakes collapse into that single
-token rather than queuing up. Because `wake()` is the only operation
+with no waiter present is latched as one pending token. The
+wake-before-wait race is therefore benign. Extra wakes collapse into that
+single token rather than queuing up. Because `wake()` is the only operation
 callable from a foreign thread, the pattern generalizes to anything
 external: a timer, a hardware interrupt, a completion callback from
 another library.
 
-=== Racing a Fetch Against a Deadline
+=== Race a Fetch Against a Deadline
 
 `demo_timeout` builds two `io_task` children, each just a waker wait, and
 races them with `when_any`:
@@ -319,16 +319,16 @@ auto result = co_await capy::when_any(
 `await_fetch` completes when the fetch worker thread finishes and wakes
 `fetch_ch.fetch_ready`. `deadline` completes when a second user thread,
 playing the clock, sleeps for the allotted duration and wakes
-`deadline_waker`. Whichever wakes first wins;
-`when_any` requests stop on the loser, which is exactly how `await_fetch`
+`deadline_waker`. Whichever wakes first wins.
+`when_any` requests stop on the loser. That is exactly how `await_fetch`
 learns to set `cancelled` and let the fetch worker thread bail out early.
 
-`async_waker::wait()` must only be awaited on a single-threaded
-executor, so both children run on `thread_pool(1)`. The slow, blocking
+You must await `async_waker::wait()` only on a single-threaded
+executor. Both children therefore run on `thread_pool(1)`. The slow, blocking
 work itself still happens off that thread, on the two `std::thread`
 objects the demo owns directly.
 
-=== Getting the Stop Token
+=== Get the Stop Token
 
 [source,cpp]
 ----
@@ -337,7 +337,7 @@ auto token = co_await capy::this_coro::stop_token;  // std::stop_token
 
 Inside a task, `this_coro::stop_token` retrieves the stop token propagated from the caller. You can also access it through the full environment via `co_await this_coro::environment`.
 
-=== Checking for Cancellation
+=== Check for Cancellation
 
 [source,cpp]
 ----
@@ -349,7 +349,7 @@ if (token.stop_requested())
 
 Check `stop_requested()` at appropriate points—typically before expensive operations or at loop iterations.
 
-=== Triggering Cancellation
+=== Trigger Cancellation
 
 [source,cpp]
 ----

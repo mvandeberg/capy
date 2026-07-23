@@ -17,7 +17,7 @@
 namespace boost {
 namespace capy {
 
-/** Concept for types providing both read and write operations.
+/** Concept for types that provide both read and write operations.
 
     A type satisfies `Stream` if it satisfies both @ref ReadStream
     and @ref WriteStream.

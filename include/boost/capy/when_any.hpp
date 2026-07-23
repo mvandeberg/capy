@@ -772,7 +772,7 @@ template<IoAwaitableRange R>
     co_return result_type{std::in_place_index<0>, state.last_error_};
 }
 
-/** Race io_result-returning awaitables, selecting the first success.
+/** Race io_result-returning awaitables; the first success wins.
 
     Overload selected when all children return io_result<Ts...>.
     Only a child returning !ec can win. Errors and exceptions do

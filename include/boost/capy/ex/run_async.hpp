@@ -324,12 +324,13 @@ make_trampoline(Ex, Handlers, Alloc)
 
 /** Wrapper returned by run_async that accepts a task for execution.
 
-    This wrapper holds the run_async_trampoline coroutine, executor, stop token,
-    and handlers. The run_async_trampoline is allocated when the wrapper is constructed
-    (before the task due to C++17 postfix evaluation order).
+    This wrapper holds the trampoline coroutine, executor, stop token, and
+    handlers. The wrapper constructor allocates the trampoline before the
+    task, because of C++17 postfix evaluation order.
 
-    The rvalue ref-qualifier on `operator()` ensures the wrapper can only
-    be used as a temporary, preventing misuse that would violate LIFO ordering.
+    The rvalue ref-qualifier on `operator()` ensures you can use the wrapper
+    only as a temporary. This prevents misuse that would violate LIFO
+    ordering.
 
     @tparam Ex The executor type satisfying the `Executor` concept.
     @tparam Handlers The handler type (default_handler or handler_pair).
@@ -412,11 +413,11 @@ public:
     run_async_wrapper& operator=(run_async_wrapper const&) = delete;
     run_async_wrapper& operator=(run_async_wrapper&&) = delete;
 
-    /** Launch the task for execution.
+    /** Start the task.
 
-        This operator accepts a task and launches it on the executor.
-        The rvalue ref-qualifier ensures the wrapper is consumed, enforcing
-        correct LIFO destruction order.
+        This operator accepts a task and starts it on the executor.
+        The rvalue ref-qualifier ensures the wrapper is consumed, which
+        enforces correct LIFO destruction order.
 
         The `io_env` constructed for the task is owned by the trampoline
         coroutine and is guaranteed to outlive the task and all awaitables
@@ -457,11 +458,11 @@ public:
 
 // Executor only (uses default recycling allocator)
 
-/** Asynchronously launch a lazy task on the given executor.
+/** Asynchronously start a lazy task on the given executor.
 
     Use this to start execution of a `task<T>` that was created lazily.
-    The returned wrapper must be immediately invoked with the task;
-    storing the wrapper and calling it later violates LIFO ordering.
+    You must invoke the returned wrapper immediately with the task. If
+    you store the wrapper and call it later, you violate LIFO ordering.
 
     Uses the default recycling frame allocator for coroutine frames.
     With no handlers, the result is discarded. An unhandled exception
@@ -497,7 +498,7 @@ run_async(Ex ex)
         mr);
 }
 
-/** Asynchronously launch a lazy task with a result handler.
+/** Asynchronously start a lazy task with a result handler.
 
     The handler `h1` is called with the task's result on success. If `h1`
     is also invocable with `std::exception_ptr`, it handles exceptions too.
@@ -542,7 +543,7 @@ run_async(Ex ex, H1 h1)
         mr);
 }
 
-/** Asynchronously launch a lazy task with separate result and error handlers.
+/** Asynchronously start a lazy task with separate result and error handlers.
 
     The handler `h1` is called with the task's result on success.
     The handler `h2` is called with the exception_ptr on failure.
@@ -588,7 +589,7 @@ run_async(Ex ex, H1 h1, H2 h2)
 
 // Ex + stop_token
 
-/** Asynchronously launch a lazy task with stop token support.
+/** Asynchronously start a lazy task with stop token support.
 
     The stop token is propagated to the task, enabling cooperative
     cancellation. With no handlers, the result is discarded and an
@@ -625,7 +626,7 @@ run_async(Ex ex, std::stop_token st)
         mr);
 }
 
-/** Asynchronously launch a lazy task with stop token and result handler.
+/** Asynchronously start a lazy task with stop token and result handler.
 
     The stop token is propagated to the task for cooperative cancellation.
     The handler `h1` is called with the result on success, and optionally
@@ -653,7 +654,7 @@ run_async(Ex ex, std::stop_token st, H1 h1)
         mr);
 }
 
-/** Asynchronously launch a lazy task with stop token and separate handlers.
+/** Asynchronously start a lazy task with stop token and separate handlers.
 
     The stop token is propagated to the task for cooperative cancellation.
     The handler `h1` is called on success, `h2` on failure.
@@ -683,7 +684,7 @@ run_async(Ex ex, std::stop_token st, H1 h1, H2 h2)
 
 // Ex + memory_resource*
 
-/** Asynchronously launch a lazy task with custom memory resource.
+/** Asynchronously start a lazy task with custom memory resource.
 
     The memory resource is used for coroutine frame allocation. The caller
     is responsible for ensuring the memory resource outlives all tasks.
@@ -707,7 +708,7 @@ run_async(Ex ex, std::pmr::memory_resource* mr)
         mr);
 }
 
-/** Asynchronously launch a lazy task with memory resource and handler.
+/** Asynchronously start a lazy task with memory resource and handler.
 
     @param ex The executor to execute the task on.
     @param mr The memory resource for frame allocation.
@@ -729,7 +730,7 @@ run_async(Ex ex, std::pmr::memory_resource* mr, H1 h1)
         mr);
 }
 
-/** Asynchronously launch a lazy task with memory resource and handlers.
+/** Asynchronously start a lazy task with memory resource and handlers.
 
     @param ex The executor to execute the task on.
     @param mr The memory resource for frame allocation.
@@ -754,7 +755,7 @@ run_async(Ex ex, std::pmr::memory_resource* mr, H1 h1, H2 h2)
 
 // Ex + stop_token + memory_resource*
 
-/** Asynchronously launch a lazy task with stop token and memory resource.
+/** Asynchronously start a lazy task with stop token and memory resource.
 
     @param ex The executor to execute the task on.
     @param st The stop token for cooperative cancellation.
@@ -776,7 +777,7 @@ run_async(Ex ex, std::stop_token st, std::pmr::memory_resource* mr)
         mr);
 }
 
-/** Asynchronously launch a lazy task with stop token, memory resource, and handler.
+/** Asynchronously start a lazy task with stop token, memory resource, and handler.
 
     @param ex The executor to execute the task on.
     @param st The stop token for cooperative cancellation.
@@ -799,7 +800,7 @@ run_async(Ex ex, std::stop_token st, std::pmr::memory_resource* mr, H1 h1)
         mr);
 }
 
-/** Asynchronously launch a lazy task with stop token, memory resource, and handlers.
+/** Asynchronously start a lazy task with stop token, memory resource, and handlers.
 
     @param ex The executor to execute the task on.
     @param st The stop token for cooperative cancellation.
@@ -825,7 +826,7 @@ run_async(Ex ex, std::stop_token st, std::pmr::memory_resource* mr, H1 h1, H2 h2
 
 // Ex + standard Allocator (value type)
 
-/** Asynchronously launch a lazy task with custom allocator.
+/** Asynchronously start a lazy task with custom allocator.
 
     The allocator is wrapped in a frame_memory_resource and stored in the
     run_async_trampoline, ensuring it outlives all coroutine frames.
@@ -849,7 +850,7 @@ run_async(Ex ex, Alloc alloc)
         std::move(alloc));
 }
 
-/** Asynchronously launch a lazy task with allocator and handler.
+/** Asynchronously start a lazy task with allocator and handler.
 
     @param ex The executor to execute the task on.
     @param alloc The allocator for frame allocation (copied and stored).
@@ -871,7 +872,7 @@ run_async(Ex ex, Alloc alloc, H1 h1)
         std::move(alloc));
 }
 
-/** Asynchronously launch a lazy task with allocator and handlers.
+/** Asynchronously start a lazy task with allocator and handlers.
 
     @param ex The executor to execute the task on.
     @param alloc The allocator for frame allocation (copied and stored).
@@ -896,7 +897,7 @@ run_async(Ex ex, Alloc alloc, H1 h1, H2 h2)
 
 // Ex + stop_token + standard Allocator
 
-/** Asynchronously launch a lazy task with stop token and allocator.
+/** Asynchronously start a lazy task with stop token and allocator.
 
     @param ex The executor to execute the task on.
     @param st The stop token for cooperative cancellation.
@@ -918,7 +919,7 @@ run_async(Ex ex, std::stop_token st, Alloc alloc)
         std::move(alloc));
 }
 
-/** Asynchronously launch a lazy task with stop token, allocator, and handler.
+/** Asynchronously start a lazy task with stop token, allocator, and handler.
 
     @param ex The executor to execute the task on.
     @param st The stop token for cooperative cancellation.
@@ -941,7 +942,7 @@ run_async(Ex ex, std::stop_token st, Alloc alloc, H1 h1)
         std::move(alloc));
 }
 
-/** Asynchronously launch a lazy task with stop token, allocator, and handlers.
+/** Asynchronously start a lazy task with stop token, allocator, and handlers.
 
     @param ex The executor to execute the task on.
     @param st The stop token for cooperative cancellation.

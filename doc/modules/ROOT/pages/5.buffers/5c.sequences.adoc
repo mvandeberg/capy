@@ -15,7 +15,7 @@ A *buffer sequence* is any type that can produce an iteration of buffers. Formal
 * A range of buffers (like `vector<const_buffer>`) is a multi-element sequence
 * Any bidirectional range with buffer-convertible values qualifies
 
-Treating a single buffer as a one-element sequence is a deliberate convenience, not an accident of the definition. It lets one concept-constrained signature serve both the common single-buffer call and scatter/gather composition, with no overload and no explicit wrap at the call site. Capy favors this convenience as a primary design goal and applies it consistently—`make_buffer`, for instance, accepts any contiguous range of bytes—so that buffer-passing reads the same whether you hand over one region or many.
+Treating a single buffer as a one-element sequence is a deliberate convenience, not an accident of the definition. It lets one concept-constrained signature serve both the common single-buffer call and scatter/gather composition, with no overload and no explicit wrap at the call site. Capy favors this convenience as a primary design goal and applies it consistently, so buffer-passing reads the same whether you hand over one region or many. `make_buffer`, for instance, accepts any contiguous range of bytes.
 
 == The Concepts
 
@@ -48,7 +48,7 @@ concept MutableBufferSequence =
 
 Same pattern, but for `mutable_buffer`.
 
-== Satisfying the Concepts
+== Satisfy the Concepts
 
 Many common types satisfy these concepts:
 
@@ -83,7 +83,7 @@ send(std::array{buf1, buf2});                  // array of buffers
 send(my_custom_buffer_sequence);               // custom type
 ----
 
-== Iterating Buffer Sequences
+== Iterate Buffer Sequences
 
 Use `begin()` and `end()` from `<boost/capy/buffers.hpp>`:
 
@@ -104,7 +104,7 @@ These functions handle both single buffers (returning pointer-to-self) and range
 
 == buffer_slice
 
-When transferring data incrementally, `buffer_slice` returns a slice that tracks progress:
+When you transfer data incrementally, `buffer_slice` returns a slice that tracks progress:
 
 [source,cpp]
 ----
@@ -130,7 +130,7 @@ task<std::size_t> read_all(Stream& stream, Buffers buffers)
 }
 ----
 
-`buffer_slice(seq, offset, length)` returns an object of unspecified type that satisfies the `Slice` concept, providing:
+`buffer_slice(seq, offset, length)` returns an object of unspecified type that satisfies the `Slice` concept. It provides:
 
 * `data()` — Buffer sequence view of the slice's current bytes (pass to `read_some`/`write_some`)
 * `remove_prefix(n)` — Advance the start by `n` bytes

@@ -88,7 +88,7 @@ The pump mechanism extends this by allowing multiple inline completions before r
 
 The trade-off is P99 latency. While the pump is running inline completions, queued work waits. For latency-sensitive workloads, you want to return to the queue more frequently so that every piece of work gets prompt attention. The pump is configurable. You can disable it entirely for HFT-style workloads that care about tail latency, or let it ramp up for servers that care about throughput.
 
-The frame recycler is a per-thread cache of coroutine frames. Chain workloads that allocate and free frames in sequence benefit from this cache. Fan-out workloads that spawn many concurrent tasks can exhaust it. The `right_now` pattern addresses this for repeated invocations of the same operation: declare a stack object with a one-element frame cache, and repeated calls reuse that cache without touching the recycler at all. `when_all` could carry its own private frame cache sized to its arity, giving each child a frame from the parent's stash via a TLS hook. Every use case that you make better can make another use case worse. You have to pay attention to that which is not seen.
+The frame recycler is a per-thread cache of coroutine frames. Chain workloads that allocate and free frames in sequence benefit from this cache. Fan-out workloads that spawn many concurrent tasks can exhaust it. The `right_now` pattern addresses this for repeated invocations of the same operation: declare a stack object with a one-element frame cache, and repeated calls reuse that cache without touching the recycler at all. `when_all` could carry its own private frame cache sized to its arity. This would give each child a frame from the parent's stash via a TLS hook. Every use case that you make better can make another use case worse. You have to pay attention to that which is not seen.
 
 
 == The Type System as Architecture
@@ -114,7 +114,7 @@ This extends naturally to testing. Derive a mock connection that uses Capy's tes
 A database library built this way can express protocol parsing with zero-copy buffer sinks for the hot path, implement connection logic against type-erased streams for maintainability, let users select TCP vs. SSL vs. Unix at the type level for linker efficiency, and test without linking OpenSSL or running a real server. The hot paths use concepts. The cold paths use virtual dispatch. The architectural boundaries use `task<>`. Every user finds the abstraction level they need.
 
 
-== Choosing the Right Layer
+== Choose the Right Layer
 
 The question that matters is: can a library author look at their problem and immediately see which layer to use? If the answer is yes, the design is working. If they have to think about it, something is wrong.
 

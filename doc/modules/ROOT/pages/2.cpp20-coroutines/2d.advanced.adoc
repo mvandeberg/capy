@@ -9,7 +9,7 @@ This section covers advanced coroutine topics: symmetric transfer for efficient 
 
 == Symmetric Transfer
 
-When a coroutine completes or awaits another coroutine, control must transfer somewhere. The naive approach—simply calling `handle.resume()`—has a problem: each nested coroutine adds a frame to the call stack. With deep nesting, you risk stack overflow.
+When a coroutine completes or awaits another coroutine, control must transfer somewhere. The naive approach—calling `handle.resume()`—has a problem: each nested coroutine adds a frame to the call stack. With deep nesting, you risk stack overflow.
 
 *Symmetric transfer* solves this by returning a coroutine handle from `await_suspend`. Instead of resuming the target coroutine via a function call, the compiler generates a tail call that transfers control without growing the stack.
 
@@ -59,22 +59,22 @@ if (next != std::noop_coroutine())
     next.resume();  // tail call, doesn't grow stack
 ----
 
-The key insight: returning a handle enables the compiler to implement the resumption as a tail call. The current stack frame is reused for the next coroutine.
+The key insight: returning a handle enables the compiler to implement the resumption as a tail call. The compiler reuses the current stack frame for the next coroutine.
 
 === Return Types for await_suspend
 
 `await_suspend` can return three types:
 
 `void`::
-Always suspend. The coroutine is suspended and some external mechanism must resume it.
+Always suspend. The coroutine suspends. Some external mechanism must resume it.
 
 `bool`::
 Conditional suspension. Return `true` to suspend, `false` to continue without suspending.
 
 `std::coroutine_handle<>`::
-Symmetric transfer. The returned handle is resumed; returning `std::noop_coroutine()` suspends without resuming anything.
+Symmetric transfer. The returned handle is resumed. Returning `std::noop_coroutine()` suspends without resuming anything.
 
-=== Using Symmetric Transfer in Generators
+=== Use Symmetric Transfer in Generators
 
 A production generator uses symmetric transfer at `final_suspend` to return to whoever is iterating:
 
@@ -171,7 +171,7 @@ Exceptions in coroutines require special handling because a coroutine can suspen
 
 When an exception is thrown inside a coroutine and not caught:
 
-1. The exception is caught by an implicit try-catch surrounding the coroutine body
+1. An implicit try-catch surrounding the coroutine body catches the exception
 2. `promise.unhandled_exception()` is called while the exception is active
 3. After `unhandled_exception()` returns, `co_await promise.final_suspend()` executes
 4. The coroutine completes (suspended or destroyed, depending on `final_suspend`)
@@ -320,9 +320,9 @@ Operation failed: Something went wrong
 
 === Initialization Exceptions
 
-Exceptions thrown before the first suspension point (before `initial_suspend` completes) propagate directly to the caller without going through `unhandled_exception()`. If `initial_suspend()` returns `suspend_always`, the coroutine suspends before any user code runs, avoiding this edge case.
+Exceptions thrown before the first suspension point (before `initial_suspend` completes) propagate directly to the caller without going through `unhandled_exception()`. If `initial_suspend()` returns `suspend_always`, the coroutine suspends before any user code runs. This avoids the edge case.
 
-== Building a Production Generator
+== Build a Production Generator
 
 With all these concepts, here is a production-quality generic generator:
 

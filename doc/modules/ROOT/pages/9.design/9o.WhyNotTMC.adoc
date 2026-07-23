@@ -75,7 +75,7 @@ This is powerful for compute workloads where work can migrate between thread poo
 
 Allowing a coroutine holding I/O objects to hop executors mid-body would break these invariants. TMC doesn't face this constraint because it's a compute scheduler - work items don't carry I/O state with executor affinity.
 
-== Stopping Things
+== Stop Requests
 
 What happens when you need to cancel an operation?
 
@@ -93,7 +93,7 @@ What happens when you need to cancel an operation?
 
 The TMC author acknowledged that automatic cancellation propagation is an "excellent killer feature" for an integrated I/O stack like Capy.
 
-== Keeping Things Orderly
+== Ordering Guarantees
 
 Both libraries support multi-threaded execution. Sometimes you need guarantees: "these operations must not overlap."
 
@@ -115,7 +115,7 @@ TMC's documentation describes this as "optimized for higher throughput with many
 
 NOTE: Neither library prevents the caller from initiating multiple concurrent I/O operations on the same object - that's always the caller's responsibility. Both provide mutual exclusion for coroutine/handler execution only, not I/O operation queuing.
 
-== Working with Data
+== Data Flow
 
 Network code moves bytes around. A lot of bytes. Efficiently.
 
@@ -157,7 +157,7 @@ run_async(ex, &arena)(handle_connection(socket));
 
 For I/O workloads where HALO cannot apply, allocator control is essential, not optional.
 
-== Getting Technical: The IoAwaitable Protocol
+== The IoAwaitable Protocol
 
 When you write `co_await something`, what happens?
 
@@ -269,7 +269,7 @@ TMC's approach is more flexible for incremental adoption but risks silent contex
 | Parameter passing
 |===
 
-Both require explicit support from awaitables. TMC's traits are external specializations, making it theoretically easier to build adapters for third-party libraries without modifying them. Capy's member function signature requires the awaitable itself to implement the protocol.
+Both require explicit support from awaitables. TMC's traits are external specializations. This makes it theoretically easier to build adapters for third-party libraries without modifying them. Capy's member function signature requires the awaitable itself to implement the protocol.
 
 Practically, both require cooperation from awaitable authors for full functionality.
 

@@ -98,7 +98,7 @@ target_link_libraries(parallel_tasks PRIVATE Boost::capy)
 
 == Walkthrough
 
-=== Partitioning Work
+=== Partition the Work
 
 [source,cpp]
 ----
@@ -107,7 +107,7 @@ constexpr int num_tasks = 4;
 constexpr int chunk = total / num_tasks;
 ----
 
-The range `[0, 10000)` is divided into 4 equal chunks, one per task. Each task computes a partial sum independently.
+The example divides the range `[0, 10000)` into 4 equal chunks, one per task. Each task computes a partial sum independently.
 
 === Parallel Execution with when_all
 
@@ -120,9 +120,9 @@ auto [ec, s0, s1, s2, s3] = co_await capy::when_all(
     partial_sum(3 * chunk, 4 * chunk));
 ----
 
-`when_all` launches all four tasks concurrently on the thread pool. Each task may run on a different thread. The result is `io_result<long long, long long, long long, long long>`, a single `ec` plus the four partial sums in input order.
+`when_all` starts all four tasks concurrently on the thread pool. Each task may run on a different thread. The result is `io_result<long long, long long, long long, long long>`, a single `ec` plus the four partial sums in input order.
 
-=== Observing Thread IDs
+=== Observe Thread IDs
 
 [source,cpp]
 ----
@@ -132,9 +132,9 @@ oss << "  range [" << lo << ", " << hi
 std::cout << oss.str();
 ----
 
-Each task prints its thread ID. On a multi-core system you will see different thread IDs, confirming true parallel execution. The `ostringstream` ensures each line is printed atomically.
+Each task prints its thread ID. On a multi-core system you see different thread IDs. This confirms true parallel execution. The `ostringstream` ensures each line prints atomically.
 
-=== Verifying Results
+=== Verify Results
 
 The sum of `[0, N)` is `N*(N-1)/2`. The example verifies that the sum of partial results matches this formula.
 

@@ -29,11 +29,11 @@ class execution_context;
     and to track outstanding work for graceful shutdown.
 
     Ordinary users writing coroutine tasks do not interact with
-    `dispatch` and `post` directly. These operations are used by
-    authors of coroutine machinery -- `promise_type` implementations,
-    awaitables, `await_transform` -- to implement asynchronous
-    algorithms such as `when_all`, `when_any`, `async_mutex`,
-    channels, and similar primitives.
+    `dispatch` and `post` directly. Authors of coroutine machinery use
+    these operations -- `promise_type` implementations, awaitables,
+    `await_transform` -- to implement asynchronous algorithms such as
+    `when_all`, `when_any`, `async_mutex`, channels, and similar
+    primitives.
 
     @tparam E The executor type.
 

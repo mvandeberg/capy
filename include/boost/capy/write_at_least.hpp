@@ -24,7 +24,7 @@ namespace capy {
 
 /** Write at least a minimum number of bytes to a stream.
 
-    This is a straightforward extension of @ref write. While @ref write
+    This extends @ref write. While @ref write
     transfers exactly `buffer_size(buffers)` bytes, `write_at_least`
     transfers at least `n` bytes: the loop stops as soon as `n` bytes
     have been written, even if `buffers` has not been fully consumed.

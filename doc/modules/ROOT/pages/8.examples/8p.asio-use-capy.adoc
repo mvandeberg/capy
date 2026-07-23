@@ -1,4 +1,4 @@
-= Calling Asio from a Capy Coroutine
+= Call Asio from a Capy Coroutine
 
 Using Boost.Asio async operations directly inside a Capy coroutine through a `use_capy` completion token.
 
@@ -20,7 +20,7 @@ This example is built when a `Boost::asio` target is available. The full source 
 
 == The Completion Token
 
-Asio async operations accept a _completion token_ that decides what the call returns. `use_capy` is a token whose `async_result` returns an `IoAwaitable`. When co-awaited, its `await_suspend` starts the Asio operation and arranges the completion handler to post the resumption through the caller's executor—so the coroutine resumes on the executor it was launched with, never on whatever thread Asio completed on:
+Asio async operations accept a _completion token_ that decides what the call returns. `use_capy` is a token whose `async_result` returns an `IoAwaitable`. When co-awaited, its `await_suspend` starts the Asio operation. It arranges the completion handler to post the resumption through the caller's executor. The coroutine resumes on the executor that started it, never on whatever thread Asio completed on:
 
 [source,cpp]
 ----
@@ -44,7 +44,7 @@ std::coroutine_handle<> await_suspend(
 }
 ----
 
-== Using the Token
+== Use the Token
 
 Pass `use_capy` where an Asio operation expects a completion token. The `co_await` yields an `io_result` carrying the error code and the operation's result:
 
@@ -72,7 +72,7 @@ writer(net::ip::tcp::socket& socket, std::size_t total)
 }
 ----
 
-The reader is symmetric, using `async_read_some`. `run_example` drives both concurrently over a connected socket pair with `when_all`, then reports completion.
+The reader is symmetric. It uses `async_read_some`. `run_example` drives both concurrently over a connected socket pair with `when_all`, then reports completion.
 
 == Output
 
@@ -88,4 +88,4 @@ example complete!
 == See Also
 
 * xref:4.coroutines/4d.io-awaitable.adoc#bridging-a-foreign-awaitable[Bridging a Foreign Awaitable] — the general pattern
-* xref:8.examples/8o.sender-bridge.adoc[Bridging a P2300 Sender] — the same technique for `std::execution` senders
+* xref:8.examples/8o.sender-bridge.adoc[Bridge a P2300 Sender] — the same technique for `std::execution` senders

@@ -127,7 +127,7 @@ for (;;)
 }
 ----
 
-The accept loop runs forever, creating a new `tcp_socket` for each connection. `acc.accept(peer)` suspends the coroutine until a client connects.
+The accept loop runs forever. It creates a new `tcp_socket` for each connection. `acc.accept(peer)` suspends the coroutine until a client connects.
 
 === Echo Session
 
@@ -150,7 +150,7 @@ capy::run_async(ioc.get_executor())(
     echo_session(std::move(peer)));
 ----
 
-Each accepted connection moves the socket into a new task via `run_async`. The coroutine owns the socket for the lifetime of the session. Multiple clients are handled concurrently on the same `io_context`.
+Each accepted connection moves the socket into a new task via `run_async`. The coroutine owns the socket for the lifetime of the session. The same `io_context` handles multiple clients concurrently.
 
 == Testing
 
@@ -187,4 +187,4 @@ Connection from 127.0.0.1:54321
 
 == Next Steps
 
-* xref:8.examples/8e.type-erased-echo.adoc[Type-Erased Echo] -- Erased streams behind a uniform interface
+* xref:8.examples/8e.type-erased-echo.adoc[Type-Erased Echo] -- Type-erased streams behind a uniform interface

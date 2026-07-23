@@ -45,7 +45,7 @@ typedef struct _WSABUF {
 
 Used with `WSARecv()`, `WSASend()`.
 
-Note the different member order—Capy handles this platform difference internally.
+The member order differs—Capy handles this platform difference internally.
 
 == Translation Process
 
@@ -68,10 +68,10 @@ Internally, Capy:
 == Stack-Based Conversion
 
 Conversion always happens on the stack—the implementation never
-allocates. A fixed-size, on-frame window of buffer descriptors (16
-entries) is filled from the sequence and passed to the OS call. If the
-sequence has more buffers than fit in the window, the window is refilled
-and the OS call is repeated for the remaining buffers:
+allocates. Capy fills a fixed-size, on-frame window of buffer descriptors
+(16 entries) from the sequence and passes it to the OS call. If the
+sequence has more buffers than fit in the window, Capy refills the window
+and repeats the OS call for the remaining buffers:
 
 [source,cpp]
 ----
@@ -92,9 +92,9 @@ auto platform_write(Buffers const& buffers)
 }
 ----
 
-The window size (16) is fixed and implementation-defined. Sequences with
-more buffers than the window are handled by refilling it across
-successive OS calls; there is no heap fallback.
+The window size (16) is fixed and implementation-defined. Capy handles
+sequences with more buffers than the window by refilling it across
+successive OS calls. There is no heap fallback.
 
 == Scatter/Gather Benefits
 
@@ -120,7 +120,7 @@ writev(fd, iov, 2);  // single syscall
 
 === Zero-Copy Transmission
 
-Data doesn't need to be copied into a single contiguous buffer. The OS reads directly from each buffer in sequence.
+You do not need to copy data into a single contiguous buffer. The OS reads directly from each buffer in sequence.
 
 === Atomic Operations
 
@@ -132,7 +132,7 @@ Advanced platforms offer registered buffer optimizations:
 
 === io_uring (Linux 5.1+)
 
-Buffers can be pre-registered with the kernel, eliminating per-operation address translation:
+You can pre-register buffers with the kernel. This eliminates per-operation address translation:
 
 [source,cpp]
 ----
@@ -149,7 +149,7 @@ Similar optimization with pre-registered memory regions for zero-copy I/O.
 
 Capy's Corosio library exposes these optimizations where available.
 
-== Writing Efficient Code
+== Write Efficient Code
 
 === Minimize Buffer Count
 
@@ -183,7 +183,7 @@ struct message_buffers
 };
 ----
 
-=== Profile Before Optimizing
+=== Profile Before You Optimize
 
 Buffer translation is rarely the bottleneck. Focus on:
 

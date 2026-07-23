@@ -1,4 +1,4 @@
-= Bridging a P2300 Sender
+= Bridge a P2300 Sender
 
 Awaiting a `std::execution` (P2300) sender from inside a Capy coroutine.
 
@@ -33,7 +33,7 @@ void set_value(Args&&... args) && noexcept
 }
 ----
 
-`await_sender` inspects the sender's completion signatures. If the sender can complete with `set_error(std::error_code)`, the bridge yields `io_result<T>` so the error stays a value rather than an exception; otherwise it yields the value directly.
+`await_sender` inspects the sender's completion signatures. If the sender can complete with `set_error(std::error_code)`, the bridge yields `io_result<T>` so the error stays a value rather than an exception. Otherwise it yields the value directly.
 
 == Source Code
 
@@ -92,7 +92,7 @@ int main()
 
 == Output
 
-The sender runs on the `run_loop` thread, but the coroutine resumes on the `thread_pool` executor it was launched with—the invariant holds across the bridge:
+The sender runs on the `run_loop` thread, but the coroutine resumes on the `thread_pool` executor that started it. The invariant holds across the bridge:
 
 ----
 main thread: 139667952822976
@@ -104,4 +104,4 @@ result: 1764
 == See Also
 
 * xref:4.coroutines/4d.io-awaitable.adoc#bridging-a-foreign-awaitable[Bridging a Foreign Awaitable] — the general pattern and why there is no universal bridge
-* xref:8.examples/8p.asio-use-capy.adoc[Calling Asio from a Capy Coroutine] — the same technique for Asio operations
+* xref:8.examples/8p.asio-use-capy.adoc[Call Asio from a Capy Coroutine] — the same technique for Asio operations

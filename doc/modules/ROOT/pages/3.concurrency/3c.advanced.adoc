@@ -53,7 +53,7 @@ Common atomic types include:
 * `std::atomic<T*>` — Thread-safe pointer
 * `std::atomic<std::shared_ptr<T>>` — Thread-safe shared pointer ({cpp}20)
 
-Any trivially copyable type can be made atomic.
+You can make any trivially copyable type atomic.
 
 === Atomic Operations
 
@@ -74,9 +74,9 @@ bool success = value.compare_exchange_strong(expected, 20);
 // Otherwise, sets expected = value and returns false
 ----
 
-== Condition Variables: Efficient Waiting
+== Condition Variables: Efficient Waits
 
-Sometimes a thread must wait for a specific condition before proceeding. You could loop, repeatedly checking:
+Sometimes a thread must wait for a specific condition before proceeding. You could loop and check repeatedly:
 
 [source,cpp]
 ----
@@ -89,7 +89,7 @@ while (!ready)
 
 This works but wastes CPU cycles and introduces latency. *Condition variables* provide efficient waiting.
 
-A condition variable allows one thread to signal others that something has changed. Waiting threads sleep until notified, consuming no CPU.
+A condition variable lets one thread signal others that something has changed. Waiting threads sleep until notified. They consume no CPU.
 
 [source,cpp]
 ----
@@ -134,7 +134,7 @@ The worker thread calls `cv.wait()`, which atomically releases the mutex and sus
 
 === The Predicate
 
-The lambda `[]{ return ready; }` is the *predicate*. `wait()` will not return until this evaluates to true. This guards against *spurious wakeups*—rare events where a thread wakes without notification. Always use a predicate.
+The lambda `[]{ return ready; }` is the *predicate*. `wait()` does not return until this evaluates to true. This guards against *spurious wakeups*—rare events where a thread wakes without notification. Always use a predicate.
 
 === Notification Methods
 
@@ -160,7 +160,7 @@ auto status = cv.wait_until(lock, deadline, predicate);
 
 == Shared Locks: Readers and Writers
 
-Consider a data structure that is read frequently but written rarely. A regular mutex serializes all access—but why block readers from each other? Multiple threads can safely read simultaneously; only writes require exclusive access.
+Consider a data structure that is read frequently but written rarely. A regular mutex serializes all access—but why block readers from each other? Multiple threads can safely read simultaneously. Only writes require exclusive access.
 
 *Shared mutexes* support this pattern:
 

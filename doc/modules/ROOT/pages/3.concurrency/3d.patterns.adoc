@@ -7,7 +7,7 @@ This section covers communication mechanisms for getting results from threads an
 * Completed xref:3.concurrency/3c.advanced.adoc[Part III: Advanced Primitives]
 * Understanding of atomics, condition variables, and shared locks
 
-== Futures and Promises: Getting Results Back
+== Futures and Promises: Get Results Back
 
 Threads can perform work, but how do you get results from them? Passing references works but is clunky. {cpp} offers a cleaner abstraction: *futures* and *promises*.
 
@@ -45,10 +45,10 @@ The worker thread calls `set_value()`. The main thread calls `get()`, which bloc
 
 === Important Behaviors
 
-* A future's `get()` can only be called once
+* You can call a future's `get()` only once
 * For multiple consumers, use `std::shared_future`
 * If the promise is destroyed without setting a value, `get()` throws `std::future_error`
-* `set_exception()` allows the worker to signal an error
+* `set_exception()` lets the worker signal an error
 
 == std::async: The Easy Path
 
@@ -76,7 +76,7 @@ int main()
 }
 ----
 
-`std::async` launches the function (potentially in a new thread), returning a future. No explicit thread creation, no promise management, no join call.
+`std::async` starts the function (potentially in a new thread) and returns a future. No explicit thread creation, no promise management, no join call.
 
 === Launch Policies
 
@@ -142,7 +142,7 @@ Thread-local storage is useful for per-thread caches, random number generators, 
 
 === Producer-Consumer Queue
 
-One or more threads produce work items; one or more threads consume them. A queue connects them:
+One or more threads produce work items. One or more threads consume them. A queue connects them:
 
 [source,cpp]
 ----
@@ -180,7 +180,7 @@ public:
 };
 ----
 
-The producer pushes items; the consumer waits for items and processes them. The condition variable ensures the consumer sleeps efficiently when the queue is empty.
+The producer pushes items. The consumer waits for items and processes them. The condition variable ensures the consumer sleeps efficiently when the queue is empty.
 
 [source,cpp]
 ----
@@ -262,7 +262,7 @@ int main()
 }
 ----
 
-The work is divided into chunks, each handled by its own thread. For CPU-bound work on large datasets, this can dramatically reduce execution time.
+The code divides the work into chunks. Each thread handles one chunk. For CPU-bound work on large datasets, this can dramatically reduce execution time.
 
 == Summary
 
@@ -275,7 +275,7 @@ You have learned the fundamentals of concurrent programming:
 * *Condition variables* — Efficient waiting for events
 * *Shared locks* — Multiple readers or one writer
 * *Futures and promises* — Communication of results between threads
-* *std::async* — Simplified launching of parallel work
+* *std::async* — A simpler way to start parallel work
 
 You have seen the dangers—race conditions, deadlocks—and the tools to avoid them.
 

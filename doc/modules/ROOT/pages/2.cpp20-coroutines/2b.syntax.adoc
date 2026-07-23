@@ -87,7 +87,7 @@ SimpleCoroutine my_first_coroutine()
 
 The `promise_type` nested structure provides the minimum scaffolding the compiler needs. You will learn what each method does in xref:2.cpp20-coroutines/2c.machinery.adoc[Part III: Coroutine Machinery].
 
-For now, observe that the presence of `co_return` transforms what looks like a regular function into a coroutine. If you try to compile a function with coroutine keywords but without proper infrastructure, the compiler will produce errors.
+For now, observe that the presence of `co_return` transforms what looks like a regular function into a coroutine. If you try to compile a function with coroutine keywords but without proper infrastructure, the compiler produces errors.
 
 == Awaitables and Awaiters
 
@@ -97,7 +97,7 @@ When you write `co_await expr`, the expression `expr` must be an *awaitable*—s
 * `await_suspend(handle)` — Called when the coroutine suspends; receives a handle to the coroutine for later resumption
 * `await_resume()` — Called when the coroutine resumes; its return value becomes the value of the `co_await` expression
 
-=== Example: Understanding the Awaiter Protocol
+=== Example: Understand the Awaiter Protocol
 
 [source,cpp]
 ----

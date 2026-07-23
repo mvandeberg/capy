@@ -43,7 +43,7 @@ If the executor determines it is safe (e.g., the current thread is already assoc
 
 Queues the continuation for later execution without ever executing it inline. Never blocks. The continuation is linked into the executor's internal queue via its `reserved` slot -- no per-post heap allocation.
 
-Both operations accept `continuation&` rather than `std::coroutine_handle<>`. A `continuation` wraps a coroutine handle with a pointer-sized `reserved` slot, which the executor commandeers as its queue link, enabling zero-allocation queuing.
+Both operations accept `continuation&` rather than `std::coroutine_handle<>`. A `continuation` wraps a coroutine handle with a pointer-sized `reserved` slot, which the executor commandeers as its queue link. This enables zero-allocation queuing.
 
 The remaining operations support context access, lifecycle management, and identity:
 
@@ -148,7 +148,7 @@ In a coroutine-native library, this optimization is provided by the language its
 ____
 Currently Coroutines TS only supports asymmetric control transfer
 where suspend always returns control back to the current
-coroutine caller or resumer. In order to emulate symmetric
+coroutine caller or resumer. To emulate symmetric
 coroutine to coroutine control transfer, one needs to build a
 queue and a scheduler.
 ____
@@ -159,7 +159,7 @@ Corosio confirms this in practice: its entire I/O layer -- sockets, acceptors, t
 
 == Why `continuation`, Not Raw `coroutine_handle<>`
 
-The executor accepts `continuation&` rather than `std::coroutine_handle<>`. A `continuation` wraps the handle with a pointer-sized `reserved` slot that the executor commandeers as its queue link, enabling zero-allocation queuing:
+The executor accepts `continuation&` rather than `std::coroutine_handle<>`. A `continuation` wraps the handle with a pointer-sized `reserved` slot that the executor commandeers as its queue link. This enables zero-allocation queuing:
 
 [source,cpp]
 ----
@@ -376,7 +376,7 @@ Capy's model flows context _forward_ from launcher to task. The `run_async(ex, a
 
 The same forward-flowing model applies to executors. The launcher binds the executor before the task runs. The task's promise stores the executor and propagates it to nested awaitables via `await_transform`. Context flows from caller to callee at every level, never backward.
 
-== Conforming Signatures
+== Conformant Signatures
 
 A minimal executor implementation:
 
@@ -401,4 +401,4 @@ public:
 
 The `Executor` concept provides `dispatch` and `post` for coroutine scheduling, work tracking for event loop lifetime, and `context()` for service access. The design descends from Asio's executor model but is adapted for coroutines: `defer` is replaced by symmetric transfer, function objects are replaced by `continuation&` for zero-allocation intrusive queuing, and `dispatch` returns `std::coroutine_handle<>` for symmetric transfer at `final_suspend`.
 
-`executor_ref` type-erases any executor into two pointers, enabling platform-independent I/O completion dispatch with zero allocation and predictable cache behavior. The capture-at-initiation / dispatch-at-completion pattern is the fundamental use case the concept serves.
+`executor_ref` type-erases any executor into two pointers. This enables platform-independent I/O completion dispatch with zero allocation and predictable cache behavior. The capture-at-initiation / dispatch-at-completion pattern is the fundamental use case the concept serves.

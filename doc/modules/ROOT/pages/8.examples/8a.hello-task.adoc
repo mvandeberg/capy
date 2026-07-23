@@ -6,7 +6,7 @@ The minimal Capy program: a task that prints a message.
 
 * Creating a `task<>` coroutine
 * Using `thread_pool` as an execution context
-* Launching tasks with `run_async`
+* Starting tasks with `run_async`
 
 == Prerequisites
 
@@ -60,7 +60,7 @@ capy::task<> say_hello()
 
 `task<>` is equivalent to `task<void>`—a coroutine that completes without returning a value. The `co_return` keyword marks this as a coroutine.
 
-Tasks are lazy: calling `say_hello()` creates a task object but does not execute the body. The `"Hello"` message is not printed until the task is launched.
+Tasks are lazy: calling `say_hello()` creates a task object but does not execute the body. The `"Hello"` message does not print until you start the task.
 
 === The Thread Pool
 
@@ -71,9 +71,9 @@ capy::thread_pool pool;
 
 `thread_pool` provides an execution context with worker threads. By default, it creates one thread per CPU core.
 
-Call `pool.join()` before the pool is destroyed to wait for all outstanding work to finish. The destructor does *not* wait for queued work: `~thread_pool` calls `stop()`, which abandons any work that has not yet started, then joins the worker threads. Without the explicit `pool.join()`, `main` could destroy the pool and exit before `say_hello` ever runs, so `"Hello from Capy!"` might never print.
+Call `pool.join()` before you destroy the pool to wait for all outstanding work to finish. The destructor does *not* wait for queued work. `~thread_pool` calls `stop()`, which abandons any work that has not yet started, then joins the worker threads. Without the explicit `pool.join()`, `main` could destroy the pool and exit before `say_hello` ever runs. Then `"Hello from Capy!"` might never print.
 
-=== Launching
+=== Start the Task
 
 [source,cpp]
 ----

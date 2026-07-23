@@ -21,9 +21,10 @@ namespace capy {
 /** Concept for awaitables that participate in the I/O protocol.
 
     An awaitable satisfies `IoAwaitable` if its `await_suspend` accepts
-    an `io_env`, enabling scheduler affinity, cancellation, and allocator
-    propagation. This extended signature distinguishes I/O awaitables
-    from standard C++ awaitables that only take a coroutine handle.
+    an `io_env`. This enables scheduler affinity, cancellation, and
+    allocator propagation. The extended signature distinguishes I/O
+    awaitables from standard C++ awaitables that only take a coroutine
+    handle.
 
     @tparam A The awaitable type.
 
@@ -55,8 +56,8 @@ namespace capy {
     functions such as @ref run or @ref run_async to remain valid for the
     lifetime of the awaitable's async operation. Awaitables that need to
     retain access to the environment should store it as `io_env const*`,
-    never as a copy. Copying is unnecessary and wasteful because the
-    referent is guaranteed to outlive the operation.
+    never as a copy. A copy is unnecessary and wasteful, because the
+    referent outlives the operation.
 
     @par Conforming Signatures
 

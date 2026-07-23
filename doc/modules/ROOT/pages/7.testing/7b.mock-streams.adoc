@@ -17,9 +17,9 @@ partial-transfer paths.
 == read_stream
 
 `read_stream` implements the `ReadStream` concept. Test code stages bytes
-via `provide()`, then the system under test (or the test body) calls
+via `provide()`. Then the system under test (or the test body) calls
 `read_some()` to consume them. The attached `fuse` injects errors at
-every read call, exercising the caller's error-handling paths. Because
+every read call. This exercises the caller's error-handling paths. Because
 `fuse` copies share state (see
 xref:7.testing/7a.drivers.adoc#_shared_state_across_copies[Shared State Across Copies]),
 constructing `read_stream rs(f)` by value still ties `rs` to the same
@@ -81,9 +81,9 @@ BOOST_TEST(r.success);
 
 === EOF Behavior
 
-When all provided data has been consumed, `read_some` returns
+When no provided data remains, `read_some` returns
 `cond::eof` with a byte count of zero. The stream does not
-suspend; the result is available immediately.
+suspend. The result is available immediately.
 
 [source,cpp]
 ----
@@ -136,9 +136,9 @@ BOOST_TEST(r.success);
 == write_stream
 
 `write_stream` implements the `WriteStream` concept. The system under
-test calls `write_some()` and the test inspects what was written via
+test calls `write_some()`. The test inspects what was written via
 `data()`. Test code may also call `expect()` to register the data it
-anticipates; any mismatch between written bytes and that prefix causes
+anticipates. Any mismatch between written bytes and that prefix causes
 `write_some()` to return `error::test_failure` directly. The fuse is a
 separate concern used only for error injection. Because `fuse` copies
 share state (see
@@ -175,7 +175,7 @@ void test_write_stream()
 === Chunked Writes
 
 Passing a `max_write_size` to the constructor limits how many bytes
-`write_some` accepts per call, simulating a slow consumer. Use this
+`write_some` accepts per call. This simulates a slow consumer. Use this
 to verify that your code loops correctly until all data is transferred.
 
 [source,cpp]
@@ -195,7 +195,7 @@ BOOST_TEST(r.success);
 === Expected Data Verification
 
 Call `expect()` before or after writes to assert that the written data
-matches a prefix. Matched bytes are consumed from both sides. If written
+matches a prefix. The stream consumes matched bytes from both sides. If written
 data does not match the expected prefix, the next `write_some` call
 returns `error::test_failure`.
 
@@ -244,7 +244,7 @@ BOOST_TEST(r.success);
 
 `stream` is a connected bidirectional test double. Create a pair with
 `make_stream_pair(f)`. Bytes written to one end become readable on the
-other. If `read_some` is called on an end with no buffered data, the
+other. If you call `read_some` on an end with no buffered data, the
 calling coroutine suspends until the peer calls `write_some`. This
 makes `stream` useful for testing client/server code without real
 sockets.
@@ -287,8 +287,8 @@ void test_stream_pair()
 
 Data written to `a` goes into `b`'s incoming buffer, and vice versa.
 `write_some` completes immediately and posts any suspended peer reader
-before returning. If `b.read_some()` is called when `a` has not yet
-written anything, the coroutine suspends; it resumes the moment `a`
+before returning. If you call `b.read_some()` when `a` has not yet
+written anything, the coroutine suspends. It resumes the moment `a`
 calls `write_some`.
 
 The `provide()` member is a shortcut that injects bytes directly into
@@ -299,19 +299,19 @@ operation under test.
 === EOF and Cross-End Closure
 
 Calling `close()` on one end signals EOF to the peer. The peer drains
-any buffered data first; once the buffer is empty, subsequent
+any buffered data first. Once the buffer is empty, subsequent
 `read_some` calls on the peer return `cond::eof`. The peer may still
 call `write_some` after receiving EOF.
 
 When the fuse injects an error during `read_some` or `write_some`, the
-pair is automatically closed: the calling end returns the injected
+pair closes automatically: the calling end returns the injected
 error, any suspended reader on the other end is resumed with
 `cond::eof`, and all subsequent operations on both ends return
 `cond::eof`.
 
 === Thread Safety
 
-Single-threaded only. Both ends of the pair must be accessed from the
+Single-threaded only. You must access both ends of the pair from the
 same thread. Concurrent access from multiple threads or multiple
 concurrent coroutines is undefined behavior.
 
@@ -354,12 +354,12 @@ concurrent coroutines is undefined behavior.
 | Return a view of the unread bytes buffered in this stream.
 |===
 
-== Putting It Together
+== Put It Together
 
 The following snippet tests a function that reads a single line
 terminated by `'\n'` from a `ReadStream`. The `fuse.armed()` loop
 runs the coroutine repeatedly, failing at every `read_some` call in
-turn, then reruns in exception mode. Each injected failure exercises
+turn. It then reruns in exception mode. Each injected failure exercises
 a different error-handling branch inside `read_line`.
 
 [source,cpp]

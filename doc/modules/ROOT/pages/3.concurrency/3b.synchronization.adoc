@@ -41,15 +41,15 @@ int main()
 
 Two threads, each incrementing 100,000 times. You would expect 200,000. But run this repeatedly and you will see different results—180,000, 195,327, maybe occasionally 200,000. Something is wrong.
 
-The `++counter` operation looks atomic—indivisible—but it is not. It actually consists of three steps:
+The `++counter` operation looks atomic—indivisible—but it is not. It consists of three steps:
 
 1. Read the current value
 2. Add one
 3. Write the result back
 
-Between any of these steps, the other thread might execute its own steps. Imagine both threads read `counter` when it is 5. Both add one, getting 6. Both write 6 back. Two increments, but the counter only went up by one. This is a *lost update*, a classic race condition.
+Between any of these steps, the other thread might execute its own steps. Imagine both threads read `counter` when it is 5. Both add one to get 6. Both write 6 back. Two increments, but the counter only went up by one. This is a *lost update*, a classic race condition.
 
-The more threads, the more opportunity for races. The faster your processor, the more instructions execute between context switches, potentially hiding the bug—until one critical day in production.
+The more threads, the more opportunity for races. The faster your processor, the more instructions execute between context switches. This can hide the bug—until one critical day in production.
 
 == Mutual Exclusion: Mutexes
 
@@ -91,7 +91,7 @@ int main()
 
 Now the output is always 200,000. The mutex ensures that between `lock()` and `unlock()`, only one thread executes. The increment is now effectively atomic.
 
-But there is a problem with calling `lock()` and `unlock()` directly. If code between them throws an exception, `unlock()` never executes. The mutex stays locked forever, and any thread waiting for it blocks eternally—a *deadlock*.
+But there is a problem with calling `lock()` and `unlock()` directly. If code between them throws an exception, `unlock()` never executes. The mutex stays locked forever. Any thread waiting for it blocks eternally—a *deadlock*.
 
 == Lock Guards: Safety Through RAII
 
@@ -119,11 +119,11 @@ void increment_many_times()
 }
 ----
 
-The `std::lock_guard` locks the mutex on construction and unlocks it on destruction. Even if an exception is thrown, the destructor runs and the mutex is released. This is the correct way to use mutexes.
+The `std::lock_guard` locks the mutex on construction and unlocks it on destruction. Even if an exception is thrown, the destructor runs and releases the mutex. This is the correct way to use mutexes.
 
 === std::scoped_lock ({cpp}17)
 
-Since {cpp}17, `std::scoped_lock` is preferred. It works like `lock_guard` but can lock multiple mutexes simultaneously, avoiding a class of deadlock:
+Since {cpp}17, prefer `std::scoped_lock`. It works like `lock_guard`, but it can lock multiple mutexes at once. This avoids a class of deadlock:
 
 [source,cpp]
 ----
@@ -132,7 +132,7 @@ std::scoped_lock lock(counter_mutex);  // C++17
 
 === std::unique_lock
 
-For more control, use `std::unique_lock`. It can be unlocked before destruction, moved to another scope, or created without immediately locking:
+For more control, use `std::unique_lock`. You can unlock it before destruction, move it to another scope, or create it without immediately locking it:
 
 [source,cpp]
 ----
@@ -148,7 +148,7 @@ lock.unlock();  // unlock early if needed
 
 `std::unique_lock` is more flexible but slightly more expensive than `std::lock_guard`. Use the simplest tool that does the job.
 
-== The Deadlock Dragon
+== Deadlock
 
 Mutexes solve data races but introduce a new danger: *deadlock*.
 
@@ -175,7 +175,7 @@ void thread_b()
 
 If both threads run and each acquires its first mutex before the other acquires the second, deadlock occurs.
 
-=== Preventing Deadlock
+=== Prevent Deadlock
 
 The simplest prevention: *always lock mutexes in the same order*. If every thread locks `mutex1` before `mutex2`, no cycle can form.
 
@@ -190,7 +190,7 @@ void safe_function()
 }
 ----
 
-`std::scoped_lock` uses a deadlock-avoidance algorithm internally, acquiring both mutexes without risk of circular waiting.
+`std::scoped_lock` uses a deadlock-avoidance algorithm internally. It acquires both mutexes without risk of circular waiting.
 
 === Deadlock Prevention Rules
 

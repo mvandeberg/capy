@@ -54,7 +54,7 @@ I/O conditions arising from the underlying I/O system (EOF, connection reset, br
 
 The caller must ensure that the memory referenced by `buffers` remains valid until the `co_await` expression returns.
 
-==== Conforming Signatures
+==== Conformant Signatures
 
 [source,cpp]
 ----
@@ -170,7 +170,7 @@ The `read_some` contract treats a completion that fills the buffer sequence as a
 
 The `(error_code, size_t)` return type carries both a byte count and a condition, but the contract assigns them disjoint roles. A nonzero `ec` describes only a transfer that fell short of the requested size; it never qualifies a complete transfer. This gives every consumer a single, unambiguous test: if `n == buffer_size(buffers)` the operation succeeded and the bytes are valid, full stop. There is no need to inspect `ec` to decide whether the data can be used.
 
-=== Deferring Conditions to the Next Read
+=== Defer Conditions to the Next Read
 
 A condition such as end-of-stream is a property of the stream, not of the bytes that were just delivered. If a read happens to fill the buffer exactly as the stream reaches its end, the bytes are still good and the read still succeeded. Reporting EOF on that same completion would force every caller to reconcile "I got all my bytes" with "but there was also an error," which is precisely the ambiguity the contract removes. Instead the condition surfaces on the next read, when `n` is necessarily less than the buffer size, and the caller observes it cleanly.
 
@@ -215,7 +215,7 @@ Because an error can accompany partial data, the advance must run before the che
 
 === Implementer Freedom
 
-When a stream produces some bytes and then observes a stopping condition before the buffer is full, it reports both at once: `(ec, k)` with `k \< buffer_size(buffers)`. There is no deferred state, no discarded data, and no internal replay buffer. A stream that decrypts or decompresses into the caller's buffer and then hits a terminal marker simply returns the bytes and the condition together.
+When a stream produces some bytes and then observes a stopping condition before the buffer is full, it reports both at once: `(ec, k)` with `k \< buffer_size(buffers)`. There is no deferred state, no discarded data, and no internal replay buffer. A stream that decrypts or decompresses into the caller's buffer and then hits a terminal marker returns the bytes and the condition together.
 
 The one case that requires deferral is the exact-fill boundary, where the final bytes leave no free space. Since `(ec, buffer_size(buffers))` is not permitted, the stream reports `(!ec, buffer_size(buffers))` and carries the condition to the next call. This case is rare, and its bookkeeping is local to the stream.
 
@@ -223,7 +223,7 @@ The one case that requires deferral is the exact-fill boundary, where the final 
 
 `read_some` and the composed `read` report progress with the same shape: `(ec, n)`, where `n` counts the bytes transferred before the condition. The composed `read` returns `(eof, m)` with `m` short of the requested total when the stream ends early; the primitive `read_some` likewise returns `(ec, n)` with `n` short of the buffer size. Partial progress alongside an error code is the same pattern at every level. The single refinement at the primitive level, that an exactly full buffer is reported as success, keeps `n` a reliable proxy for completion at every layer.
 
-=== Conforming Sources
+=== Conformant Sources
 
 Concrete `ReadStream` implementations are free to report `n == 0` or `n > 0` on error, whichever is natural:
 

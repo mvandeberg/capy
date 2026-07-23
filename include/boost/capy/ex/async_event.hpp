@@ -50,13 +50,13 @@ namespace capy {
 
     This event provides a way to notify multiple coroutines that some
     condition has occurred. When a coroutine awaits an unset event, it
-    suspends and is added to a wait queue. When the event is set, all
-    waiting coroutines are resumed.
+    suspends and joins a wait queue. When you set the event, it resumes
+    all waiting coroutines.
 
     @par Cancellation
 
-    When a coroutine is suspended waiting for the event and its stop
-    token is triggered, the waiter completes with `error::canceled`
+    When a coroutine is suspended waiting for the event and a stop
+    is requested, the waiter completes with `error::canceled`
     instead of waiting for `set()`.
 
     Cancellation only applies while the coroutine is suspended in the

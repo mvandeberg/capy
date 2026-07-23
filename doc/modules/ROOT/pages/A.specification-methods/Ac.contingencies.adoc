@@ -20,11 +20,11 @@ processed.
 Each stream operation that may encounter a contingency await-returns
 a type which is a specialization of `capy::io_result`. These objects can be _destructured_
 using a structured binding. The first binding of such destructuring is of type
-`std::error_code`. This binding, call it `ec`, is used to signal if and which
-contingency occured:
+`std::error_code`. This binding, call it `ec`, signals if and which
+contingency occurred:
 
  * If `ec == std::error_code{}`, no contingency occurred.
- * Otherwise a contingency occurred. In order to determine which contingency occurred,
+ * Otherwise a contingency occurred. To determine which contingency occurred,
    compare `ec` to error conditions, in particular to `capy::cond`.
 
 NOTE: Reaching the end of stream is also a contingency

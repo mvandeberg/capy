@@ -25,7 +25,7 @@
 namespace boost {
 namespace capy {
 
-/** Base class for I/O object containers providing service management.
+/** Base class for I/O object containers that manage services.
 
     An execution context represents a place where function objects are
     executed. It provides a service registry where polymorphic services

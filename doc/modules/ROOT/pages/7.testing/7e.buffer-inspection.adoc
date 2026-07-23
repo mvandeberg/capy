@@ -10,7 +10,7 @@
 = Buffer Inspection
 
 Two small utilities round out the toolkit. `bufgrind` iterates every split
-point of a buffer sequence, exercising every chunk-boundary condition in the
+point of a buffer sequence. This exercises every chunk-boundary condition in the
 system under test. `buffer_to_string` concatenates buffer sequences into a
 `std::string` for assertion.
 
@@ -19,13 +19,13 @@ system under test. `buffer_to_string` concatenates buffer sequences into a
 `bufgrind` is a test utility that iterates through every way to split a buffer
 sequence into two contiguous pieces. For an N-byte input it produces N+1 split
 positions: `(0, N)`, `(1, N-1)`, ..., `(N, 0)`. The two pieces at each
-position concatenate back to the original sequence. Any code that processes
-a buffer in chunks is exercised at every possible chunk boundary with a single
-`while` loop.
+position concatenate back to the original sequence. A single `while`
+loop exercises any code that processes a buffer in chunks at every possible
+chunk boundary.
 
-`bufgrind` does not perform I/O and does not consult a fuse, so the snippets
-on this page drive it under `f.inert(...)`: a single pass is sufficient to
-visit every split position, and there are no async failure sites to inject.
+`bufgrind` does not perform I/O and does not consult a fuse. The snippets
+on this page therefore drive it under `f.inert(...)`: a single pass visits
+every split position, and there are no async failure sites to inject.
 
 [source,cpp]
 ----
@@ -75,8 +75,8 @@ so the loop body always executes at least once.
 === Step Size
 
 When the input is large, visiting every byte boundary is expensive. Pass a
-`step` parameter to skip positions. The final position (equal to the total
-size) is always visited regardless of step alignment.
+`step` parameter to skip positions. `bufgrind` always visits the final
+position (equal to the total size) regardless of step alignment.
 
 [source,cpp]
 ----
@@ -92,16 +92,16 @@ while(bg)
 }
 ----
 
-A step of 0 is treated as 1. A step larger than the total size reduces to
+`bufgrind` treats a step of 0 as 1. A step larger than the total size reduces to
 two positions: 0 and size.
 
 === Mutability Preservation
 
 `bufgrind` is templated on a `ConstBufferSequence` but the slices it
 produces follow the mutability of the input. Each half is a buffer-slice
-view (`slice_type`); its `data()` member exposes the underlying buffer
+view (`slice_type`). Its `data()` member exposes the underlying buffer
 sequence. Passing a `mutable_buffer` yields halves whose `data()` models
-`MutableBufferSequence`; passing a `const_buffer` yields halves whose
+`MutableBufferSequence`. Passing a `const_buffer` yields halves whose
 `data()` models `ConstBufferSequence`. This matters for tests that need
 to write into the produced buffers rather than only read from them.
 
@@ -141,8 +141,8 @@ while(bg)
 == buffer_to_string
 
 `buffer_to_string` concatenates one or more buffer sequences into a
-`std::string`. With a single argument it converts that buffer sequence;
-with multiple arguments it concatenates them in order. The most common
+`std::string`. With a single argument it converts that buffer sequence.
+With multiple arguments it concatenates them in order. The most common
 use is asserting the combined content of a `bufgrind` split.
 
 [source,cpp]
@@ -198,11 +198,11 @@ BOOST_TEST(r.success);
   `std::string`. Arguments are appended in the order given.
 |===
 
-== Putting It Together
+== Put It Together
 
 The following snippet tests a hypothetical parser that reads from a
-`read_stream`. `bufgrind` exercises every split of the input so the parser
-is run against every possible chunk boundary; `buffer_to_string` verifies
+`read_stream`. `bufgrind` exercises every split of the input, so it runs the parser
+against every possible chunk boundary. `buffer_to_string` verifies
 the output at each split:
 
 [source,cpp]

@@ -60,7 +60,7 @@ Components at different levels belong in different packages. This is a structura
 
 == Cumulative Component Dependency
 
-Lakos quantified the cost of getting levels wrong with Cumulative Component Dependency (CCD): the sum over all components in a subsystem of the number of components needed in order to test each component incrementally (see Figure 4-22, p. 191 of Lakos'96).
+Lakos quantified the cost of getting levels wrong with Cumulative Component Dependency (CCD): the sum over all components in a subsystem of the number of components needed to test each component incrementally (see Figure 4-22, p. 191 of Lakos'96).
 
 CCD ranges from N for a perfectly horizontal (flat) design to N-squared for a vertical or cyclically dependent one. The metric is additive for independent subsystems. If two independent libraries each have CCD of 5, combining them without adding cross-dependencies gives CCD 10 - exactly the sum:
 
@@ -80,7 +80,7 @@ CCD = 5      CCD = 5
       CCD = 10
 ----
 
-Each component should have a single purpose. Ideally all of the functionality within a component is primitive - if you can write a function in terms of a type rather than as a member of that type, write a free function (or today, a template function constrained by a concept). This keeps levels flat and CCD low.
+Each component should have a single purpose. Ideally, all functionality within a component is primitive. If you can write a function in terms of a type rather than as a member of that type, write a free function (or today, a template function constrained by a concept). This keeps levels flat and CCD low.
 
 Merging two libraries at different levels inflates CCD. Every component that only needs buffers and tasks now drags in sockets, TLS, and four platform backends. Testing cost, build cost, and cognitive cost all increase.
 
@@ -104,7 +104,7 @@ These two modules hide different information. That is the practical reason they 
 Capy pulls the complexity of coroutine execution, buffer management, and context propagation downward, so that libraries like Http and Corosio do not have to deal with it. Merging Capy into Corosio does not eliminate that complexity. It buries it inside a larger library where it is harder to find, harder to test, and impossible to reuse without taking the whole thing.
 
 
-== Writing Against the Narrowest Interface
+== Write Against the Narrowest Interface
 
 A `ReadStream` concept captures the essential operation: anything you can `read_some` from. TCP sockets, TLS streams, file handles, in-memory buffers - one generic algorithm works with all of them. That algorithm belongs in Capy, not Corosio, because it depends only on the concept, not on any particular implementation.
 
@@ -124,7 +124,7 @@ If Capy were merged into Corosio, Boost.Http would be forced to depend on platfo
 This is precisely the excessive link-time dependency that levelization is designed to prevent. Merging Capy into Corosio does not create a cycle, but it forces every consumer of Capy's abstractions to inherit Corosio's platform dependencies. The cost is paid by everyone, even those who need nothing from Corosio.
 
 
-== Testing in Isolation
+== Test in Isolation
 
 With Capy as a separate library, you can test buffer algorithms, stream concepts, and task machinery without a network stack. No sockets. No event loops. No platform dependencies. Just pure {cpp}20 coroutine logic.
 

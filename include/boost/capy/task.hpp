@@ -60,13 +60,14 @@ struct task_return_base<void>
 
     Use `task<T>` as the return type for coroutines that perform I/O
     and return a value of type `T`. The coroutine body does not start
-    executing until the task is awaited, enabling efficient composition
-    without unnecessary eager execution.
+    until you await the task. This enables efficient composition and
+    avoids unnecessary eager execution.
 
-    The task participates in the I/O awaitable protocol: when awaited,
-    it receives the caller's executor and stop token, propagating them
-    to nested `co_await` expressions. This enables cancellation and
-    proper completion dispatch across executor boundaries.
+    The task participates in the I/O awaitable protocol. When you await
+    it, the task receives the caller's executor and stop token. It
+    propagates them to nested `co_await` expressions. This enables
+    cancellation and proper completion dispatch across executor
+    boundaries.
 
     @par Thread Safety
     Distinct objects: Safe.
@@ -225,8 +226,8 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
         /** Capture the in-flight exception from the coroutine body.
 
             Called by the compiler when the coroutine body exits via an
-            unhandled exception. The captured exception is rethrown when
-            the task is awaited.
+            unhandled exception. The task rethrows the captured exception
+            when you await it.
         */
         void unhandled_exception() noexcept
         {
@@ -314,8 +315,8 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
 
     /** Report whether the awaited task is already complete.
 
-        Always returns `false`; a task is lazy and has not started when
-        it is awaited, so the awaiting coroutine always suspends.
+        Always returns `false`. A task is lazy: it has not started when
+        you await it, so the awaiting coroutine always suspends.
 
         @return `false`.
     */

@@ -19,7 +19,7 @@ Key characteristics:
 * *Stop token propagation* — Forward-propagates cancellation signals
 * *xref:4.coroutines/4g.allocators.adoc#_halo_optimization[HALO] support* — Enables Heap Allocation eLision Optimization when possible
 
-== Declaring task Coroutines
+== Declare a task Coroutine
 
 Any function that returns `task<T>` and contains coroutine keywords (`co_await`, `co_return`) is a `task` coroutine:
 
@@ -46,7 +46,7 @@ task<> do_nothing()  // task<void>
 
 The syntax `task<>` is equivalent to `task<void>` and represents a coroutine that completes without producing a value.
 
-== Returning Values with co_return
+== Return Values with co_return
 
 Use `co_return` to complete the coroutine and provide its result:
 
@@ -67,7 +67,7 @@ task<> log_message(std::string msg)
 
 For `task<void>`, you can either use `co_return;` explicitly or let execution fall off the end of the function body.
 
-== Awaiting Other Tasks
+== Await Other Tasks
 
 Tasks can await other tasks using `co_await`. This is the primary mechanism for composing asynchronous operations:
 
@@ -128,7 +128,7 @@ Computing...
 Result: 42
 ----
 
-Lazy execution enables efficient composition—tasks that are never awaited never run, consuming no resources beyond their initial allocation.
+Lazy execution enables efficient composition. Tasks that are never awaited never run and consume no resources beyond their initial allocation.
 
 == Symmetric Transfer
 
@@ -143,9 +143,9 @@ task<> b() { co_await c(); }
 task<> c() { co_return; }
 ----
 
-Without symmetric transfer, each `co_await` would add a stack frame, potentially causing stack overflow with deep nesting. With symmetric transfer, `c` returning to `b` returning to `a` uses constant stack space regardless of depth.
+Without symmetric transfer, each `co_await` would add a stack frame. Deep nesting could then cause stack overflow. With symmetric transfer, `c` returning to `b` returning to `a` uses constant stack space regardless of depth.
 
-This is implemented through the `await_suspend` returning a coroutine handle rather than `void`:
+Capy implements this through an `await_suspend` that returns a coroutine handle rather than `void`:
 
 [source,cpp]
 ----
@@ -179,7 +179,7 @@ After moving, the source task becomes empty and must not be awaited.
 
 == Exception Propagation
 
-Exceptions thrown inside a task are captured and rethrown when the task is awaited:
+The task captures exceptions thrown inside it and rethrows them when awaited:
 
 [source,cpp]
 ----
@@ -203,7 +203,7 @@ task<> example()
 }
 ----
 
-The exception is stored in the promise when it occurs and rethrown in `await_resume` when the calling coroutine resumes.
+The promise stores the exception when it occurs. `await_resume` rethrows it when the calling coroutine resumes.
 
 == Reference
 
@@ -221,4 +221,4 @@ Or included via the umbrella header:
 #include <boost/capy.hpp>
 ----
 
-You have now learned how to declare, return values from, and await `task<T>` coroutines. In the next section, you will learn how to launch tasks for execution using `run_async` and `run`.
+You have now learned how to declare, return values from, and await `task<T>` coroutines. In the next section, you will learn how to start tasks using `run_async` and `run`.

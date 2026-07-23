@@ -183,7 +183,7 @@ auto [ec, name, orders, balance] = co_await capy::when_all(
     wrap(fetch_account_balance(user_id)));
 ----
 
-`when_all` requires children returning `io_result`, so plain tasks are wrapped. All three run concurrently. The result is `io_result<std::string, int, double>`, a single `ec` plus the flattened payloads in input order.
+`when_all` requires children returning `io_result`. You therefore wrap plain tasks. All three run concurrently. The result is `io_result<std::string, int, double>`, a single `ec` plus the flattened payloads in input order.
 
 === Void io_tasks
 
@@ -216,7 +216,7 @@ catch (...)
 }
 ----
 
-I/O errors are reported via `ec` in the `io_result`. Thrown exceptions are captured separately — Upon error cancellation is requested and the first exception is rethrown after all tasks complete.
+The `io_result` reports I/O errors via `ec`. Thrown exceptions are captured separately. On error, `when_all` requests cancellation and rethrows the first exception after all tasks complete.
 
 == Output
 

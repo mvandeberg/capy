@@ -21,11 +21,12 @@
 namespace boost {
 namespace capy {
 
-/** Concept for task types that can be launched from non-coroutine contexts.
+/** Concept for task types that a caller can start from outside a coroutine.
 
-    Extends @ref IoAwaitable with operations needed by launch utilities
-    (@ref run, @ref run_async) to start a task, transfer ownership of the
-    coroutine frame, and retrieve results or exceptions after completion.
+    Extends @ref IoAwaitable with the operations that the start functions
+    @ref run and @ref run_async need: to start a task, transfer ownership
+    of the coroutine frame, and retrieve results or exceptions after
+    completion.
 
     @tparam T The task type.
 

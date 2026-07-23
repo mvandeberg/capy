@@ -12,7 +12,7 @@ Two tasks communicating via an async event, with strand serialization.
 == Prerequisites
 
 * Completed xref:8.examples/8a.hello-task.adoc[Hello Task]
-* Understanding of basic task creation and launching
+* Understanding of basic task creation and starting
 
 == Source Code
 
@@ -84,7 +84,7 @@ target_link_libraries(producer_consumer PRIVATE capy)
 capy::strand s{pool.get_executor()};
 ----
 
-A `strand` is an executor adaptor that serializes execution. All coroutines dispatched through a strand are guaranteed not to run concurrently, making it safe to access shared state without explicit locking. Note that `async_event` is not thread-safe, so using a strand ensures safe access.
+A `strand` is an executor adaptor that serializes execution. All coroutines dispatched through a strand are guaranteed not to run concurrently. This makes it safe to access shared state without explicit locking. `async_event` is not thread-safe, so a strand ensures safe access.
 
 === The Event
 
@@ -93,7 +93,7 @@ A `strand` is an executor adaptor that serializes execution. All coroutines disp
 capy::async_event data_ready;
 ----
 
-`async_event` is a manual-reset signaling mechanism. One task can `set()` it; other tasks can `wait()` for it. When set, all current waiters resume, and the event stays set (later `wait()` calls return immediately) until `clear()` is called.
+`async_event` is a manual-reset signaling mechanism. One task can `set()` it. Other tasks can `wait()` for it. When set, all current waiters resume. The event stays set until you call `clear()`. Later `wait()` calls return immediately.
 
 === Producer
 
@@ -125,7 +125,7 @@ auto consumer = [&]() -> capy::io_task<> {
 
 The consumer waits until the event is set. The `co_await data_ready.wait()` suspends until `set()` is called.
 
-=== Running Both
+=== Run Both
 
 [source,cpp]
 ----
@@ -139,7 +139,7 @@ auto run_both = [&]() -> capy::task<> {
 capy::run_async(s, on_complete, on_error)(run_both());
 ----
 
-`when_all` runs both tasks concurrently within the same parent coroutine context, but the strand ensures they don't run at the same time on different threads. The producer signals `data_ready` when the value is set, and the consumer waits for the signal before reading.
+`when_all` runs both tasks concurrently within the same parent coroutine context. The strand ensures they don't run at the same time on different threads. The producer signals `data_ready` when it sets the value. The consumer waits for the signal before reading.
 
 === Completion Synchronization
 

@@ -683,7 +683,7 @@ template<IoAwaitableRange R>
     co_return io_result<>{};
 }
 
-/** Execute io_result-returning awaitables concurrently, inspecting error codes.
+/** Execute io_result-returning awaitables concurrently and combine their error codes.
 
     Overload selected when all children return io_result<Ts...>.
     The error_code is lifted out of each child into a single outer

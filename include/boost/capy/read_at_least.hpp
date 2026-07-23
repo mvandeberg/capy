@@ -25,7 +25,7 @@ namespace capy {
 
 /** Read at least a minimum number of bytes from a stream.
 
-    This is a straightforward extension of @ref read. While @ref read
+    This extends @ref read. While @ref read
     transfers exactly `buffer_size(buffers)` bytes, `read_at_least`
     transfers at least `n` bytes: the loop stops as soon as `n` bytes
     have been read, even if `buffers` is not yet full. Any bytes beyond

@@ -75,8 +75,8 @@ namespace capy {
 
     @par Cancellation
 
-    If the environment's stop token is triggered while suspended,
-    the wait completes with `error::canceled`. A wake that loses
+    If a stop is requested while the waiter is suspended, the wait
+    completes with `error::canceled`. A wake that loses
     the race against cancellation is latched for the next `wait()`
     rather than dropped.
 
@@ -88,11 +88,11 @@ namespace capy {
 
     Distinct objects: Safe.@n
     Shared objects: `wake()` may be called from any thread.
-    `wait()` must only be awaited by one coroutine at a time, and
-    only on an executor that never runs the coroutine's
-    continuations concurrently: a single-threaded executor or a
-    strand over a multi-threaded one (the same threading model as
-    `async_event` and `async_mutex`). Awaiting `wait()` directly
+    Only one coroutine at a time may await `wait()`. Await it only on
+    an executor that never runs the coroutine's continuations
+    concurrently: a single-threaded executor, or a strand over a
+    multi-threaded one (the same threading model as `async_event` and
+    `async_mutex`). Awaiting `wait()` directly
     on a multi-threaded executor is undefined.
 
     This type is non-copyable and non-movable because a suspended
