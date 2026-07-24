@@ -53,5 +53,5 @@ page names cited in `DOC_REVIEW_FEEDBACK.md` Section 3, unverified against that 
 | 23 | corosio | adoc | Glossary page (Corosio repo) | 5 | Phase 5 |
 | 24 | corosio | adoc | `4i.signals.adoc`, `4j.resolver.adoc` (Corosio repo; Section 4 of the feedback doc says fixed — re-verify against the Corosio repo before treating as closed) | 5 | Phase 5 |
 | 25 | corosio | adoc | `3e.hash-server.adoc`, `3f.reconnect.adoc` (Corosio repo; Section 4 says fixed — re-verify against the Corosio repo before treating as closed) | 5 | Phase 5 |
-| 27 | corosio | presentation | Antora UI theme / dark-mode CSS (Corosio repo or shared UI bundle) | 5 | Phase 5 |
+| 27 | corosio | adoc | presentation/theme: Antora UI theme / dark-mode CSS (Corosio repo or shared UI bundle) | 5 | Phase 5 |
 | 30 | corosio | adoc | Platform-specific issues page (does not yet exist; Corosio repo) | 5 | Phase 5 |
