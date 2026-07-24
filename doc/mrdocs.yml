@@ -26,6 +26,16 @@ multipage: true
 # use-system-libc: true
 # use-system-stdlib: true
 
+# Warnings (Style Guide Part F.0 "MrDocs-no-warnings" gate; doc/lint/mrdocs-warnings.mjs
+# scans the build log for these). Deliberately not warn-as-error: the gate stays
+# non-blocking until Phase 2 exit promotes it (see task-2 brief).
+warnings: true
+warn-if-undocumented: true
+warn-no-paramdoc: true
+warn-unnamed-param: true
+warn-broken-ref: true
+warn-if-doc-error: true
+
 # Automation
 auto-function-metadata: false
 

@@ -113,3 +113,64 @@ jobs:
         with:
           name: antora-docs
           path: boost-root/libs/capy/doc/build/site
+
+      # --- Doc-quality checks (Style Guide Part F.0 / doc improvement plan Task 2) ---
+      # All non-blocking: continue-on-error: true. They report findings for review;
+      # gates are promoted to blocking at later phase exits (see DOC_IMPROVEMENT_PLAN.md).
+      # The accuracy gate for .adoc example code (B2/B3/D2 correctness) is separate and
+      # stays a hard gate: the boost_capy_doc_tests CMake target, built via the B2 test
+      # workflow (ci.yml), not this job.
+
+      - name: Install Vale
+        if: always()
+        continue-on-error: true
+        run: |
+          mkdir -p "$RUNNER_TEMP/vale-bin"
+          curl -sSL https://github.com/errata-ai/vale/releases/download/v3.15.1/vale_3.15.1_Linux_64-bit.tar.gz \
+            | tar -xz -C "$RUNNER_TEMP/vale-bin" vale
+          echo "$RUNNER_TEMP/vale-bin" >> "$GITHUB_PATH"
+          echo "$(pwd)/boost-root/libs/capy/doc/node_modules/.bin" >> "$GITHUB_PATH"
+
+      - name: Doc-quality - Vale sync (Google style package)
+        if: always()
+        continue-on-error: true
+        working-directory: boost-root/libs/capy/doc
+        run: vale sync
+
+      - name: Doc-quality - Vale over .adoc pages
+        if: always()
+        continue-on-error: true
+        working-directory: boost-root/libs/capy/doc
+        run: vale modules
+
+      - name: Doc-quality - extract + Vale over header docstrings
+        if: always()
+        continue-on-error: true
+        working-directory: boost-root/libs/capy/doc
+        run: |
+          node lint/extract-docstrings.mjs
+          vale lint/.docstrings
+
+      - name: Doc-quality - structural lint (doc-lint.mjs)
+        if: always()
+        continue-on-error: true
+        working-directory: boost-root/libs/capy/doc
+        run: node lint/doc-lint.mjs
+
+      - name: Doc-quality - accessibility contrast scan (pa11y-ci)
+        if: always()
+        continue-on-error: true
+        working-directory: boost-root/libs/capy/doc
+        run: node lint/run-a11y.mjs
+
+      - name: Doc-quality - MrDocs no-warnings scan
+        if: always()
+        continue-on-error: true
+        working-directory: boost-root/libs/capy/doc
+        run: node lint/mrdocs-warnings.mjs
+
+      - name: Doc-quality - no-new-violations report
+        if: always()
+        continue-on-error: true
+        working-directory: boost-root/libs/capy/doc
+        run: node lint/check-no-new-violations.mjs

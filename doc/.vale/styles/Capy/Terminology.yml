@@ -1,0 +1,9 @@
+extends: substitution
+message: "Use '%s' for one-term-per-concept consistency (style guide C.1)."
+level: warning
+ignorecase: false
+swap:
+  '\b(launch|spawn|fire off|kick off)\b': start
+  '\bcancellation token\b': stop token
+  '\bcancel token\b': stop token
+  '\bboxed\b': type-erased

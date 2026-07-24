@@ -1,0 +1,6 @@
+extends: existence
+message: "Heading uses 'Part N' ceremony instead of a descriptive title (style guide A7): '%s'."
+level: warning
+scope: heading
+raw:
+  - '^==+\s+Part\s+\d+'

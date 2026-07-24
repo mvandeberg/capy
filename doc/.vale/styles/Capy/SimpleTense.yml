@@ -1,0 +1,7 @@
+extends: existence
+message: "Avoid needless future/perfect tense — prefer present simple (style guide C4): '%s'."
+level: warning
+ignorecase: true
+tokens:
+  - 'will '
+  - 'has been'
