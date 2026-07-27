@@ -17,11 +17,13 @@ on:
       - develop
     paths:
       - 'doc/**'
+      - 'include/**'
       - '*.adoc'
       - 'README.adoc'
   pull_request:
     paths:
       - 'doc/**'
+      - 'include/**'
       - '*.adoc'
       - 'README.adoc'
 
@@ -118,8 +120,9 @@ jobs:
       # All non-blocking: continue-on-error: true. They report findings for review;
       # gates are promoted to blocking at later phase exits (see DOC_IMPROVEMENT_PLAN.md).
       # The accuracy gate for .adoc example code (B2/B3/D2 correctness) is separate and
-      # stays a hard gate: the boost_capy_doc_tests CMake target, built via the B2 test
-      # workflow (ci.yml), not this job.
+      # stays a hard gate: the boost_capy_doc_tests b2 target defined in
+      # test/doc/Jamfile, run via `./b2 libs/capy/test` in ci.yml, not this job
+      # (test/doc/CMakeLists.txt defines the equivalent CMake target).
 
       - name: Install Vale
         if: always()
