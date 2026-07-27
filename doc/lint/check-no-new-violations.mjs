@@ -43,13 +43,32 @@ const current = JSON.parse(fs.readFileSync(tmpPath, 'utf8'));
 fs.rmSync(tmpPath, { force: true });
 
 let totalNew = 0;
+let anySkipped = false;
 const report = {};
 for (const [check, currentCheck] of Object.entries(current.checks)) {
+  // A skipped check (Vale broken, MrDocs/a11y couldn't run, ...) is NOT a clean pass — it
+  // means no comparison happened at all. Surface it loudly (stderr, outside the JSON blob)
+  // so it can't be mistaken for "0 new" in a log that only skims the summary line, and
+  // record it distinctly (newCount: null, not 0) in the JSON report too.
+  if (currentCheck.skipped) {
+    anySkipped = true;
+    console.error(`SKIPPED: ${check} (${currentCheck.reason}) — no-new-violations comparison NOT performed for this check.`);
+    report[check] = {
+      skipped: true, reason: currentCheck.reason,
+      baselineCount: baseline.checks[check]?.count ?? 0, currentCount: currentCheck.count,
+      newCount: null, newFindings: [],
+    };
+    continue;
+  }
   const baseSet = new Set(baseline.checks[check]?.fingerprints || []);
   const newOnes = (currentCheck.fingerprints || []).filter((fp) => !baseSet.has(fp));
   totalNew += newOnes.length;
   report[check] = { baselineCount: baseline.checks[check]?.count ?? 0, currentCount: currentCheck.count, newCount: newOnes.length, newFindings: newOnes };
 }
 
-console.log(JSON.stringify({ totalNew, strict, checks: report }, null, 2));
-process.exit(strict && totalNew > 0 ? 1 : 0);
+if (anySkipped) {
+  console.error(`SKIPPED checks present — totalNew (${totalNew}) is only valid for the checks that actually ran.`);
+}
+
+console.log(JSON.stringify({ totalNew, anySkipped, strict, checks: report }, null, 2));
+process.exit(strict && (totalNew > 0 || anySkipped) ? 1 : 0);

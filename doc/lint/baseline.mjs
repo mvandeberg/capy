@@ -32,8 +32,22 @@ function run(cmd, args, opts = {}) {
 
 function valeFingerprints(target) {
   const r = run('vale', ['--output=JSON', target], { cwd: DOC_DIR });
-  let parsed = {};
-  try { parsed = JSON.parse(r.stdout || '{}'); } catch { /* vale prints nothing useful */ }
+  if (r.error) {
+    return { count: 0, skipped: true, reason: `vale failed to launch: ${r.error.message}`, fingerprints: [] };
+  }
+  // Vale's own exit codes: 0 = no alerts at MinAlertLevel, 1 = alerts found (the normal,
+  // expected case — NOT a failure), 2 = fatal runtime error (e.g. `asciidoctor` off PATH,
+  // a broken `vale sync`). On a fatal error Vale writes a single JSON error object to
+  // stderr and leaves stdout empty, so a plain JSON.parse(stdout || '{}') silently yields
+  // `{}` — indistinguishable from "ran clean, found nothing." Detect that explicitly
+  // instead of ever reporting a broken Vale run as `count: 0`.
+  let parsed = null;
+  try { parsed = r.stdout ? JSON.parse(r.stdout) : null; } catch { parsed = null; }
+  const looksLikeFileMap = parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed);
+  if (r.status === 2 || !looksLikeFileMap) {
+    const tail = (r.stderr || r.stdout || '(no output)').trim().slice(-500);
+    return { count: 0, skipped: true, reason: `vale on '${target}' did not produce findings (exit ${r.status}): ${tail}`, fingerprints: [] };
+  }
   const fingerprints = [];
   for (const [file, alerts] of Object.entries(parsed)) {
     for (const a of alerts) fingerprints.push(`${path.relative(DOC_DIR, file)}:${a.Line}:${a.Check}`);
