@@ -105,16 +105,16 @@ prose problems:
 
 - `9k.Executor.adoc`: **0 findings added** by content; 7 findings *removed* (the deleted
   section's own pre-existing violations went away with it).
-- `4g.allocators.adoc`: **2 findings added** by content — 1× `Google.EmDash` and 1×
-  `Vale.Spelling` ("coroutine") — both landing on the verbatim-moved sentence ("...per
-  `.resume()` call -- negligible compared to the cost of resuming a coroutine."). Both
-  check types are pre-existing, massively-backlogged patterns already present dozens of
-  times on this exact page and thousands of times across the corpus (Vale's dictionary
-  doesn't recognize "coroutine"; the codebase's house style uses ASCII `--` for em dashes,
-  which `Google.EmDash` doesn't recognize as one). This is not a new class of problem — it
-  is the same two already-backlogged violations reappearing on relocated text, which is
-  unavoidable without rewording the moved block (the brief specifies wording is Phase 4's
-  job, not this task's).
+- `4g.allocators.adoc`: **0 findings added** by content, after a Fix-round-1 pass trimmed
+  the NOTE's intra-page duplication (see below) and swapped one leftover `--` for a comma.
+  An earlier draft of the moved NOTE briefly reintroduced 2 findings by content — 1×
+  `Google.EmDash` and 1× `Vale.Spelling` ("coroutine") — both pre-existing, massively
+  backlogged patterns already present dozens of times on this exact page and thousands of
+  times across the corpus (Vale's dictionary doesn't recognize "coroutine"; the codebase's
+  house style uses ASCII `--` for em dashes, which `Google.EmDash` doesn't recognize as
+  one). This was not a new class of problem — the same two already-backlogged violations
+  reappearing on relocated text — but Fix round 1 removed it anyway once the redundant
+  sentences it lived in were trimmed.
 - One genuinely new finding was caught and fixed during this task: my own newly-authored
   xref stub sentence on `9k.Executor.adoc` originally used `--` for a parenthetical, which
   is a real net-new `Google.EmDash` occurrence (new authored text, not moved). Reworded to
