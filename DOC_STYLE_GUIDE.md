@@ -1,0 +1,231 @@
+# Capy / Corosio Documentation Style Guide
+
+**Audience:** human editors and AI agents writing or editing the documentation.
+
+This guide is a **checkable contract**: every rule is phrased so an agent can apply it, and
+most can be checked automatically. Enforcement falls into three tiers — a CI **gate** that
+blocks a merge, a CI **warning** that flags candidates for a human to judge, or **review**
+via the PR checklist when no tool can decide (see Part F for the per-rule mapping). It is
+organized by five documentation axes — Structure, Accuracy, Wording, Completeness,
+Presentation — plus the cross-cutting concern that motivates all of them: **drift**.
+
+> **The prime directive — prevent drift.** Prose and generated reference tend to diverge
+> over time; hand-copied signatures and pasted examples rot silently. Every rule below
+> exists to make the docs *self-correcting*: single-sourced, compiled, and linted. When a
+> rule trades elegance for drift-resistance, drift-resistance wins.
+
+---
+
+## Part A — Structure (Diátaxis)
+
+Follow **[Diátaxis](https://diataxis.fr)**. Every page is exactly one of four modes, and
+**modes must not mix**:
+
+| Mode | Purpose | Answers |
+|---|---|---|
+| **Tutorial** | learning, by doing | "teach me" |
+| **How-to** | a single task, start→finish | "how do I X?" |
+| **Reference** | information, dry and complete | "what is the signature of X?" |
+| **Explanation** | understanding, rationale | "why is it this way?" |
+
+**Rules:**
+- **A1.** Each page declares its mode; an edit keeps content within that mode.
+- **A2. Reference belongs in the reference.** Exposition pages never reproduce full
+  signatures or concept definitions — they *link* (Part B). This is the highest-value
+  structural rule.
+- **A3. Rationale belongs in Explanation.** Use interleaved admonitions (`[NOTE]`/`[TIP]`)
+  for *local* rationale on a how-to/tutorial page; reserve dedicated design/explanation
+  pages for *cross-cutting* rationale. Do not run multiple parallel rationale channels for
+  the same material.
+- **A4. One concept, one home.** Before adding a page, find where the concept already
+  lives. If two pages teach the same thing, merge them.
+- **A5. Ordering follows dependency.** A page may not rely on a concept introduced only on
+  a *later* page. "Advanced" material comes after the basics it builds on.
+- **A6. Quick-start / getting-started content sits near the top of the navigation**, not
+  buried near the reference.
+- **A7. Headings describe content, not ceremony.** No numbered "Part N" mega-headings for
+  short sections; use plain descriptive headings.
+
+## Part B — Single-source-of-truth (anti-drift core)
+
+The Antora pipeline provides two mechanisms; use them instead of hand-authoring:
+
+- **B1. Never hand-type an API signature in prose.** Reference a symbol with the `cpp:`
+  macro so it links to the generated reference and cannot drift
+  (e.g. `cpp:boost::capy::run_async[]`). To describe what a function does, link it; do not
+  restate its declaration.
+- **B2. Never paste example code.** Every code block is an `include::example$...[tag=...]`
+  of a compiled source file. New examples are written as compiled sources with tagged
+  regions, not typed into the page.
+- **B3. Intentionally-non-compiling blocks are tagged**, not silently pasted: use a
+  pseudocode role for sketches/rejected designs and an external role for other-library
+  comparisons, so the compile gate knows to skip them.
+- **B4. A brief describes behavior, not identity.** A reference brief says what the entity
+  *does*, not what it *is*, and never restates its declaration or claims parameters it does
+  not take.
+
+## Part C — Wording (pragmatic Simplified Technical English)
+
+Apply an **ASD-STE100–derived subset**: STE's *spirit* — short sentences, active voice, one
+idea per sentence, simple tense, one term per concept — **not** its strict word-ban. Enforce
+**hard** in reference briefs and how-to steps; **relax** to spirit-only in tutorials and
+design essays.
+
+- **C1. One idea per sentence.** Split compounds joined by "and/but/;/—".
+- **C2. Length.** ≤ 20 words for instructions, ≤ 25 for descriptive text. Hard in API docs;
+  soft in essays.
+- **C3. Active voice; name the actor.** "The task receives the executor," not "the executor
+  is received."
+- **C4. Present simple.** Avoid needless "will" and "has been".
+- **C5. No unnecessary negatives.** Write "This is X," not "This is X. Not Y. Not Z."
+- **C6. No decorative figurative language.** At most one analogy per page, only when it
+  carries real explanatory weight. Cut clichés and metaphors the reader must
+  reverse-engineer.
+- **C7. Define terms before use.** No expression enters the text without a definition or a
+  glossary link.
+- **C8. Keep articles.** "the task", "a coroutine" — never drop *the/a* to save words.
+- **C9. Plain words.** *use* (not utilize/leverage), *to* (not in order to), *before* (not
+  prior to), *because* (not due to the fact that); delete
+  *simply/basically/obviously/of course/note that*.
+- **C10. One term per concept** (Part C.1). Never alternate synonyms.
+
+### C.1 Terminology table (controlled vocabulary)
+
+Use the **Use** column everywhere; never the **Avoid** synonyms. API identifiers are
+technical names and never change. *(This table is the one part of the guide expected to grow
+as vocabulary is added — extend it rather than letting synonyms drift.)*
+
+| Concept | Use | Avoid |
+|---|---|---|
+| begin executing a coroutine | **start** | launch, spawn, fire off, kick off, run (verb) |
+| the `co_await` operation | **await** | wait on, waiting for |
+| value a coroutine yields at completion | **result** | return value (except naming the C++ type) |
+| object that schedules work | **executor** | scheduler (reserve for P2300) |
+| context owning threads/executors | **execution context** | context (bare), backend context |
+| concrete I/O impl behind a type-erased type | **I/O backend** | backend, provider, engine |
+| type that hides its concrete type | **type-erased** | erased, opaque, boxed |
+| `stop_token`-based cancellation | **stop token** / **cancellation** | cancel token, cancellation token |
+| callback passed to `run_async` | **completion handler** | handler (bare), callback |
+| a `task<T>` value | **task** | coroutine (the language feature), coro |
+| the C++20 language feature | **coroutine** | coro, async function |
+| awaitable satisfying `IoAwaitable` | **I/O awaitable** | awaitable (bare, when the concept is meant) |
+
+Approved technical names (need no paraphrase): coroutine, task, promise, awaiter,
+awaitable, executor, execution context, strand, thread pool, allocator, frame, buffer,
+buffer sequence, stream, stop token, sender, receiver, scheduler, mutex, event, waker.
+
+## Part D — Completeness & Pedagogy
+
+- **D1. Goal-oriented, not syntax-first.** Open a concept with a use case ("you want to
+  X"), then introduce the machinery that achieves it. Do not enumerate syntax before
+  motivation.
+- **D2. Every concept page has a runnable example** of the library's *own* type — not only
+  of the standard-library types it resembles. A page introducing a type shows that type in
+  use, actually running.
+- **D3. Every non-obvious design choice states its rationale** (or links to the explanation
+  page that does). "Because it is" is not documentation.
+- **D4. Document thread-safety *and* executor affinity** at the class level where relevant.
+- **D5. No unexplained qualifiers.** Hedges like "even on X" or "where available" either get
+  explained or get cut.
+
+## Part E — Presentation & Tooling
+
+- **E1.** Prose links to the reference via `cpp:` (Part B1) so a first-time reader can see a
+  type inline.
+- **E2.** A right-rail table of contents is enabled; long pages are split at natural mode
+  boundaries. *(Review tier: the ToC is a set-once theme format controlled by the shared UI
+  bundle, not a per-page attribute a linter can check; verify by eye, do not gate.)*
+- **E3.** The reference is grouped by functionality where the generator allows; operators are
+  documented with their types; asynchronous operations are distinguishable from synchronous.
+- **E4.** The theme passes a contrast check in both light and dark mode.
+
+## Part F — Enforcement (makes this guide checkable)
+
+The guide is only anti-drift if CI checks it. Add **[Vale](https://vale.sh)** and wire it
+into the CI documentation job.
+
+### F.0 Enforcement tier by rule
+
+Not every rule is machine-checkable. Each rule sits in one of three tiers:
+
+- **Gate** — CI blocks the merge. Checked by Vale, the snippet-compile job, a small custom
+  AsciiDoc/nav lint script, or an accessibility scan.
+- **Warning** — CI flags candidates, a human decides. Heuristic checks with real
+  false-positive/negative rates; never block on these.
+- **Review** — no tool can judge; enforced by the PR checklist (F3).
+
+| Tier | Rules |
+|---|---|
+| **Gate** | A1, A6, A7, B2, B3, C2, C4, C9, C10, D2, E4 |
+| **Warning** | A2, B1, C1, C3, C5, C6, D4, D5, E1 |
+| **Review** | A3, A4, A5, B4, C7, C8, D1, D3, E2, E3 |
+
+The accuracy gates (B2, B3, D2 correctness) are enforced by the snippet-compile job, not by
+Vale — that job is what makes examples unable to drift.
+
+`doc/.vale.ini`:
+```ini
+StylesPath = .vale/styles
+MinAlertLevel = warning
+Packages = Google
+[*.adoc]
+BasedOnStyles = Vale, Google, Capy
+; AsciiDoc source/callout blocks are code, not prose:
+BlockIgnores = (?s) *(\[source.*?----.*?----)
+TokenIgnores = (\x60[^\x60]+\x60)
+```
+
+`doc/.vale/styles/Capy/Terminology.yml` (enforces Part C.1):
+```yaml
+extends: substitution
+message: "Use '%s' for one-term-per-concept consistency (style guide C.1)."
+level: warning
+ignorecase: false
+swap:
+  '\b(launch|spawn|fire off|kick off)\b': start
+  '\bcancellation token\b': stop token
+  '\bcancel token\b': stop token
+  '\bboxed\b': type-erased
+```
+
+`doc/.vale/styles/Capy/NoFluff.yml` (enforces C5/C9):
+```yaml
+extends: existence
+message: "Filler/fluff — delete or rewrite (style guide C5/C9): '%s'."
+level: warning
+ignorecase: true
+tokens:
+  - simply
+  - basically
+  - essentially
+  - obviously
+  - of course
+  - note that
+  - in order to
+  - due to the fact that
+  - utilize
+```
+
+`doc/.vale/styles/Capy/SentenceLength.yml` (enforces C2):
+```yaml
+extends: occurrence
+message: "Sentence over 25 words — split it (style guide C1/C2)."
+level: suggestion
+scope: sentence
+token: \b(\w+)\b
+max: 25
+```
+
+- **F1.** CI runs `vale doc/modules` and fails on `error`-level findings.
+- **F2.** The snippet-compile job is the accuracy gate; keep every example sourced from a
+  compiled file (Part B2).
+- **F3.** Doc PR checklist: mode declared (A1)? no hand-typed signatures (B1)? example
+  compiled (B2)? terminology clean (`vale`)? rationale present (D3)?
+
+---
+
+### How an agent uses this guide
+1. Identify the page's Diátaxis mode; keep edits in-mode (A1).
+2. Never type a signature or paste code — link (B1) or include a compiled snippet (B2).
+3. Run `vale` and the doc build locally; fix all `error`s before proposing the change.
+4. For every new claim, either link the rationale or add it (D3).
