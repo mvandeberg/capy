@@ -7,7 +7,7 @@ This section teaches cooperative cancellation from the ground up, explaining {cp
 * Completed xref:4.coroutines/4d.io-awaitable.adoc[The IoAwaitable Protocol]
 * Understanding of how context propagates through coroutine chains
 
-== Part 1: The Problem
+== The Problem
 
 Cancellation matters in many scenarios:
 
@@ -40,7 +40,7 @@ Some systems support forceful thread interruption. This is dangerous because it 
 
 The solution is *cooperative cancellation*: ask nicely, let the work clean up. The cancellation requestor signals intent; the worker decides when and how to respond.
 
-== Part 2: {cpp}20 Stop Tokens—A General-Purpose Signaling Mechanism
+== {cpp}20 Stop Tokens—A General-Purpose Signaling Mechanism
 
 {cpp}20 introduces `std::stop_token`, `std::stop_source`, and `std::stop_callback`. While named for "stopping," these implement a general-purpose *Observer pattern*—a thread-safe one-to-many notification system.
 
@@ -94,7 +94,7 @@ Each `stop_callback<F>` stores a different callable type `F`. Despite this, all 
 
 Registration and invocation are thread-safe. You can register callbacks, request stop, and invoke callbacks from any thread without additional synchronization.
 
-== Part 3: The One-Shot Nature
+== The One-Shot Nature
 
 [WARNING]
 ====
@@ -129,7 +129,7 @@ If you need repeatable signals, `stop_token` is the wrong tool. Consider:
 * Atomic flags with explicit reset protocol
 * Custom event types
 
-== Part 4: Beyond Cancellation
+=== Beyond Cancellation
 
 The "stop" naming obscures the mechanism's generality. `stop_token` implements *one-shot broadcast notification*, useful for:
 
@@ -138,7 +138,7 @@ The "stop" naming obscures the mechanism's generality. `stop_token` implements *
 * *Resource availability* — Signal when database connected or cache warmed
 * *Any one-shot broadcast scenario*
 
-== Part 5: Stop Tokens in Coroutines
+== Stop Tokens in Coroutines
 
 Coroutines have a propagation problem: how does a nested coroutine know to stop? If you pass a stop token explicitly to every function, your APIs become cluttered.
 
@@ -173,7 +173,7 @@ The rule:
 * To cancel work, request a stop on a `std::stop_source` whose token the work observes. The work unwinds cleanly through `final_suspend` and any RAII guards run in the correct order.
 * Do not call `destroy()` on a handle returned by `task::handle()` or `quitter::handle()` while the coroutine is being awaited.
 
-== Part 6: Responding to Cancellation
+== Responding to Cancellation
 
 === Checking the Token
 
@@ -200,14 +200,14 @@ When cancellation causes an operation to fail, the conventional error code is `e
 include::example$snippets/4e_cancellation.cpp[tag=canceled_convention,indent=0]
 ----
 
-== Part 7: OS Integration
+== OS Integration
 
 When Capy's I/O is provided by Corosio, requesting stop cancels work in progress rather than waiting for the operation to finish on its own. Corosio cancels the pending operation through whatever backend is active for the platform, and it resolves promptly with `std::errc::operation_canceled`.
 
 The mechanism depends on the backend: completion-based backends (Windows IOCP, and io_uring when enabled on Linux) cancel the operation in the kernel, while readiness-based backends (Linux epoll, kqueue on the BSDs and macOS, and the portable select fallback) remove it from the reactor before its system call runs. Either way the operation is reported as cancelled instead of blocking until the I/O would have completed.
 
 [[stoppable-awaitables]]
-== Part 8: Implementing Stoppable Awaitables
+== Implementing Stoppable Awaitables
 
 The examples above show *polling* for cancellation with `token.stop_requested()`. For awaitables that suspend indefinitely—waiting for I/O, a lock, or an external event—you need a `std::stop_callback` to wake the coroutine when cancellation arrives.
 
@@ -237,7 +237,7 @@ When `request_stop()` fires the callback, the coroutine handle is posted to the 
 
 NOTE: Capy's built-in I/O awaitables (via Corosio) already use the post-back pattern internally. This guidance applies when writing your own custom awaitables.
 
-== Part 9: Patterns
+== Patterns
 
 === Racing a Deadline
 
