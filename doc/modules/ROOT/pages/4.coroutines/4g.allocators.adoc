@@ -51,6 +51,23 @@ include::example$snippets/4g_allocators.cpp[tag=safe_resume,indent=0]
 
 `safe_resume` saves the current thread-local allocator, calls `h.resume()`, then restores the saved value. This makes TLS behave like a stack: nested resumes cannot spoil the outer value. All of Capy's built-in executors (`thread_pool`, strands, `blocking_context`) use `safe_resume` internally. Custom executor event loops must do the same -- see xref:8.examples/8n.custom-executor.adoc[Custom Executor] for an example.
 
+[NOTE]
+====
+The fix is to save and restore TLS around every `.resume()` call:
+
+[source,cpp]
+----
+include::example$snippets/9k_executor.cpp[tag=safe_resume]
+----
+
+This makes TLS behave like a stack. Each nested resume pushes its own allocator; when the coroutine suspends and `.resume()` returns, the previous value is restored. The cost is two TLS accesses (one read, one write) per `.resume()` call -- negligible compared to the cost of resuming a coroutine.
+
+Two `.resume()` call sites intentionally do _not_ use `safe_resume`:
+
+* **`symmetric_transfer`** (MSVC workaround). The calling coroutine is about to suspend unconditionally. When it later resumes, `await_resume` restores TLS from the promise's stored environment. Save/restore would add overhead with no benefit.
+* **`run_async_wrapper::operator()`**. TLS is already saved in the wrapper's constructor and restored in its destructor, which bracket the entire task lifetime.
+====
+
 == Custom Allocator Requirements
 
 Custom allocators must meet the usual {cpp} allocator requirements, or be a `std::pmr::memory_resource*`. The library does not expose a separate public concept for them; a value-type allocator works as a frame allocator when it provides, illustratively:
