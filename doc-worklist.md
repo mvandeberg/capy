@@ -55,3 +55,8 @@ page names cited in `DOC_REVIEW_FEEDBACK.md` Section 3, unverified against that 
 | 25 | corosio | adoc | `3e.hash-server.adoc`, `3f.reconnect.adoc` (Corosio repo; Section 4 says fixed — re-verify against the Corosio repo before treating as closed) | 5 | Phase 5 |
 | 27 | corosio | adoc | presentation/theme: Antora UI theme / dark-mode CSS (Corosio repo or shared UI bundle) | 5 | Phase 5 |
 | 30 | corosio | adoc | Platform-specific issues page (does not yet exist; Corosio repo) | 5 | Phase 5 |
+
+- **2026-07-27:** Finding #19 resolved on the Capy side — `8i.echo-server-corosio.adoc`
+  and its nav entry were deleted (content preserved in git history at
+  `6944132fb5e20726c468f6b05783190a250b2e4c`). Compiled snippet source still to move to
+  Corosio's `example/` tree is `example/echo-server-corosio/` (left in place, unmodified).
