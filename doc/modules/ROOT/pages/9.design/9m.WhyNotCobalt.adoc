@@ -21,7 +21,7 @@ Capy achieves the Dimovian Ideal. The proof is in `example/asio/`.
 include::example$asio/api/capy_streams.hpp[tag=header]
 ----
 
-Asio appears only as a forward declaration. The context uses pimpl. The factory returns `capy::any_stream` — a type-erased stream that hides the concrete socket type entirely.
+Asio appears only as a forward declaration. The context uses pimpl. The factory returns cpp:capy::any_stream[capy::any_stream] — a type-erased stream that hides the concrete socket type entirely.
 
 === The Translation Unit
 
@@ -36,7 +36,7 @@ Asio appears only as a forward declaration. The context uses pimpl. The factory 
 include::example$asio/any_stream.cpp[tag=writer_reader]
 ----
 
-`writer()` and `reader()` operate on `capy::any_stream&`. They don't know what I/O backend produced the stream. They never need to know.
+`writer()` and `reader()` operate on cpp:capy::any_stream[capy::any_stream]`&`. They don't know what I/O backend produced the stream. They never need to know.
 
 === What Cobalt Does Instead
 
@@ -100,15 +100,15 @@ Capy's concepts form a refinement hierarchy that emerged naturally from use-case
 |===
 | Concept | Capy | Cobalt
 
-| `ReadStream`
+| cpp:ReadStream[]
 | Yes
 |
 
-| `WriteStream`
+| cpp:WriteStream[]
 | Yes
 |
 
-| `Stream`
+| cpp:Stream[]
 | Yes
 |
 
@@ -157,15 +157,15 @@ This is how the Dimovian Ideal is mechanically achieved.
 |===
 | Type-Erased Wrapper | Capy | Cobalt
 
-| `any_read_stream`
+| cpp:any_read_stream[]
 | Yes
 |
 
-| `any_write_stream`
+| cpp:any_write_stream[]
 | Yes
 |
 
-| `any_stream`
+| cpp:any_stream[]
 | Yes
 |
 
@@ -254,18 +254,18 @@ Tests run without sockets or network access, eliminating non-determinism.
 
 Cobalt is single-threaded by design. One executor per thread. Channels are restricted to a single thread — Cobalt's own documentation states: "Channels can be used to exchange data between different coroutines on a single thread." Primitives cannot be shared between threads.
 
-Capy supports multi-threaded execution. `thread_pool` distributes work across threads. `strand` serializes execution without blocking OS threads. The `Executor` concept is open — implement your own.
+Capy supports multi-threaded execution. cpp:thread_pool[] distributes work across threads. cpp:strand[] serializes execution without blocking OS threads. The cpp:Executor[] concept is open — implement your own.
 
 [cols="1,1,1"]
 |===
 | Threading | Capy | Cobalt
 
 | Multi-threaded execution
-| `thread_pool`
+| cpp:thread_pool[]
 | No
 
 | Serialized execution
-| `strand`
+| cpp:strand[]
 | Single-threaded only
 
 | Executor model
@@ -292,7 +292,7 @@ Capy introduces the https://wg21.link/P4003[IoAwaitable protocol] and uses it fo
 include::example$snippets/9m_why_not_cobalt.cpp[tag=await_suspend_env,indent=0]
 ----
 
-No thread-local state. No ambient context. The executor and stop token flow forward through the call chain via the `io_env` parameter.
+No thread-local state. No ambient context. The executor and stop token flow forward through the call chain via the cpp:io_env[] parameter.
 
 [cols="1,1,1"]
 |===
@@ -311,7 +311,7 @@ No thread-local state. No ambient context. The executor and stop token flow forw
 | No
 
 | Stop token delivery
-| Structural (`io_env`)
+| Structural (cpp:io_env[])
 | `this_coro::cancellation_state`
 |===
 
@@ -319,7 +319,7 @@ No thread-local state. No ambient context. The executor and stop token flow forw
 
 Both libraries propagate cancellation automatically through coroutine chains. Both support OS-level cancellation of pending I/O operations (`CancelIoEx` on Windows, `IORING_OP_ASYNC_CANCEL` on Linux).
 
-Capy uses `std::stop_token`, propagated via the IoAwaitable protocol's `io_env` parameter. The token flows forward structurally alongside the executor.
+Capy uses `std::stop_token`, propagated via the IoAwaitable protocol's cpp:io_env[] parameter. The token flows forward structurally alongside the executor.
 
 Cobalt uses Asio's `cancellation_signal` and `cancellation_slot`. Propagation is wired automatically in `await_suspend` via `forward_cancellation`. `this_coro::cancellation_state` provides filtering control over which cancellation types pass through.
 
@@ -332,7 +332,7 @@ Cobalt uses Asio's `cancellation_signal` and `cancellation_slot`. Propagation is
 | `asio::cancellation_signal`
 
 | Propagation
-| Automatic (`io_env`)
+| Automatic (cpp:io_env[])
 | Automatic (slot/signal wiring)
 
 | Filtering
@@ -346,7 +346,7 @@ Cobalt uses Asio's `cancellation_signal` and `cancellation_slot`. Propagation is
 
 == Buffer Sequences
 
-Capy adopts Asio's buffer sequence model — `ConstBufferSequence`, `MutableBufferSequence` — because it works. Capy's buffer types are fully compatible with Asio's. You can pass Capy buffers to Asio operations and vice versa, seamlessly. Then Capy extends the model with additional types and algorithms, while still achieving the Dimovian Ideal — none of this requires exposing Asio headers to consumers.
+Capy adopts Asio's buffer sequence model — cpp:ConstBufferSequence[], cpp:MutableBufferSequence[] — because it works. Capy's buffer types are fully compatible with Asio's. You can pass Capy buffers to Asio operations and vice versa, seamlessly. Then Capy extends the model with additional types and algorithms, while still achieving the Dimovian Ideal — none of this requires exposing Asio headers to consumers.
 
 Cobalt does not provide buffer sequence types. Users who need these features use Asio's types directly.
 
@@ -354,19 +354,19 @@ Cobalt does not provide buffer sequence types. Users who need these features use
 |===
 | Buffer Feature | Capy | Cobalt
 
-| `ConstBufferSequence`
+| cpp:ConstBufferSequence[]
 | Yes
 | Via Asio
 
-| `MutableBufferSequence`
+| cpp:MutableBufferSequence[]
 | Yes
 | Via Asio
 
-| `front`
+| cpp:front[]
 | Yes
 |
 
-| `buffer_slice`
+| cpp:buffer_slice[]
 | Yes
 |
 
@@ -391,9 +391,9 @@ struct awaitable : awaitable_base
 
 If the buffer is exhausted, allocations fall back to the upstream PMR resource or `operator new`. The buffer size is a compile-time constant. Changing it requires recompiling the library.
 
-Capy leaves these decisions to the user. `run_async(executor, allocator)(my_task())` sets the allocator before the task is created. The task's `operator new` reads it from thread-local storage. This is a small, flexible customization point that permits usage patterns the authors did not anticipate: per-connection arenas, bounded pools, tracking allocators, per-tenant memory budgets. The allocation strategy is a deployment decision, not a library decision.
+Capy leaves these decisions to the user. cpp:run_async[]`(executor, allocator)(my_task())` sets the allocator before the task is created. The task's `operator new` reads it from thread-local storage. This is a small, flexible customization point that permits usage patterns the authors did not anticipate: per-connection arenas, bounded pools, tracking allocators, per-tenant memory budgets. The allocation strategy is a deployment decision, not a library decision.
 
-`recycling_memory_resource` provides zero-overhead recycling after warmup. Memory isolated per connection. Reclaimed instantly on disconnect.
+cpp:recycling_memory_resource[] provides zero-overhead recycling after warmup. Memory isolated per connection. Reclaimed instantly on disconnect.
 
 [cols="1,1,1"]
 |===
@@ -412,11 +412,11 @@ Capy leaves these decisions to the user. `run_async(executor, allocator)(my_task
 | No
 
 | Recycling allocator
-| `recycling_memory_resource`
+| cpp:recycling_memory_resource[]
 |
 
 | Custom allocator support
-| `run_async(ex, alloc)`
+| cpp:run_async[]`(ex, alloc)`
 | Global setup only
 
 | Deterministic freeing
@@ -465,7 +465,7 @@ The input is `numbers.json` from the Boost.JSON benchmark suite. Results are bes
 | 317 us
 | 1.0x
 
-| `capy::task`
+| cpp:capy::task[capy::task]
 | 537 us
 | 1.69x
 
@@ -587,7 +587,7 @@ Every `co_await ws.write(...)` call creates a coroutine frame, suspends, resumes
 | None
 
 | Threading
-| Multi-threaded (`thread_pool`, `strand`)
+| Multi-threaded (cpp:thread_pool[], cpp:strand[])
 | Single-threaded
 
 | Context propagation
@@ -599,7 +599,7 @@ Every `co_await ws.write(...)` call creates a coroutine frame, suspends, resumes
 | `cancellation_signal`, automatic, OS-level
 
 | Buffer sequences
-| Extended (`buffer_slice`, `front`)
+| Extended (cpp:buffer_slice[], cpp:front[])
 | None (use Asio directly)
 
 | Allocator control
