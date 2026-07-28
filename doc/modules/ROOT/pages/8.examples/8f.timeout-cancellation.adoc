@@ -49,15 +49,15 @@ plays the clock, and `async_waker` gives it a suspension point to wake.
 
 `async_waker` is Capy's answer to "how do I wait for something that isn't
 a coroutine?" It hands a single wakeup from any thread to one waiting
-coroutine: one coroutine suspends in `wait()`; any thread, including one
-you spun up yourself to play the role of a clock, wakes it with `wake()`:
+coroutine: one coroutine suspends in cpp:async_waker::wait[wait]`()`; any thread, including one
+you spun up yourself to play the role of a clock, wakes it with cpp:async_waker::wake[wake]`()`:
 
 [source,cpp]
 ----
 include::example$timeout-cancellation/timeout_cancellation.cpp[tag=fetch_channel]
 ----
 
-`wait()` returns an `io_result<>` that is empty on wakeup and carries
+cpp:async_waker::wait[wait]`()` returns an `io_result<>` that is empty on wakeup and carries
 `cond::canceled` if the environment's stop token fires first. A wakeup
 with no waiter present is latched as one pending token, so the
 wake-before-wait race is benign; extra wakes collapse into that single
@@ -83,7 +83,7 @@ playing the clock, sleeps for the allotted duration and wakes
 `when_any` requests stop on the loser, which is exactly how `await_fetch`
 learns to set `cancelled` and let the fetch worker thread bail out early.
 
-`async_waker::wait()` must only be awaited on a single-threaded
+cpp:async_waker::wait[wait]`()` must only be awaited on a single-threaded
 executor, so both children run on `thread_pool(1)`. The slow, blocking
 work itself still happens off that thread, on the two `std::thread`
 objects the demo owns directly.
