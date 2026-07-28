@@ -2,7 +2,7 @@
 
 == Overview
 
-This document describes the design of the `WriteStream` concept: the fundamental partial-write primitive in the concept hierarchy. It explains why `write_some` is the correct building block, how algorithms expressed directly in terms of `write_some` can outperform composed complete-write algorithms like `write_now`, and when each approach is appropriate.
+This document describes the design of the cpp:WriteStream[] concept: the fundamental partial-write primitive in the concept hierarchy. It explains why `write_some` is the correct building block, how algorithms expressed directly in terms of `write_some` can outperform composed complete-write algorithms like `write_now`, and when each approach is appropriate.
 
 == Definition
 
@@ -11,24 +11,24 @@ This document describes the design of the `WriteStream` concept: the fundamental
 include::example$snippets/9f_write_stream.cpp[tag=write_stream_concept]
 ----
 
-The `requires` clause checks `write_some` against a single representative buffer, `const_buffer_archetype`, because a {cpp} concept cannot quantify over "every buffer sequence." The contract is stronger than what the compiler verifies: a `WriteStream` must accept *any* `ConstBufferSequence`—a single buffer or a range of them—and the archetype stands in for that universally-quantified requirement. Read this as a textual requirement that the concept can only sample, not a claim that conformance is limited to the archetype type.
+The `requires` clause checks `write_some` against a single representative buffer, cpp:const_buffer_archetype[], because a {cpp} concept cannot quantify over "every buffer sequence." The contract is stronger than what the compiler verifies: a cpp:WriteStream[] must accept *any* cpp:ConstBufferSequence[]—a single buffer or a range of them—and the archetype stands in for that universally-quantified requirement. Read this as a textual requirement that the concept can only sample, not a claim that conformance is limited to the archetype type.
 
-A `WriteStream` provides a single operation:
+A cpp:WriteStream[] provides a single operation:
 
 === `write_some(buffers)` -- Partial Write
 
-Attempts to write up to `buffer_size(buffers)` bytes from the buffer sequence to the stream. Returns `(error_code, std::size_t)` where `n` is the number of bytes written.
+Attempts to write up to cpp:buffer_size[]`(buffers)` bytes from the buffer sequence to the stream. Returns `(error_code, std::size_t)` where `n` is the number of bytes written.
 
 ==== Semantics
 
-If `buffer_size(buffers) > 0`:
+If cpp:buffer_size[]`(buffers) > 0`:
 
-- If `!ec`, then `n >= 1 && n \<= buffer_size(buffers)`. `n` bytes were written from the buffer sequence.
-- If `ec`, then `n >= 0 && n \< buffer_size(buffers)`. `n` is the number of bytes written before the I/O condition arose.
+- If `!ec`, then `n >= 1 && n \<=` cpp:buffer_size[]`(buffers)`. `n` bytes were written from the buffer sequence.
+- If `ec`, then `n >= 0 && n \<` cpp:buffer_size[]`(buffers)`. `n` is the number of bytes written before the I/O condition arose.
 
-Equivalently, `n == buffer_size(buffers)` implies `!ec`: a completion that writes the entire buffer sequence is a success, even when the underlying operation also signals a condition. That condition is reported on a subsequent write.
+Equivalently, `n ==` cpp:buffer_size[]`(buffers)` implies `!ec`: a completion that writes the entire buffer sequence is a success, even when the underlying operation also signals a condition. That condition is reported on a subsequent write.
 
-If `buffer_empty(buffers)` is true, `n` is 0. The empty buffer is not itself a cause for error, but `ec` may reflect the state of the stream.
+If cpp:buffer_empty[]`(buffers)` is true, `n` is 0. The empty buffer is not itself a cause for error, but `ec` may reflect the state of the stream.
 
 The caller must not assume that all bytes are consumed. `write_some` may write fewer bytes than offered. This is the defining property of a partial-write primitive.
 
@@ -53,7 +53,7 @@ Buffer sequences should be accepted by value when the member function is a corou
 
 == Concept Hierarchy
 
-`WriteStream` is the base of the write-side hierarchy:
+cpp:WriteStream[] is the base of the write-side hierarchy:
 
 ----
 WriteStream   { write_some }
@@ -62,7 +62,7 @@ WriteStream   { write_some }
 WriteSink     { write_some, write, write_eof(buffers), write_eof() }
 ----
 
-Every `WriteSink` is a `WriteStream`. Algorithms constrained on `WriteStream` accept both raw streams and sinks. The `WriteSink` concept adds complete-write and EOF signaling on top of the partial-write primitive. See the WriteSink design document for details.
+Every `WriteSink` is a cpp:WriteStream[]. Algorithms constrained on cpp:WriteStream[] accept both raw streams and sinks. The `WriteSink` concept adds complete-write and EOF signaling on top of the partial-write primitive. See the WriteSink design document for details.
 
 == Composed Algorithms
 
@@ -75,7 +75,7 @@ Two composed algorithms build complete-write behavior on top of `write_some`:
 include::example$snippets/9f_write_stream.cpp[tag=write_signature]
 ----
 
-Loops `write_some` until the entire buffer sequence is consumed. Always suspends (returns `task`). No frame caching.
+Loops `write_some` until the entire buffer sequence is consumed. Always suspends (returns cpp:task[]). No frame caching.
 
 === `write_now` (class template)
 
@@ -97,7 +97,7 @@ A composed algorithm like `write_now` cannot do this. It receives a fixed buffer
 
 === Diagram: Relaying 100KB from a ReadSource through a TCP Socket
 
-Consider relaying 100KB from a `ReadStream` to a TCP socket. The kernel's send buffer accepts at most 40KB per call. Compare two approaches:
+Consider relaying 100KB from a cpp:ReadStream[] to a TCP socket. The kernel's send buffer accepts at most 40KB per call. Compare two approaches:
 
 ==== Approach A: `write_some` with Top-Up (3 syscalls)
 
@@ -124,7 +124,7 @@ Every time `write_now` partially drains a buffer, the remainder is a small paylo
 
 === Code: `write_now` Without Top-Up
 
-This example reads from a `ReadSource` and writes to a `WriteStream` using `write_now`. Each chunk is drained to completion before the caller can read more from the source.
+This example reads from a `ReadSource` and writes to a cpp:WriteStream[] using `write_now`. Each chunk is drained to completion before the caller can read more from the source.
 
 [source,cpp]
 ----
@@ -155,17 +155,17 @@ After the kernel accepts 40KB of a 64KB chunk, `write_now` must send the remaini
 | Sink-oriented code where the concrete type implements complete-write
   natively (buffered writer, file, compressor) and the caller does not
   manage the loop.
-| Requires `WriteSink`, not just `WriteStream`.
+| Requires `WriteSink`, not just cpp:WriteStream[].
 |===
 
 === Rule of Thumb
 
 - If the caller has a discrete, bounded payload and wants zero-fuss complete-write semantics, use `write_now`.
-- If the destination is a `WriteSink`, use `write` directly.
+- If the destination is a `WriteSink`, use cpp:write[] directly.
 
 == Conforming Types
 
-Examples of types that satisfy `WriteStream`:
+Examples of types that satisfy cpp:WriteStream[]:
 
 - **TCP sockets**: `write_some` maps to a single `send()` or `WSASend()` call. Partial writes are normal under load.
 - **TLS streams**: `write_some` encrypts and sends one TLS record.
@@ -173,11 +173,11 @@ Examples of types that satisfy `WriteStream`:
 - **QUIC streams**: `write_some` sends one or more QUIC frames.
 - **Test mock streams**: `write_some` records data and returns configurable results for testing.
 
-All of these types also naturally extend to `WriteSink` by adding `write`, `write_eof(buffers)`, and `write_eof()`.
+All of these types also naturally extend to `WriteSink` by adding cpp:write[], `write_eof(buffers)`, and `write_eof()`.
 
 == Relationship to `ReadStream`
 
-The read-side counterpart is `ReadStream`, which requires `read_some`. The same partial-transfer / composed-algorithm decomposition applies:
+The read-side counterpart is cpp:ReadStream[], which requires `read_some`. The same partial-transfer / composed-algorithm decomposition applies:
 
 [cols="1,1"]
 |===
@@ -187,7 +187,7 @@ The read-side counterpart is `ReadStream`, which requires `read_some`. The same 
 | `ReadStream::read_some`
 
 | `write_now` (composed)
-| `read` free function (composed)
+| cpp:read[] free function (composed)
 
 | `WriteSink::write`
 | `ReadSource::read`
@@ -197,10 +197,10 @@ The asymmetry is that the read side does not have a `read_now` with eager comple
 
 == Summary
 
-`WriteStream` provides `write_some` as the single partial-write primitive. This is deliberately minimal:
+cpp:WriteStream[] provides `write_some` as the single partial-write primitive. This is deliberately minimal:
 
-- Algorithms that need complete-write semantics use `write_now` (for `WriteStream`) or `write` (for `WriteSink`).
+- Algorithms that need complete-write semantics use `write_now` (for cpp:WriteStream[]) or cpp:write[] (for `WriteSink`).
 - Algorithms that need maximum throughput use `write_some` directly with buffer top-up, achieving fewer syscalls than composed algorithms by keeping the buffer full between iterations.
-- The concept is the base of the hierarchy. `WriteSink` refines it by adding `write`, `write_eof(buffers)`, and `write_eof()`.
+- The concept is the base of the hierarchy. `WriteSink` refines it by adding cpp:write[], `write_eof(buffers)`, and `write_eof()`.
 
 The choice between `write_some`, `write_now`, and `WriteSink::write` is a throughput-versus-convenience trade-off. `write_some` gives the caller maximum control. `write_now` gives the caller maximum simplicity. `WriteSink::write` gives the concrete type maximum implementation freedom.
