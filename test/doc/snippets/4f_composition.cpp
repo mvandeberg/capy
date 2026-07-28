@@ -337,7 +337,7 @@ struct item
 };
 
 // tag::fan_out[]
-io_task<int> process_item(item const& i);
+io_task<int> process_item(item i);
 
 task<int> process_all(std::vector<item> const& items)
 {
@@ -356,7 +356,7 @@ task<int> process_all(std::vector<item> const& items)
 }
 // end::fan_out[]
 
-io_task<int> process_item(item const& i)
+io_task<int> process_item(item i)
 {
     co_return io_result<int>{{}, i.value};
 }
