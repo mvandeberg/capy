@@ -45,9 +45,9 @@ This signature receives:
 
 * `h` — The coroutine handle (as in standard awaiters)
 * `env` — The execution environment containing:
-** `env->executor` — The caller's executor for dispatching completions
-** `env->stop_token` — A stop token for cooperative cancellation
-** `env->frame_allocator` — An optional frame allocator
+** cpp:io_env::executor[env->executor] — The caller's executor for dispatching completions
+** cpp:io_env::stop_token[env->stop_token] — A stop token for cooperative cancellation
+** cpp:io_env::frame_allocator[env->frame_allocator] — An optional frame allocator
 
 Many IoAwaitables return `std::coroutine_handle<>` to enable symmetric transfer, but the concept does not require any particular return type.
 
