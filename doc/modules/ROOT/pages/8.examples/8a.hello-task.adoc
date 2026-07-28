@@ -61,7 +61,7 @@ include::example$hello-task/hello_task.cpp[tag=launch,indent=0]
 
 `run_async` bridges non-coroutine code (like `main`) to coroutine code. The two-call syntax:
 
-1. `run_async(pool.get_executor())` — Creates a launcher with the executor
+1. cpp:run_async[]`(pool.get_executor())` — Creates a launcher with the executor
 2. `(say_hello())` — Accepts the task and starts execution
 
 The task runs on one of the pool's worker threads.
