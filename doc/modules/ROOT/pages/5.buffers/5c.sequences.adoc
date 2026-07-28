@@ -86,7 +86,7 @@ include::example$snippets/5c_sequences.cpp[tag=buffer_slice_include]
 include::example$snippets/5c_sequences.cpp[tag=buffer_slice,indent=0]
 ----
 
-`buffer_slice(seq, offset, length)` returns a value that is itself a buffer sequence: pass it directly to any operation expecting one. The `offset` and `length` parameters (both optional) make `buffer_slice` a general byte sub-range primitive. Except for the single-buffer case, the result borrows `seq`, so the sequence must outlive the slice.
+cpp:buffer_slice[]`(seq, offset, length)` returns a value that is itself a buffer sequence: pass it directly to any operation expecting one. The `offset` and `length` parameters (both optional) make `buffer_slice` a general byte sub-range primitive. Except for the single-buffer case, the result borrows `seq`, so the sequence must outlive the slice.
 
 == consuming_buffers
 
@@ -101,15 +101,15 @@ include::example$snippets/5c_sequences.cpp[tag=read_all,indent=0]
 
 A `consuming_buffers` cursor borrows the underlying sequence and provides:
 
-* `data()` — Buffer sequence view of the remaining bytes (pass to `read_some`/`write_some`)
-* `consume(n)` — Advance past `n` transferred bytes, in place
+* cpp:consuming_buffers::data[data]`()` — Buffer sequence view of the remaining bytes (pass to `read_some`/`write_some`)
+* cpp:consuming_buffers::consume[consume]`(n)` — Advance past `n` transferred bytes, in place
 
 == Why Bidirectional?
 
 The concepts require bidirectional ranges (not just forward ranges) for two reasons:
 
 1. Some algorithms traverse buffers backwards
-2. The slice views produced by `buffer_slice` and `consuming_buffers::data()` need to adjust the first and last buffers' bounds
+2. The slice views produced by `buffer_slice` and cpp:consuming_buffers::data[]`()` need to adjust the first and last buffers' bounds
 
 If your custom buffer sequence only provides forward iteration, wrap it in a type that provides bidirectional access.
 
