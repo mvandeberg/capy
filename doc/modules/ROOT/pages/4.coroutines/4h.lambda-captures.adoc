@@ -97,19 +97,19 @@ Member function coroutines work correctly because `this` is an implicit paramete
 |===
 | Pattern | Safety | Notes
 
-| `[x]() -> task<> { use(x); }()`
+| `[x]() ->` cpp:task[task]`<> { use(x); }()`
 | UNSAFE
 | Capture `x` destroyed with lambda
 
-| `[](auto x) -> task<> { use(x); }(val)`
+| `[](auto x) ->` cpp:task[task]`<> { use(x); }(val)`
 | SAFE
 | Parameter `x` in coroutine frame
 
-| `[&x]() -> task<> { use(x); }()`
+| `[&x]() ->` cpp:task[task]`<> { use(x); }()`
 | UNSAFE
 | Accessed through dangling `this` pointer to destroyed closure
 
-| `[](auto& x) -> task<> { use(x); }(val)`
+| `[](auto& x) ->` cpp:task[task]`<> { use(x); }(val)`
 | SAFE*
 | Reference parameter; `val` must outlive coroutine
 
