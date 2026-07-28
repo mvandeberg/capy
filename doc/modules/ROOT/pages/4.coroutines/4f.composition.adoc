@@ -25,7 +25,7 @@ include::example$snippets/4f_composition.cpp[tag=concurrent,indent=0]
 
 == when_all: Wait for All Tasks
 
-`when_all` launches multiple `io_task` children concurrently and waits for all of them to complete. It returns `task<io_result<R1, R2, ..., Rn>>`, a single `ec` plus the flattened payloads:
+`when_all` launches multiple `io_task` children concurrently and waits for all of them to complete. It returns cpp:task[task]`<io_result<R1, R2, ..., Rn>>`, a single `ec` plus the flattened payloads:
 
 [source,cpp]
 ----
