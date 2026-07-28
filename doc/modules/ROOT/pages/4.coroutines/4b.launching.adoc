@@ -27,7 +27,7 @@ include::example$programs/4b_launching_run_async.cpp[tag=full]
 
 === Two-Call Syntax
 
-Notice the unusual syntax: `run_async(executor)(task)`. This is intentional and relates to {cpp}17 evaluation order.
+Notice the unusual syntax: cpp:run_async[]`(executor)(task)`. This is intentional and relates to {cpp}17 evaluation order.
 
 {cpp}17 guarantees that in the expression `f(a)(b)`:
 
@@ -39,7 +39,7 @@ This ordering matters because the task's coroutine frame is allocated during ste
 
 [WARNING]
 ====
-Do not store the result of `run_async(executor)` and call it later. The
+Do not store the result of cpp:run_async[]`(executor)` and call it later. The
 wrapper's call operator is rvalue-qualified, so this fails to compile:
 
 [source,cpp,role=pseudocode]
