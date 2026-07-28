@@ -58,7 +58,13 @@ public:
     mutable_buffer& operator=(
         mutable_buffer const&) = default;
 
-    /// Construct from pointer and size.
+    /** Construct from a pointer and size.
+
+        Takes `void*` so a pointer to any object type binds without a
+        cast, since the buffer represents a raw, untyped writable
+        region. Stored internally as `unsigned char*` for byte-wise
+        pointer arithmetic (see `operator+=`).
+    */
     constexpr mutable_buffer(
         void* data, std::size_t size) noexcept
         : p_(static_cast<unsigned char*>(data))
@@ -66,7 +72,11 @@ public:
     {
     }
 
-    /// Return a pointer to the memory region.
+    /** Return a pointer to the memory region.
+
+        Returns `void*`, symmetric with the constructor, so the
+        caller can reinterpret the raw region as whatever type it needs.
+    */
     constexpr void* data() const noexcept
     {
         return p_;
@@ -118,7 +128,13 @@ public:
     const_buffer& operator=(
         const_buffer const& other) = default;
 
-    /// Construct from pointer and size.
+    /** Construct from a pointer and size.
+
+        Takes `void const*` so a pointer to any object type binds
+        without a cast, since the buffer represents a raw, untyped
+        read-only region. Stored internally as `unsigned char const*`
+        for byte-wise pointer arithmetic (see `operator+=`).
+    */
     constexpr const_buffer(
         void const* data, std::size_t size) noexcept
         : p_(static_cast<unsigned char const*>(data))
@@ -134,7 +150,11 @@ public:
     {
     }
 
-    /// Return a pointer to the memory region.
+    /** Return a pointer to the memory region.
+
+        Returns `void const*`, symmetric with the constructor, so the
+        caller can reinterpret the raw region as whatever type it needs.
+    */
     constexpr void const* data() const noexcept
     {
         return p_;

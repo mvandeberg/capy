@@ -25,6 +25,14 @@ namespace capy {
     propagation. This extended signature distinguishes I/O awaitables
     from standard C++ awaitables that only take a coroutine handle.
 
+    `IoAwaitable` constrains only this one member function,
+    `await_suspend(std::coroutine_handle<>, io_env const*)`. It is the
+    single customization point that receives the `io_env`, so it is the
+    only member that needs the executor, stop token, and frame allocator
+    used to start, schedule, and cancel the operation; `await_ready` and
+    `await_resume` operate on state local to the awaitable and take no
+    `io_env` parameter, so they are not part of what this concept checks.
+
     @tparam A The awaitable type.
 
     @par Syntactic Requirements
@@ -59,6 +67,12 @@ namespace capy {
     referent is guaranteed to outlive the operation.
 
     @par Conforming Signatures
+
+    Only the `await_suspend` overload shown below is checked by
+    `IoAwaitable`. `await_ready` and `await_resume` are shown for
+    context because the C++ awaitable protocol (`co_await`) requires
+    the compiler to find them on the awaiter type, not because this
+    concept requires them.
 
     @code
     struct A
