@@ -230,7 +230,7 @@ Both the concept and the wrapper accept full buffer sequences. Type erasure does
 | Aspect | Capy | Cobalt
 
 | `write_some` parameter
-| template<cpp:ConstBufferSequence[] `CB>`
+| cpp:ConstBufferSequence[template<ConstBufferSequence CB>]
 | `const_buffer_sequence` (concrete type)
 
 | Accepted buffer types
