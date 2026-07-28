@@ -117,8 +117,15 @@ jobs:
           path: boost-root/libs/capy/doc/build/site
 
       # --- Doc-quality checks (Style Guide Part F.0 / doc improvement plan Task 2) ---
-      # All non-blocking: continue-on-error: true. They report findings for review;
-      # gates are promoted to blocking at later phase exits (see DOC_IMPROVEMENT_PLAN.md).
+      # Individual check steps below stay non-blocking (continue-on-error: true): they
+      # print each tool's raw findings for review. Enforcement is done by the
+      # no-new-violations comparator, which diffs a fresh run against baseline.json.
+      # At Phase-1 exit the rules A1/A6/A7/B2/D2 are GATED: the "Phase-1 gate" step
+      # below runs the comparator with --strict --gate and IS blocking
+      # (continue-on-error: false) — it fails the job on any NEW A1/A6/A7/B2/D2
+      # violation. All other rules remain warning-only via the non-blocking
+      # "no-new-violations report" step until their own phase exits (see
+      # DOC_IMPROVEMENT_PLAN.md).
       # The accuracy gate for .adoc example code (B2/B3/D2 correctness) is separate and
       # stays a hard gate: the boost_capy_doc_tests b2 target defined in
       # test/doc/Jamfile, run via `./b2 libs/capy/test` in ci.yml, not this job
@@ -172,8 +179,22 @@ jobs:
         working-directory: boost-root/libs/capy/doc
         run: node lint/mrdocs-warnings.mjs
 
-      - name: Doc-quality - no-new-violations report
+      - name: Doc-quality - no-new-violations report (all rules, non-blocking)
         if: always()
         continue-on-error: true
         working-directory: boost-root/libs/capy/doc
         run: node lint/check-no-new-violations.mjs
+
+      # BLOCKING Phase-1 gate: fails the job on any NEW A1/A6/A7/B2/D2 violation.
+      # A1/A6/B2/D2 are doc_lint fingerprints; A7 is the Vale rule Capy.PartHeadings.
+      # A skip of either gated check (doc_lint / vale_adoc) also fails the gate
+      # (can't verify a gated rule = not a pass); skips of a11y/mrdocs/vale_docstrings
+      # do not. The pre-existing backlog is grandfathered by baseline.json.
+      - name: Doc-quality - Phase-1 gate (A1/A6/A7/B2/D2, blocking)
+        if: always()
+        continue-on-error: false
+        working-directory: boost-root/libs/capy/doc
+        run: |
+          node lint/check-no-new-violations.mjs --strict \
+            --gate 'doc_lint:^(A1|A6|B2|D2):' \
+            --gate 'vale_adoc:Capy\.PartHeadings$'
