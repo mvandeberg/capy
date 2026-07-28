@@ -33,7 +33,7 @@ When async code finishes waiting, it needs to resume somewhere. Where?
 
 * Context flows forward through `await_suspend(h, env)` where `env` is an `io_env`
 * Your coroutine started on executor X? It resumes on executor X.
-* Child tasks can run on different executors via `run(other_ex)(child_task())`
+* Child tasks can run on different executors via cpp:run[]`(other_ex)(child_task())`
 
 *TMC's answer:* Where you tell it, with flexibility to change mid-execution.
 
@@ -65,7 +65,7 @@ tmc::task<void> example() {
 
 This is powerful for compute workloads where work can migrate between thread pools.
 
-*Capy's design choice:* Intentionally prevent mid-coroutine executor switching. A coroutine stays on its bound executor for its entire lifetime. Child tasks can run on different executors via `run(other_ex)(child_task())`, but the parent never moves.
+*Capy's design choice:* Intentionally prevent mid-coroutine executor switching. A coroutine stays on its bound executor for its entire lifetime. Child tasks can run on different executors via cpp:run[]`(other_ex)(child_task())`, but the parent never moves.
 
 *Why Capy prevents this:* I/O objects often have invariants tied to their executor:
 
@@ -137,7 +137,7 @@ HALO (Heap Allocation Lowering Optimization) lets compilers eliminate coroutine 
 
 *Capy provides:*
 
-* Custom allocator propagation via `run_async(ex, allocator)` and `run(allocator)`
+* Custom allocator propagation via cpp:run_async[]`(ex, allocator)` and cpp:run[]`(allocator)`
 * Per-connection arena allocation
 * Memory isolation between connections
 * Instant reclamation on connection close
@@ -179,9 +179,9 @@ The awaitable receives:
 
 * `h` — The handle (for resumption)
 * `env` — The execution environment containing:
-** `env->executor` — The executor (where to resume)
-** `env->stop_token` — A stop token (for cancellation)
-** `env->frame_allocator` — An optional `std::pmr::memory_resource*` for coroutine frame allocation (null selects the default allocator)
+** cpp:io_env::executor[env->executor] — The executor (where to resume)
+** cpp:io_env::stop_token[env->stop_token] — A stop token (for cancellation)
+** cpp:io_env::frame_allocator[env->frame_allocator] — An optional `std::pmr::memory_resource*` for coroutine frame allocation (null selects the default allocator)
 
 *TMC's approach:*
 
