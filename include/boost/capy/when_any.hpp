@@ -630,11 +630,13 @@ public:
         index and payload.
 
     @throws std::invalid_argument if range is empty.
-    @throws Rethrows the winner's exception if extracting or
-        move-constructing the winning payload throws (a winner was
-        found but its result could not be produced).
-    @throws Rethrows a child's exception when all children fail and the
-        reported failure is an exception (which child is unspecified).
+
+    @par Exception Safety
+    The winner's exception is rethrown if extracting or
+    move-constructing the winning payload throws (a winner was found
+    but its result could not be produced). If all children fail and
+    the reported failure is an exception, that child's exception is
+    rethrown (which child is unspecified).
 
     @par Example
     @code
@@ -712,8 +714,10 @@ template<IoAwaitableRange R>
         is failure and index 1 carries the winner's index.
 
     @throws std::invalid_argument if range is empty.
-    @throws Rethrows a child's exception when all children fail and the
-        reported failure is an exception (which child is unspecified).
+
+    @par Exception Safety
+    If all children fail and the reported failure is an exception,
+    that child's exception is rethrown (which child is unspecified).
 
     @par Example
     @code
@@ -788,11 +792,12 @@ template<IoAwaitableRange R>
         an error_code from one of the failed children (unspecified
         which; no priority between errors and exceptions).
 
-    @throws Rethrows the winner's exception if extracting or
-        constructing the winning payload throws (a winner was found
-        but its result could not be produced).
-    @throws Rethrows a child's exception when all children fail and the
-        reported failure is an exception (which child is unspecified).
+    @par Exception Safety
+    The winner's exception is rethrown if extracting or constructing
+    the winning payload throws (a winner was found but its result
+    could not be produced). If all children fail and the reported
+    failure is an exception, that child's exception is rethrown
+    (which child is unspecified).
 
     @note A failing child does not cancel its siblings; `when_any`
         waits for a success or for every child to finish. To make a

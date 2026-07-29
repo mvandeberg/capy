@@ -560,8 +560,10 @@ public:
 
     @throws std::invalid_argument if range is empty (thrown before
         coroutine suspends).
-    @throws Rethrows the first child exception after all children
-        complete (exception beats error_code).
+
+    @par Exception Safety
+    If a child throws, the first child exception is rethrown after
+    all children complete (exception beats error_code).
 
     @par Example
     @code
@@ -635,8 +637,10 @@ template<IoAwaitableRange R>
         error, or default-constructed on success.
 
     @throws std::invalid_argument if range is empty.
-    @throws Rethrows the first child exception after all children
-        complete (exception beats error_code).
+
+    @par Exception Safety
+    If a child throws, the first child exception is rethrown after
+    all children complete (exception beats error_code).
 
     @par Example
     @code
@@ -699,9 +703,6 @@ template<IoAwaitableRange R>
 
     @return A task yielding io_result<R1, R2, ..., Rn> where each Ri
         follows the payload flattening rules.
-
-    @throws Rethrows the first child exception after all children
-        complete (exception beats error_code).
 */
 template<IoAwaitable... As>
     requires (sizeof...(As) > 0)
