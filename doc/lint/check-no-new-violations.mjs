@@ -27,6 +27,15 @@
 //   --gate 'doc_lint:^(A1|A6|B2|D2):' --gate 'vale_adoc:Capy\.PartHeadings$'
 //   (A1/A6/B2/D2 come from doc_lint; A7 is the Vale rule Capy.PartHeadings.)
 //
+// Phase-2 exit adds MrDocs-no-warnings + E4 (a11y contrast) to the above:
+//   --gate 'mrdocs_warnings:.*' --gate 'a11y::color-contrast:'
+//   mrdocs_warnings:.* gates the whole reference-surface check; the a11y entry
+//   gates ONLY the contrast subset — its regex ':color-contrast:' matches the
+//   `code` segment of an a11y fingerprint (url:code:selector), so link-name /
+//   list findings stay non-gated. (The a11y check itself must run non-skipped
+//   in the baseline for its gate to mean anything — see the BLOCKED note in the
+//   Task 14 brief.)
+//
 // Usage: node doc/lint/check-no-new-violations.mjs [--strict] [--gate spec ...] [--skip-a11y]
 //
 import fs from 'node:fs';

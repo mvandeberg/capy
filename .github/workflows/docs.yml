@@ -120,11 +120,12 @@ jobs:
       # Individual check steps below stay non-blocking (continue-on-error: true): they
       # print each tool's raw findings for review. Enforcement is done by the
       # no-new-violations comparator, which diffs a fresh run against baseline.json.
-      # At Phase-1 exit the rules A1/A6/A7/B2/D2 are GATED: the "Phase-1 gate" step
-      # below runs the comparator with --strict --gate and IS blocking
-      # (continue-on-error: false) — it fails the job on any NEW A1/A6/A7/B2/D2
-      # violation. All other rules remain warning-only via the non-blocking
-      # "no-new-violations report" step until their own phase exits (see
+      # At Phase-2 exit the gated rules are A1/A6/A7/B2/D2 + E4 + MrDocs-no-warnings:
+      # the blocking gate step below runs the comparator with --strict --gate and IS
+      # blocking (continue-on-error: false) — it fails the job on any NEW
+      # A1/A6/A7/B2/D2 violation, any NEW MrDocs reference-surface warning, or any NEW
+      # a11y color-contrast finding. All other rules remain warning-only via the
+      # non-blocking "no-new-violations report" step until their own phase exits (see
       # DOC_IMPROVEMENT_PLAN.md).
       # The accuracy gate for .adoc example code (B2/B3/D2 correctness) is separate and
       # stays a hard gate: the boost_capy_doc_tests b2 target defined in
@@ -185,16 +186,22 @@ jobs:
         working-directory: boost-root/libs/capy/doc
         run: node lint/check-no-new-violations.mjs
 
-      # BLOCKING Phase-1 gate: fails the job on any NEW A1/A6/A7/B2/D2 violation.
-      # A1/A6/B2/D2 are doc_lint fingerprints; A7 is the Vale rule Capy.PartHeadings.
-      # A skip of either gated check (doc_lint / vale_adoc) also fails the gate
-      # (can't verify a gated rule = not a pass); skips of a11y/mrdocs/vale_docstrings
-      # do not. The pre-existing backlog is grandfathered by baseline.json.
-      - name: Doc-quality - Phase-1 gate (A1/A6/A7/B2/D2, blocking)
+      # BLOCKING Phase-2 gate: fails the job on any NEW A1/A6/A7/B2/D2 violation,
+      # any NEW MrDocs reference-surface warning, or any NEW a11y color-contrast
+      # finding. A1/A6/B2/D2 are doc_lint fingerprints; A7 is the Vale rule
+      # Capy.PartHeadings; MrDocs-no-warnings gates the whole mrdocs_warnings check;
+      # E4 gates only the a11y contrast subset (regex ':color-contrast:' over the
+      # url:code:selector fingerprint). A skip of ANY gated check (doc_lint /
+      # vale_adoc / mrdocs_warnings / a11y) fails the gate (can't verify a gated rule
+      # = not a pass); a skip of the still-ungated vale_docstrings does not. The
+      # pre-existing backlog is grandfathered by baseline.json.
+      - name: Doc-quality - Phase-2 gate (A1/A6/A7/B2/D2 + E4 + MrDocs-no-warnings, blocking)
         if: always()
         continue-on-error: false
         working-directory: boost-root/libs/capy/doc
         run: |
           node lint/check-no-new-violations.mjs --strict \
             --gate 'doc_lint:^(A1|A6|B2|D2):' \
-            --gate 'vale_adoc:Capy\.PartHeadings$'
+            --gate 'vale_adoc:Capy\.PartHeadings$' \
+            --gate 'mrdocs_warnings:.*' \
+            --gate 'a11y::color-contrast:'
