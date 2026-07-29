@@ -119,7 +119,7 @@ that cleans it (a `continue-on-error: false` change + baseline reset):
 | Promote at end of | Rules that become blocking gates |
 |---|---|
 | Phase 1 (Structure) | A1, A6, A7, B2, D2 |
-| Phase 2 (Accuracy)  | E4, MrDocs-no-warnings (B3 already gated via the compile job) |
+| Phase 2 (Accuracy)  | MrDocs-no-warnings (B3 already gated via the compile job); E4 stays Review tier — theme-controlled, not Capy-fixable, same as E2 |
 | Phase 4 (Wording)   | C2, C4, C9, C10 (over both `.adoc` and docstrings) |
 
 ### Task 3: Audit `cpp:`-macro / reference-link coverage (finding #7)
@@ -268,8 +268,9 @@ patterns with rationale link; MrDocs clean for the symbol.
 > Template = Task 9: fix → rebuild reference → verify → commit. Docstring-surface rows run
 > the same template against the `.hpp`.
 
-- [ ] **Phase 2 exit — promote gates:** flip E4 (a11y contrast) and MrDocs-no-warnings to
-  blocking; confirm CI green.
+- [ ] **Phase 2 exit — promote gates:** flip MrDocs-no-warnings to blocking; confirm CI green.
+  (E4 stays Review tier — a11y contrast findings were all shared-theme nav chrome, not
+  Capy-fixable, consistent with E2's demotion.)
 
 ---
 

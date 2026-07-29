@@ -184,6 +184,17 @@ const LOC_RE = /^(\/\S+\.(?:hpp|cpp|ipp)):(\d+):(\d+):\s*$/;
 const ITEM_RE = /^\s*\d+\)\s*(.+)$/;
 const BARE_WARNING_RE = /^warning:\s*(.+)$/;
 
+// `boost`/`capy` namespaces get flagged by warn-if-undocumented too, but a
+// namespace isn't a documentable symbol in the sense this gate cares about
+// (no @brief slot maps onto a namespace declaration the way it does onto a
+// class/function), and the finding is fingerprint-unstable across
+// environments (see the file header: local vs. CI MrDocs build/order
+// differences). Drop these here so they never enter the gate's finding list,
+// in both baseline generation and the live check (same script). All other
+// MrDocs warning classes (undocumented symbol/param, broken refs, etc.) are
+// left intact.
+const NAMESPACE_UNDOCUMENTED_RE = /namespace is undocumented/;
+
 const findings = [];
 let currentLoc = null;
 for (const line of lines) {
@@ -194,11 +205,19 @@ for (const line of lines) {
   }
   const item = line.match(ITEM_RE);
   if (item && currentLoc) {
-    findings.push({ file: currentLoc.file, line: currentLoc.line, message: item[1].trim() });
+    const message = item[1].trim();
+    if (!NAMESPACE_UNDOCUMENTED_RE.test(message)) {
+      findings.push({ file: currentLoc.file, line: currentLoc.line, message });
+    }
     continue;
   }
   const bare = line.match(BARE_WARNING_RE);
-  if (bare) findings.push({ file: null, line: null, message: bare[1].trim() });
+  if (bare) {
+    const message = bare[1].trim();
+    if (!NAMESPACE_UNDOCUMENTED_RE.test(message)) {
+      findings.push({ file: null, line: null, message });
+    }
+  }
 }
 
 emit({ summary: { total: findings.length }, findings });

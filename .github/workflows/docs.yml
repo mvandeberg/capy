@@ -35,12 +35,15 @@ jobs:
   antora:
     name: Antora Docs
     runs-on: 'ubuntu-latest'
-    # The a11y contrast gate (E4) is BLOCKING as of Phase-2 exit. pa11y needs a
-    # launchable browser: .pa11yci.json defaults to /usr/bin/chromium (local),
-    # but ubuntu-latest ships google-chrome at /usr/bin/google-chrome and has no
-    # chromium. run-a11y.mjs reads PA11Y_CHROME_PATH to override the config, so
-    # point it at the runner's pre-installed Chrome for every step that runs the
-    # a11y scan (the scan step, the omnibus report, and the blocking gate).
+    # The a11y contrast gate (E4) is Review tier, not blocking (DOC_STYLE_GUIDE.md
+    # Part F.0 — demoted alongside E2: all gated failures were color-contrast on
+    # shared Antora theme nav chrome, not Capy-fixable). pa11y still needs a
+    # launchable browser to run the scan as a non-blocking report: .pa11yci.json
+    # defaults to /usr/bin/chromium (local), but ubuntu-latest ships google-chrome
+    # at /usr/bin/google-chrome and has no chromium. run-a11y.mjs reads
+    # PA11Y_CHROME_PATH to override the config, so point it at the runner's
+    # pre-installed Chrome for every step that runs the a11y scan (the scan step
+    # and the omnibus report).
     env:
       PA11Y_CHROME_PATH: /usr/bin/google-chrome
     defaults:
@@ -142,13 +145,14 @@ jobs:
       # Individual check steps below stay non-blocking (continue-on-error: true): they
       # print each tool's raw findings for review. Enforcement is done by the
       # no-new-violations comparator, which diffs a fresh run against baseline.json.
-      # At Phase-2 exit the gated rules are A1/A6/A7/B2/D2 + E4 + MrDocs-no-warnings:
-      # the blocking gate step below runs the comparator with --strict --gate and IS
+      # At Phase-2 exit the gated rules are A1/A6/A7/B2/D2 + MrDocs-no-warnings: the
+      # blocking gate step below runs the comparator with --strict --gate and IS
       # blocking (continue-on-error: false) — it fails the job on any NEW
-      # A1/A6/A7/B2/D2 violation, any NEW MrDocs reference-surface warning, or any NEW
-      # a11y color-contrast finding. All other rules remain warning-only via the
-      # non-blocking "no-new-violations report" step until their own phase exits (see
-      # DOC_IMPROVEMENT_PLAN.md).
+      # A1/A6/A7/B2/D2 violation or any NEW MrDocs reference-surface warning. E4 (a11y
+      # contrast) is Review tier, not gated (DOC_STYLE_GUIDE.md Part F.0); the a11y
+      # scan below stays a non-blocking report. All other rules remain warning-only
+      # via the non-blocking "no-new-violations report" step until their own phase
+      # exits (see DOC_IMPROVEMENT_PLAN.md).
       # The accuracy gate for .adoc example code (B2/B3/D2 correctness) is separate and
       # stays a hard gate: the boost_capy_doc_tests b2 target defined in
       # test/doc/Jamfile, run via `./b2 libs/capy/test` in ci.yml, not this job
@@ -208,16 +212,17 @@ jobs:
         working-directory: boost-root/libs/capy/doc
         run: node lint/check-no-new-violations.mjs
 
-      # BLOCKING Phase-2 gate: fails the job on any NEW A1/A6/A7/B2/D2 violation,
-      # any NEW MrDocs reference-surface warning, or any NEW a11y color-contrast
-      # finding. A1/A6/B2/D2 are doc_lint fingerprints; A7 is the Vale rule
-      # Capy.PartHeadings; MrDocs-no-warnings gates the whole mrdocs_warnings check;
-      # E4 gates only the a11y contrast subset (regex ':color-contrast:' over the
-      # url:code:selector fingerprint). A skip of ANY gated check (doc_lint /
-      # vale_adoc / mrdocs_warnings / a11y) fails the gate (can't verify a gated rule
-      # = not a pass); a skip of the still-ungated vale_docstrings does not. The
+      # BLOCKING Phase-2 gate: fails the job on any NEW A1/A6/A7/B2/D2 violation or
+      # any NEW MrDocs reference-surface warning. A1/A6/B2/D2 are doc_lint
+      # fingerprints; A7 is the Vale rule Capy.PartHeadings; MrDocs-no-warnings gates
+      # the whole mrdocs_warnings check. E4 (a11y contrast) is Review tier, not
+      # gated — see DOC_STYLE_GUIDE.md Part F.0 (demoted like E2: the gated failures
+      # were color-contrast on shared Antora theme nav chrome, which Capy cannot
+      # fix). A skip of ANY gated check (doc_lint / vale_adoc / mrdocs_warnings)
+      # fails the gate (can't verify a gated rule = not a pass); a skip of the
+      # still-ungated vale_docstrings or the non-blocking a11y scan does not. The
       # pre-existing backlog is grandfathered by baseline.json.
-      - name: Doc-quality - Phase-2 gate (A1/A6/A7/B2/D2 + E4 + MrDocs-no-warnings, blocking)
+      - name: Doc-quality - Phase-2 gate (A1/A6/A7/B2/D2 + MrDocs-no-warnings, blocking)
         if: always()
         continue-on-error: false
         working-directory: boost-root/libs/capy/doc
@@ -225,5 +230,4 @@ jobs:
           node lint/check-no-new-violations.mjs --strict \
             --gate 'doc_lint:^(A1|A6|B2|D2):' \
             --gate 'vale_adoc:Capy\.PartHeadings$' \
-            --gate 'mrdocs_warnings:.*' \
-            --gate 'a11y::color-contrast:'
+            --gate 'mrdocs_warnings:.*'
