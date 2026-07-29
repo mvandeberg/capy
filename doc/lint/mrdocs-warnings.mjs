@@ -41,23 +41,40 @@ function emit(payload) {
   process.exit(0);
 }
 
+// Pinned MrDocs version (Task 14 / Phase-2 exit). The cache DFS below can
+// surface more than one `mrdocs` binary (e.g. the `develop` and `master`
+// reference-collector tags), and their `--version` strings can differ — so
+// picking the FIRST one found made the "no-warnings" gate nondeterministic.
+// We constrain the search to the binary whose BASE version (the `X.Y.Z`
+// before any `+build` metadata) matches this pin; if none matches we error
+// loudly rather than silently scan with an unexpected version. Override via
+// MRDOCS_VERSION for a deliberate bump.
+const PINNED_VERSION = process.env.MRDOCS_VERSION || '0.8.0';
+
 function findOnPath(names) {
+  return findAllOnPath(names)[0] || null;
+}
+
+function findAllOnPath(names) {
+  const found = [];
   const dirs = (process.env.PATH || '').split(path.delimiter);
   for (const name of names) {
     for (const dir of dirs) {
       const candidate = path.join(dir, name);
       try {
         fs.accessSync(candidate, fs.constants.X_OK);
-        return candidate;
+        found.push(candidate);
       } catch { /* not here */ }
     }
   }
-  return null;
+  return found;
 }
 
 // Search the Antora reference-collector cache the extension populates
 // (getUserCacheDir('antora')/reference-collector/mrdocs/<platform>/<tag>/bin/mrdocs).
-function findMrDocsInCache() {
+// Returns EVERY executable found so the caller can pick the pin-matching one.
+function findAllMrDocsInCache() {
+  const found = [];
   const bases = [
     process.env.MRDOCS_ROOT,
     path.join(os.homedir(), '.cache/antora/reference-collector/mrdocs'),
@@ -73,19 +90,47 @@ function findMrDocsInCache() {
         const p = path.join(dir, ent.name);
         if (ent.isDirectory()) stack.push(p);
         else if (ent.name === 'mrdocs' || ent.name === 'mrdocs.exe') {
-          try { fs.accessSync(p, fs.constants.X_OK); return p; } catch { /* skip */ }
+          try { fs.accessSync(p, fs.constants.X_OK); found.push(p); } catch { /* skip */ }
         }
       }
     }
   }
-  return null;
+  return found;
 }
 
-const mrdocsExe = findOnPath(['mrdocs', 'mrdocs.exe']) || findMrDocsInCache();
-if (!mrdocsExe) {
+// Base version (X.Y.Z, build metadata after `+` stripped) reported by a
+// candidate binary, or null if it can't be run / parsed.
+function mrdocsBaseVersion(exe) {
+  const r = spawnSync(exe, ['--version'], { encoding: 'utf8' });
+  if (r.error || (r.status !== 0 && r.status !== null)) return null;
+  const out = `${r.stdout || ''}${r.stderr || ''}`;
+  const m = out.match(/MrDocs\s+version\s+(\S+)/i) || out.match(/(\d+\.\d+\.\d+)/);
+  return m ? m[1].split('+')[0] : null;
+}
+
+// Candidate search space: PATH first, then the reference-collector cache.
+const candidates = [...findAllOnPath(['mrdocs', 'mrdocs.exe']), ...findAllMrDocsInCache()];
+if (candidates.length === 0) {
   emit({
     error: 'mrdocs executable not found (checked PATH and the Antora reference-collector cache). ' +
            'Run the Antora build first (it downloads MrDocs), then re-run this script.',
+    summary: { total: 0 },
+    findings: [],
+  });
+}
+
+// Select the FIRST candidate whose base version matches the pin.
+let mrdocsExe = null;
+const inspected = [];
+for (const c of candidates) {
+  const v = mrdocsBaseVersion(c);
+  inspected.push(`${c} => ${v ?? '(version unreadable)'}`);
+  if (v === PINNED_VERSION) { mrdocsExe = c; break; }
+}
+if (!mrdocsExe) {
+  emit({
+    error: `no MrDocs binary matching pinned version ${PINNED_VERSION} found ` +
+           `(set MRDOCS_VERSION to override). Candidates inspected:\n  ${inspected.join('\n  ')}`,
     summary: { total: 0 },
     findings: [],
   });
