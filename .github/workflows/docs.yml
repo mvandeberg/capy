@@ -15,17 +15,21 @@ on:
     branches:
       - master
       - develop
+      - develop-2
+      - 'pr/**'
     paths:
       - 'doc/**'
       - 'include/**'
       - '*.adoc'
       - 'README.adoc'
+      - '.github/workflows/docs.yml'
   pull_request:
     paths:
       - 'doc/**'
       - 'include/**'
       - '*.adoc'
       - 'README.adoc'
+      - '.github/workflows/docs.yml'
 
 jobs:
   antora:
