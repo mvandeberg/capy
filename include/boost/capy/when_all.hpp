@@ -695,8 +695,8 @@ template<IoAwaitableRange R>
     first error_code wins.
 
     @par Exception Safety
-    Exception always beats error_code. If any child throws, the
-    exception is rethrown regardless of error_code results.
+    If a child throws, the first child exception is rethrown after
+    all children complete (exception beats error_code).
 
     @param awaitables One or more awaitables each returning
         io_result<Ts...>.
