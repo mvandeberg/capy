@@ -41,6 +41,17 @@ include::example$snippets/4a_tasks.cpp[tag=returning]
 
 For `task<void>`, you can either use `co_return;` explicitly or let execution fall off the end of the function body.
 
+== Running a Task
+
+A `task` is lazy, so declaring one does not run it. To run a task to completion from ordinary (non-coroutine) code, pass it to cpp:run_async[] with an executor and a completion handler. The task runs on the executor, and its result is delivered to the handler:
+
+[source,cpp]
+----
+include::example$snippets/4a_tasks.cpp[tag=run]
+----
+
+Here `add(2, 3)` runs on a cpp:thread_pool[] executor, and the completion handler receives the result, `5`. The call to `pool.join()` waits for the pooled work to finish before the result is read.
+
 == Awaiting Other Tasks
 
 Tasks can await other tasks using `co_await`. This is the primary mechanism for composing asynchronous operations:

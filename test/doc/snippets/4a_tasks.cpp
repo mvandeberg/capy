@@ -256,6 +256,26 @@ struct tasks_test
     }
 
     void
+    testRunning()
+    {
+        using returning::add;
+        // tag::run[]
+        // You have a task; run it on an executor and observe its result.
+        thread_pool pool(1);
+        auto ex = pool.get_executor();
+
+        int total = 0;
+        run_async(ex, [&](int result) {
+            std::cout << "Result: " << result << "\n";  // prints 5
+            total = result;
+        })(add(2, 3));
+
+        pool.join();  // wait for the pooled task to finish
+        // end::run[]
+        BOOST_TEST(total == 5);
+    }
+
+    void
     testAwaiting()
     {
         thread_pool pool(1);
@@ -303,6 +323,7 @@ struct tasks_test
     {
         testDeclaring();
         testReturning();
+        testRunning();
         testAwaiting();
         testLazy();
         testChain();
