@@ -31,6 +31,14 @@ jobs:
   antora:
     name: Antora Docs
     runs-on: 'ubuntu-latest'
+    # The a11y contrast gate (E4) is BLOCKING as of Phase-2 exit. pa11y needs a
+    # launchable browser: .pa11yci.json defaults to /usr/bin/chromium (local),
+    # but ubuntu-latest ships google-chrome at /usr/bin/google-chrome and has no
+    # chromium. run-a11y.mjs reads PA11Y_CHROME_PATH to override the config, so
+    # point it at the runner's pre-installed Chrome for every step that runs the
+    # a11y scan (the scan step, the omnibus report, and the blocking gate).
+    env:
+      PA11Y_CHROME_PATH: /usr/bin/google-chrome
     defaults:
       run:
         shell: bash

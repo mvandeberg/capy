@@ -14,6 +14,7 @@
 //
 import fs from 'node:fs';
 import net from 'node:net';
+import os from 'node:os';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -37,6 +38,25 @@ if (!fs.existsSync(configPath)) {
 }
 
 const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+
+// Browser path is env-overridable (PA11Y_CHROME_PATH) so the same config works
+// on hosts whose browser lives elsewhere. .pa11yci.json hard-codes
+// /usr/bin/chromium (the local default); GitHub's ubuntu-latest ships
+// google-chrome at /usr/bin/google-chrome, not chromium, and now that the E4
+// contrast gate is BLOCKING an unlaunchable browser would fail the build on
+// missing infra (or, worse, pass vacuously). CI sets PA11Y_CHROME_PATH to the
+// runner's browser. We inject the override and run pa11y-ci against a derived
+// config so the committed JSON stays the local default.
+const chromePath = process.env.PA11Y_CHROME_PATH;
+let effectiveConfigPath = configPath;
+if (chromePath) {
+  config.defaults = config.defaults || {};
+  config.defaults.chromeLaunchConfig = config.defaults.chromeLaunchConfig || {};
+  config.defaults.chromeLaunchConfig.executablePath = chromePath;
+  effectiveConfigPath = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'pa11y-cfg-')), '.pa11yci.json');
+  fs.writeFileSync(effectiveConfigPath, JSON.stringify(config, null, 2));
+}
+
 const firstUrl = (config.urls || [])[0];
 const portMatch = firstUrl && firstUrl.match(/:(\d+)\b/);
 const PORT = portMatch ? Number(portMatch[1]) : 8088;
@@ -61,10 +81,27 @@ let payload;
 try {
   await waitForPort(PORT, 5000);
   const bin = path.join(DOC_DIR, 'node_modules/.bin/pa11y-ci');
-  const r = spawnSync(bin, ['--config', configPath, '--json'], { cwd: DOC_DIR, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
-  let parsed;
-  try { parsed = JSON.parse(r.stdout || '{}'); } catch {
-    payload = { error: 'pa11y-ci did not return JSON (Chromium unavailable?)', stderrTail: (r.stderr || '').slice(-2000), summary: { total: 0 }, findings: [] };
+  const r = spawnSync(bin, ['--config', effectiveConfigPath, '--json'], { cwd: DOC_DIR, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  // Distinguish a real run from a browser-launch failure. When pa11y cannot
+  // launch the browser (e.g. executablePath points at a missing binary) it
+  // writes NOTHING to stdout and the error to stderr, exiting non-zero. A naive
+  // `JSON.parse(stdout || '{}')` would then yield `{}` — indistinguishable from
+  // "ran clean, 0 findings" — and, now that the E4 contrast gate is BLOCKING,
+  // let the gate pass VACUOUSLY while silently guarding nothing. So an empty or
+  // shapeless result (no `results` object) is reported as an error → the
+  // baseline marks the check skipped → a skip of this GATED check fails the
+  // gate loudly, which is the correct outcome for "couldn't actually check".
+  let parsed = null;
+  if (r.stdout && r.stdout.trim()) {
+    try { parsed = JSON.parse(r.stdout); } catch { parsed = null; }
+  }
+  const looksLikeResults = parsed && typeof parsed === 'object' && parsed.results && typeof parsed.results === 'object';
+  if (!looksLikeResults) {
+    payload = {
+      error: `pa11y-ci produced no usable results (exit ${r.status}) — browser failed to launch? ` +
+             `Check the a11y browser path (PA11Y_CHROME_PATH / .pa11yci.json executablePath).`,
+      stderrTail: (r.stderr || '').slice(-2000), summary: { total: 0 }, findings: [],
+    };
   }
   if (!payload) {
     const findings = [];
