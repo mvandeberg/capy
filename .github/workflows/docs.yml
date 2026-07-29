@@ -43,10 +43,20 @@ jobs:
       run:
         shell: bash
     steps:
+      # asciidoctor here is the Ruby CLI that Vale 3.x shells out to when
+      # linting .adoc files (its lintAdoc scope). It is NOT the same as the JS
+      # @asciidoctor/core that Antora/build_antora.sh pulls in via `npm ci` —
+      # that has no `asciidoctor` binary on PATH. Without the Ruby CLI, `vale
+      # modules` and baseline.mjs's vale_adoc error with "asciidoctor not found"
+      # → the check is marked skipped → and because vale_adoc is a GATED check
+      # (it carries the blocking A7 Capy.PartHeadings rule) the gate's
+      # gated-skip path would fail the job on missing infra. The apt package
+      # installs /usr/bin/asciidoctor, on PATH for every later step. This first
+      # step runs before the Antora build, the Vale steps, and the blocking gate.
       - name: Install packages
         uses: alandefreitas/cpp-actions/package-install@v1.9.0
         with:
-          apt-get: git cmake
+          apt-get: git cmake asciidoctor
 
       - name: Clone Boost.Capy
         uses: actions/checkout@v4
