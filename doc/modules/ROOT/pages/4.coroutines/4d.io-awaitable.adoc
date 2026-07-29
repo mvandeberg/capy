@@ -152,6 +152,24 @@ See xref:4.coroutines/4e.cancellation.adoc#stoppable-awaitables[Implementing Sto
 
 For a production implementation of this exact pattern, read the source of `async_waker::wait_awaiter` (xref:reference:boost/capy/async_waker/wait_awaiter.adoc[`async_waker::wait_awaiter`]): it registers a stop callback that posts the resume through the executor, and arbitrates between wakeup and cancellation with a single atomic claim.
 
+== Running a Custom IoAwaitable
+
+The sections above show how to _build_ an IoAwaitable; this one shows it running inside a task and delivering its result. The awaitable produces a value and resumes the caller by posting its cpp:continuation[] through the caller's executor—the pattern from the previous section, completed:
+
+[source,cpp]
+----
+include::example$snippets/4d_io_awaitable.cpp[tag=runnable_awaitable]
+----
+
+To run that task from ordinary, non-coroutine code, hand it to cpp:run_async[] with an executor and a completion handler:
+
+[source,cpp]
+----
+include::example$snippets/4d_io_awaitable.cpp[tag=run_awaitable,indent=0]
+----
+
+The task runs on the cpp:thread_pool[] executor. When the awaitable posts its continuation, the pool resumes the task, `await_resume` returns the value, and it arrives at the completion handler—here, `5`.
+
 [#bridging-a-foreign-awaitable]
 == Bridging a Foreign Awaitable
 
