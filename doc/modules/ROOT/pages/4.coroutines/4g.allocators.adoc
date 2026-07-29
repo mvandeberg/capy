@@ -116,6 +116,24 @@ This allocator is used by default for `thread_pool` and other execution contexts
 
 NOTE: `recycling_memory_resource` honors only the default new alignment (`__STDCPP_DEFAULT_NEW_ALIGNMENT__`, typically `alignof(std::max_align_t)`). The alignment argument passed to `do_allocate`/`do_deallocate` is ignored, so over-aligned requests are not satisfied. This is sufficient for coroutine frames but means the resource is not a drop-in replacement where over-aligned allocations are required.
 
+=== Observing Reuse
+
+You can watch the reuse happen. This `memory_resource` pools each freed block by size and counts how many allocations come from the heap versus a recycled block:
+
+[source,cpp]
+----
+include::example$snippets/4g_allocators.cpp[tag=recycling_observe_resource,indent=0]
+----
+
+Run the same task eight times through it, one run at a time:
+
+[source,cpp]
+----
+include::example$snippets/4g_allocators.cpp[tag=recycling_observe,indent=0]
+----
+
+The first run finds an empty pool and takes its coroutine frames from the heap. Each `pool.join()` returns those frames to the resource, so the next cpp:run_async[] call reuses them: once the pool is warm, the upstream count stops climbing while the task keeps running -- the seven warm runs allocate nothing new. cpp:recycling_memory_resource[] does the same thing with size-class freelists and a lock-free thread-local cache, which is why cpp:thread_pool[] and the other execution contexts install it by default.
+
 == Frame Allocator Mixin
 
 Most users never need to allocate coroutine frames manually -- `task<T>` and the built-in awaitable types already participate in TLS frame allocation. When you write your own coroutine promise type and want it to use the same fast path, inherit from `frame_alloc_mixin`:
