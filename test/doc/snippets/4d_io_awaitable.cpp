@@ -211,8 +211,9 @@ struct add_awaitable
     int a_;
     int b_;
     io_env const* env_ = nullptr;
-    continuation cont_;
-    result_type result_;
+    // Defaulted, so the call site supplies only a_ and b_.
+    continuation cont_{};
+    result_type result_{};
 
     bool await_ready() const noexcept { return false; }
 
