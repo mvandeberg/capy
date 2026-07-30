@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2026 Steve Gerbino
+// Copyright (c) 2026 Michael Vandeberg
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -547,6 +548,51 @@ public:
     @li Exception always beats error_code
     @li Completes only after all children have finished
 
+    @par Await-effects
+
+    Takes ownership of the range, creates one wrapper coroutine per
+    element, then posts every wrapper to the caller's executor. All
+    children therefore run concurrently, each awaited with the caller's
+    executor and frame allocator and with a stop token owned by this
+    operation.
+
+    Awaiting an empty range throws `std::invalid_argument` before any
+    child is started.
+
+    A stop request is made on the operation's own stop token when:
+
+    @li a child await-returns a non-zero `ec`, or
+    @li a child exits via an exception, or
+    @li the caller's stop token is triggered.
+
+    Every sibling observes that request through the stop token it was
+    awaited with. The request does not end the operation: the await
+    completes only after every child has finished.
+
+    @par Await-returns
+    An object of type `io_result<std::vector<PayloadT>>` destructuring as
+    `[ec, values]`, where `PayloadT` is the payload of one child's
+    `io_result`.
+
+    `ec` is the first non-zero `ec` await-returned by a child, in
+    completion order rather than input order. The `ec` of every other
+    child is discarded.
+
+    On success, `values` holds one payload per element of the input
+    range, in input order. If `ec` is set, `values` is empty: the
+    payloads of the children that did succeed are discarded.
+
+    If any child exits via an exception, the first such exception is
+    rethrown instead of await-returning, even when a child also reported
+    an `ec`.
+
+    @par Await-postcondition
+    Every child has finished. If `ec` is success, `values` holds one
+    payload per input awaitable; otherwise `values` is empty.
+
+    @par Remarks
+    Supports _IoAwaitable cancellation_.
+
     @par Thread Safety
     The returned task must be awaited from a single execution context.
     Child awaitables execute concurrently but complete through the caller's
@@ -630,6 +676,46 @@ template<IoAwaitableRange R>
     collected. The first error_code cancels siblings and is propagated.
     Exceptions always beat error codes.
 
+    @par Await-effects
+
+    Takes ownership of the range, creates one wrapper coroutine per
+    element, then posts every wrapper to the caller's executor. All
+    children therefore run concurrently, each awaited with the caller's
+    executor and frame allocator and with a stop token owned by this
+    operation.
+
+    Awaiting an empty range throws `std::invalid_argument` before any
+    child is started.
+
+    A stop request is made on the operation's own stop token when:
+
+    @li a child await-returns a non-zero `ec`, or
+    @li a child exits via an exception, or
+    @li the caller's stop token is triggered.
+
+    Every sibling observes that request through the stop token it was
+    awaited with. The request does not end the operation: the await
+    completes only after every child has finished.
+
+    @par Await-returns
+    An object of type `io_result<>` destructuring as `[ec]`. The children
+    have no payloads, so nothing else is reported.
+
+    `ec` is the first non-zero `ec` await-returned by a child, in
+    completion order rather than input order. The `ec` of every other
+    child is discarded.
+
+    If any child exits via an exception, the first such exception is
+    rethrown instead of await-returning, even when a child also reported
+    an `ec`.
+
+    @par Await-postcondition
+    Every child has finished. `ec` is success only if every child
+    await-returned success.
+
+    @par Remarks
+    Supports _IoAwaitable cancellation_.
+
     @param awaitables Range of io_result<>-returning awaitables to
         execute concurrently (must not be empty).
 
@@ -693,6 +779,49 @@ template<IoAwaitableRange R>
     The error_code is lifted out of each child into a single outer
     io_result. On success all values are returned; on failure the
     first error_code wins.
+
+    @par Await-effects
+
+    Creates one wrapper coroutine per argument, then posts every wrapper
+    to the caller's executor. All children therefore run concurrently,
+    each awaited with the caller's executor and frame allocator and with
+    a stop token owned by this operation. The overload requires at least
+    one awaitable, so there is no empty case.
+
+    A stop request is made on the operation's own stop token when:
+
+    @li a child await-returns a non-zero `ec`, or
+    @li a child exits via an exception, or
+    @li the caller's stop token is triggered.
+
+    Every sibling observes that request through the stop token it was
+    awaited with. The request does not end the operation: the await
+    completes only after every child has finished.
+
+    @par Await-returns
+    An object of type `io_result<P1, ..., Pn>` destructuring as
+    `[ec, v1, ..., vn]`, where `Pi` is the payload of the i-th child's
+    `io_result`.
+
+    `ec` is the first non-zero `ec` await-returned by a child, in
+    completion order rather than argument order. The `ec` of every other
+    child is discarded.
+
+    Each `vi` is the payload the i-th child itself await-returned, even
+    when that child or a sibling reported an `ec`. A failed child
+    therefore still contributes its own partial payload. This differs from
+    the range overloads, which discard all payloads once any child fails.
+
+    If any child exits via an exception, the first such exception is
+    rethrown instead of await-returning, even when a child also reported
+    an `ec`.
+
+    @par Await-postcondition
+    Every child has finished. Each `vi` holds the i-th child's payload,
+    and `ec` is success only if every child await-returned success.
+
+    @par Remarks
+    Supports _IoAwaitable cancellation_.
 
     @par Exception Safety
     If a child throws, the first child exception is rethrown after

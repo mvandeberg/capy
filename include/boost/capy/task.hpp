@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2025 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2026 Michael Vandeberg
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -67,6 +68,35 @@ struct task_return_base<void>
     it receives the caller's executor and stop token, propagating them
     to nested `co_await` expressions. This enables cancellation and
     proper completion dispatch across executor boundaries.
+
+    @par Await-effects
+
+    Let `t` be a `task<T>`. `co_await t` always suspends the awaiting
+    coroutine, then transfers control directly into the task's coroutine
+    body on the current thread; no executor operation is posted. The
+    caller's executor, stop token, and frame allocator are stored in the
+    task and propagated to every `co_await` inside the body.
+
+    The body runs until it returns or exits via an exception, at which
+    point control transfers directly back to the awaiting coroutine,
+    again without an executor operation.
+
+    `task` never inspects the stop token; it only propagates it. A task
+    body observes a stop request through the results of the operations it
+    awaits, or by reading the token itself. See @ref quitter for a task
+    that stops its own body.
+
+    @par Await-returns
+    The value the body passed to `co_return`, moved out of the task, or
+    nothing when `T` is `void`.
+
+    If the body exits via an unhandled exception, that exception is
+    rethrown instead.
+
+    @par Await-postcondition
+    The task's coroutine has run to completion and is suspended at its
+    final suspend point. The task still owns the frame, but not the
+    result: the await moves it out, so a task must not be awaited twice.
 
     @par Thread Safety
     Distinct objects: Safe.

@@ -78,6 +78,52 @@ struct quitter_return_base<void>
     Everything else — frame allocation, environment propagation,
     symmetric transfer, move semantics — is identical to @ref task.
 
+    @par Await-effects
+
+    Let `q` be a `quitter<T>`. `co_await q` always suspends the awaiting
+    coroutine, then transfers control directly into the quitter's
+    coroutine body on the current thread; no executor operation is
+    posted. The caller's executor, stop token, and frame allocator are
+    stored in the quitter and propagated to every `co_await` inside the
+    body.
+
+    Unlike @ref task, the stop token is checked at every point where the
+    body would resume: before the body's first statement, and again each
+    time an awaited operation resumes it. If a stop request is pending,
+    the body is not resumed. An internal sentinel exception unwinds it
+    instead, so RAII destructors run, and the coroutine completes as
+    stopped.
+
+    The body runs until it returns, exits via an exception, or is unwound
+    by a stop request, at which point control transfers directly back to
+    the awaiting coroutine, again without an executor operation.
+
+    @par Await-returns
+    The value the body passed to `co_return`, moved out of the quitter,
+    or nothing when `T` is `void`.
+
+    If the body exits via an unhandled exception, that exception is
+    rethrown instead.
+
+    If the coroutine completed as stopped, the internal sentinel
+    exception is thrown instead of await-returning. Awaiting a stopped
+    `quitter` from another `quitter` therefore stops that one too; a
+    @ref task awaiting it sees the sentinel as an unhandled exception in
+    its own body. When a quitter is started by `run_async`, a stopped
+    completion reaches the error handler as the sentinel
+    `std::exception_ptr`, not the value handler.
+
+    @par Await-postcondition
+    The quitter's coroutine has run to completion and is suspended at its
+    final suspend point; the body's RAII destructors have run. Exactly
+    one of the following holds: the body returned a value, which the
+    await moved out, so a quitter must not be awaited twice; the body
+    exited via an exception; or `handle().promise().stopped()` returns
+    `true`.
+
+    @par Remarks
+    Supports _IoAwaitable cancellation_.
+
     @tparam T The result type.  Use `quitter<>` for `quitter<void>`.
 
     @see task, IoRunnable, IoAwaitable
