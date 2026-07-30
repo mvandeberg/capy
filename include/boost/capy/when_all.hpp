@@ -539,12 +539,13 @@ public:
 
     Launches all awaitables simultaneously and waits for all to complete.
     On success, extracted payloads are collected in a vector preserving
-    input order. The first error_code cancels siblings and is propagated
-    in the outer io_result. Exceptions always beat error codes.
+    input order. The first error_code makes a stop request that every
+    sibling observes, and is propagated in the outer io_result.
+    Exceptions always beat error codes.
 
     @li All child awaitables run concurrently on the caller's executor
     @li Payloads are returned as a vector in input order
-    @li First error_code wins and cancels siblings
+    @li First error_code wins and makes a stop request that siblings observe
     @li Exception always beats error_code
     @li Completes only after all children have finished
 
@@ -587,7 +588,8 @@ public:
     an `ec`.
 
     @par Await-postcondition
-    Every child has finished. If `ec` is success, `values` holds one
+    Every child has finished. `ec` is success only if every child
+    await-returned success. If `ec` is success, `values` holds one
     payload per input awaitable; otherwise `values` is empty.
 
     @par Remarks
@@ -673,8 +675,9 @@ template<IoAwaitableRange R>
 
     Launches all awaitables simultaneously and waits for all to complete.
     Since all awaitables return io_result<>, no payload values are
-    collected. The first error_code cancels siblings and is propagated.
-    Exceptions always beat error codes.
+    collected. The first error_code makes a stop request that every
+    sibling observes, and is propagated. Exceptions always beat error
+    codes.
 
     @par Await-effects
 
