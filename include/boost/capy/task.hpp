@@ -276,14 +276,33 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
         template<class Awaitable>
         struct transform_awaiter
         {
+            /// The wrapped awaitable, decayed and stored by value.
             std::decay_t<Awaitable> a_;
+
+            /// The promise of the coroutine performing the `co_await`.
             promise_type* p_;
 
+            /** Report whether the wrapped awaitable is already complete.
+
+                @return The wrapped awaitable's own `await_ready` result:
+                `true` if no suspension is needed.
+            */
             bool await_ready() noexcept
             {
                 return a_.await_ready();
             }
 
+            /** Restore the frame allocator, then resume the wrapped
+                awaitable.
+
+                Reinstalls the thread-local frame allocator from the stored
+                environment before the body continues, because the
+                resumption may arrive on a different thread than the one
+                that suspended.
+
+                @return The wrapped awaitable's await-result, forwarded
+                unchanged.
+            */
             decltype(auto) await_resume()
             {
                 // Restore TLS before body resumes
@@ -291,6 +310,26 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
                 return a_.await_resume();
             }
 
+            /** Suspend by calling the wrapped awaitable with the
+                environment.
+
+                This is the plain `await_suspend` the compiler calls for the
+                nested `co_await`. It forwards to the wrapped awaitable's
+                @ref IoAwaitable overload, supplying the promise's stored
+                environment as the second argument, and hands back that
+                call's result unchanged — so the wrapped awaitable's
+                suspension decision, whatever form it takes, is preserved.
+
+                @param h The coroutine performing the `co_await`.
+
+                @return Whatever the wrapped awaitable's `await_suspend`
+                returns. When that is a `std::coroutine_handle<>`, the
+                handle is routed through `detail::symmetric_transfer`: on
+                MSVC it is resumed on the current stack and this function
+                returns `void`, so the awaiting coroutine suspends
+                unconditionally; on every other compiler it is returned
+                unchanged for symmetric transfer.
+            */
             template<class Promise>
             auto await_suspend(std::coroutine_handle<Promise> h) noexcept
             {
@@ -471,7 +510,7 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
 
         @param other The task to move from.
 
-        @return `*this`.
+        @return A reference to `*this`.
     */
     task& operator=(task&& other) noexcept
     {
