@@ -15,6 +15,14 @@
 // to. The file extension is .adoc so it picks up the same `[*.adoc]` section
 // of doc/.vale.ini used for the Antora pages — no separate Vale config needed.
 //
+// The parameter name is dropped, not re-emitted as a label. Emitting it back
+// as `name: description` — which this script did until 2026-07 — made every
+// `@param`/`@tparam` in the library trip Google.Colons, whose token is
+// `(?<!:[^ ]+?):\s[A-Z]`: a colon, a space, a capital. That accounted for 424
+// of 444 Colons alerts on this surface, a false-positive class that grows with
+// every parameter documented. A parameter name is an identifier, not prose;
+// the description is the prose, and the description is what stays linted.
+//
 // Usage: node doc/lint/extract-docstrings.mjs [outDir]
 //
 import fs from 'node:fs';
@@ -49,7 +57,7 @@ function cleanBlock(raw) {
   const prose = [];
   for (let line of lines) {
     if (line === '') { prose.push(''); continue; }
-    line = line.replace(NAMED_TAGS, '$2: ');
+    line = line.replace(NAMED_TAGS, '');
     line = line.replace(BARE_TAGS, '');
     line = line.replace(INLINE_REFS, '$2');
     prose.push(line);
