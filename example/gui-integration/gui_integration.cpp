@@ -16,9 +16,10 @@
 // is the only primitive a real toolkit has to provide.
 //
 // The interesting part is thread affinity.  The coroutine awaits work
-// that runs on a thread pool, then updates a widget.  Every widget
-// access checks which thread it is on, so the program proves where the
-// coroutine resumes instead of assuming it.
+// on a thread pool, then a dialog the toolkit answers on its own
+// thread, and updates a widget after each.  Every widget access checks
+// which thread it is on, so the program proves where the coroutine
+// resumes instead of assuming it.
 //
 
 // tag::full[]
@@ -29,6 +30,7 @@
 #include <coroutine>
 #include <cstdlib>
 #include <deque>
+#include <functional>
 #include <iostream>
 #include <mutex>
 #include <string>
@@ -242,9 +244,93 @@ count_rows(gui_app& app)
 }
 // end::pool_task[]
 
+//----------------------------------------------------------
+// A completion from the toolkit's own thread
+//----------------------------------------------------------
+
+// tag::dialog[]
+// Stands in for QMessageBox, GtkDialog, or wxMessageDialog.  A toolkit
+// reports the user's answer on whichever thread it chooses, so a plain
+// thread is the honest stand-in.  It is not the GUI thread, and it is
+// not a thread Capy scheduled.
+class dialog
+{
+    gui_app& app_;
+    std::thread thread_;
+
+public:
+    explicit dialog(gui_app& app) noexcept
+        : app_(app)
+    {
+    }
+
+    // Joins the toolkit's thread, so no answer outlives main.
+    ~dialog()
+    {
+        if(thread_.joinable())
+            thread_.join();
+    }
+
+    // Show the dialog.  Returns at once; the answer arrives later, on
+    // the toolkit's thread.
+    void show(std::function<void(std::string)> on_closed)
+    {
+        check(!thread_.joinable(), "dialog already showing");
+        thread_ = std::thread(
+            [this, cb = std::move(on_closed)]
+            {
+                check(!app_.on_gui_thread(),
+                    "dialog answered on the GUI thread");
+                cb("OK");  // the user chose OK
+            });
+    }
+};
+// end::dialog[]
+
+// tag::dialog_awaitable[]
+// An IoAwaitable for an operation the toolkit completes.  The protocol
+// is the subject of the IoAwaitable page; one line of it matters here.
+struct show_dialog
+{
+    dialog& dialog_;
+    capy::io_env const* env_ = nullptr;
+    capy::continuation cont_ = {};
+    std::string answer_ = {};
+
+    bool await_ready() const noexcept
+    {
+        return false;
+    }
+
+    std::coroutine_handle<> await_suspend(
+        std::coroutine_handle<> h, capy::io_env const* env)
+    {
+        env_ = env;
+        cont_.h = h;
+        dialog_.show([this](std::string answer)
+        {
+            answer_ = std::move(answer);
+            // The toolkit's thread must not resume the coroutine
+            // itself.  Handing the continuation to the executor is what
+            // puts the resumption back on the GUI thread.  This is also
+            // the last read of *this: the GUI thread may resume the
+            // coroutine, and destroy this awaitable, straight away.
+            env_->executor.post(cont_);
+        });
+        return std::noop_coroutine();
+    }
+
+    std::string await_resume()
+    {
+        return std::move(answer_);
+    }
+};
+// end::dialog_awaitable[]
+
 // tag::coroutine[]
 capy::task<>
-refresh(gui_app& app, label& status, capy::thread_pool& pool)
+refresh(gui_app& app, label& status,
+    capy::thread_pool& pool, dialog& confirm)
 {
     // Started on the GUI executor, so the body runs on the GUI thread
     // and touching the widget is safe.
@@ -256,6 +342,13 @@ refresh(gui_app& app, label& status, capy::thread_pool& pool)
 
     // Back on the GUI thread, without a hop written by hand.
     status.set_text("Loaded " + rows + " rows");
+
+    // The toolkit answers on its own thread.  show_dialog posts the
+    // continuation through this coroutine's executor, so the resumption
+    // lands on the GUI thread again.
+    auto answer = co_await show_dialog{confirm};
+
+    status.set_text("Confirmed: " + answer);
 }
 // end::coroutine[]
 
@@ -266,6 +359,7 @@ int main()
     gui_app app;
     label status(app);
     capy::thread_pool pool(1);
+    dialog confirm(app);
 
     capy::run_async(app.get_executor(), [&app]
     {
@@ -273,12 +367,13 @@ int main()
         // there too.
         check(app.on_gui_thread(), "handler off the GUI thread");
         app.quit();
-    })(refresh(app, status, pool));
+    })(refresh(app, status, pool, confirm));
 
     app.run();
     pool.join();
 
-    check(status.text() == "Loaded 42 rows", "wrong final text");
+    // The updates are sequential, so the last one proves all of them.
+    check(status.text() == "Confirmed: OK", "wrong final text");
     std::cout << "[gui] event loop finished\n";
     return 0;
 }
