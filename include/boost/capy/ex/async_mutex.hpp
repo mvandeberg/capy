@@ -402,7 +402,7 @@ public:
         {
         }
 
-        /** Construct a guard that will release the given mutex.
+        /** Construct a guard that releases the given mutex on destruction.
 
             Adopts an already-held lock; it does not acquire one.
 

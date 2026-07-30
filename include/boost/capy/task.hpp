@@ -317,7 +317,7 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
                 nested `co_await`. It forwards to the wrapped awaitable's
                 @ref IoAwaitable overload, supplying the promise's stored
                 environment as the second argument, and hands back that
-                call's result unchanged — so the wrapped awaitable's
+                call's result unchanged, so the wrapped awaitable's
                 suspension decision, whatever form it takes, is preserved.
 
                 @param h The coroutine performing the `co_await`.

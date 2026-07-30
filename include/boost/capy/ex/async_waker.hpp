@@ -185,11 +185,11 @@ public:
         /** Destroy the awaiter, leaving the waker unable to reach it.
 
             Destroys the stop callback if one is registered. If the awaiter
-            is still armed — the frame is being torn down without ever
-            being resumed — it also returns the waker's slot to the empty
+            is still armed, it also returns the waker's slot to the empty
             state, so a later `wake()` cannot dereference a destroyed
-            awaiter. A wake that arrives after that point is latched as a
-            token instead.
+            awaiter. That case means the frame is being torn down without
+            ever being resumed; a wake arriving afterward latches a token
+            instead.
         */
         ~wait_awaiter()
         {

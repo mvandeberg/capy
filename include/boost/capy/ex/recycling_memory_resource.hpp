@@ -147,8 +147,8 @@ public:
         and falls through to the slow path for global pool or
         heap allocation.
 
-        A request above the largest size class (2048 bytes) bypasses the
-        pools and goes straight to `::operator new`.
+        A request larger than the largest size class (2048 bytes)
+        bypasses the pools and goes straight to `::operator new`.
 
         The second parameter is the requested alignment, and it is ignored:
         every block comes from `::operator new`, so blocks carry the
