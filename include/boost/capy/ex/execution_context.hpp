@@ -110,9 +110,12 @@ protected:
         `target<Derived>()` to return `nullptr`.
 
         @tparam Derived The most-derived context type.
+
+        @param self `this`, typed as the most-derived context type.
+            Only its type is recorded; the pointer is not stored.
     */
     template< typename Derived >
-    explicit execution_context( Derived* ) noexcept;
+    explicit execution_context( Derived* self ) noexcept;
 
 public:
     //------------------------------------------------
@@ -154,9 +157,11 @@ public:
         service
     {
     public:
+        /// Destructor.
         virtual ~service() = default;
 
     protected:
+        /// Construct a service. Only derived classes may do so.
         service() = default;
 
         /** Called when the owning execution context shuts down.
