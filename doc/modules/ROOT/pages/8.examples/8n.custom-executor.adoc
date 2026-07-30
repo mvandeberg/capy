@@ -95,4 +95,4 @@ Event loop finished.
 
 1. Add a `stop()` method that causes `run()` to exit early, even with work remaining
 2. Make the run loop thread-safe so work can be posted from other threads
-3. Integrate the run loop with a platform event system (e.g., `epoll`, `kqueue`, or a GUI framework)
+3. Integrate the run loop with a platform event system (e.g., `epoll` or `kqueue`). For the GUI-framework case, xref:8.examples/8q.gui-integration.adoc[GUI Integration] works the example through, including where a coroutine resumes after awaiting work that finished on another thread
