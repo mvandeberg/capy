@@ -147,6 +147,8 @@ The toolkit's thread does not resume the coroutine. It posts the continuation th
 
 The widget update after this `co_await` carries the same thread check as every other access. Resume the handle directly instead of posting, and the check fires.
 
+`show_dialog` does not watch `env->stop_token`, so a stop request cannot interrupt a dialog already showing. Exercise 2 adds that.
+
 === Starting and Stopping the Loop
 
 [source,cpp]
@@ -162,13 +164,13 @@ The completion handler runs on the GUI thread, because the task completed there.
 
 === Substituting a Real Toolkit
 
-The stand-in exists to prove the contract, not to model a toolkit. Four pieces change when the toolkit is real, and the rest does not:
+The stand-in exists to prove the contract, not to model a toolkit. Five pieces change when the toolkit is real, and the rest does not:
 
 * `post_to_gui_thread` forwards to the toolkit's own post operation, and the receiving side calls cpp:safe_resume[] on the handle.
 * `gui_app::run` disappears. The toolkit already owns a loop, such as `QApplication::exec`, `g_main_loop_run`, or `wxApp::OnRun`.
 * `gui_app::quit` forwards to the toolkit's own quit, such as `QCoreApplication::quit`, `g_main_loop_quit`, or `wxAppConsole::ExitMainLoop`.
 * `label` becomes a real widget. Its thread check is the part the toolkit does not do for you.
-* `dialog` becomes the toolkit's own dialog, and `show` the call that opens it. The callback becomes the toolkit's completion notification.
+* `dialog` becomes the toolkit's own dialog, and its callback the toolkit's completion notification. The `gui_app&` it holds only for the thread check goes away.
 
 `executor_type`, `show_dialog`, `count_rows`, and `refresh` are unchanged. Those four are the pattern worth copying.
 
@@ -184,6 +186,6 @@ The stand-in exists to prove the contract, not to model a toolkit. Four pieces c
 == Exercises
 
 1. Break the invariant on purpose. Make `post` resume the handle inline instead of queueing it, and watch the widget check fire
-2. Make `show_dialog` cancellable. Inspect `env->stop_token` and complete early when a stop is already requested
+2. Make `show_dialog` cancellable. Pass a `std::stop_token` to cpp:run_async[], request the stop before the dialog is awaited, and complete early in `await_suspend` when the token reports one
 3. Give `dialog` a Cancel answer, and skip the update when the user chooses it
 4. Add a second background step and a second widget, and check that both updates land on the GUI thread

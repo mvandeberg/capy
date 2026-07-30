@@ -275,7 +275,11 @@ public:
     // the toolkit's thread.
     void show(std::function<void(std::string)> on_closed)
     {
-        check(!thread_.joinable(), "dialog already showing");
+        // The stand-in delivers one answer at a time.  A previous
+        // thread has already posted its answer by the time the
+        // coroutine can ask again, so this join does not block.
+        if(thread_.joinable())
+            thread_.join();
         thread_ = std::thread(
             [this, cb = std::move(on_closed)]
             {
@@ -313,8 +317,9 @@ struct show_dialog
             // The toolkit's thread must not resume the coroutine
             // itself.  Handing the continuation to the executor is what
             // puts the resumption back on the GUI thread.  This is also
-            // the last read of *this: the GUI thread may resume the
-            // coroutine, and destroy this awaitable, straight away.
+            // the last read of *this: the executor may resume the
+            // coroutine -- and then destroy this awaitable -- before
+            // this call returns.
             env_->executor.post(cont_);
         });
         return std::noop_coroutine();
