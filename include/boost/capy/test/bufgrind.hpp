@@ -152,11 +152,9 @@ public:
 
             @param h The awaiting coroutine handle.
 
-            @param env The I/O environment (unused).
-
             @return @p h, so the caller resumes immediately.
         */
-        std::coroutine_handle<> await_suspend(std::coroutine_handle<> h, io_env const* env) const noexcept { (void)env; return h; }
+        std::coroutine_handle<> await_suspend(std::coroutine_handle<> h, io_env const*) const noexcept { return h; }
 
         /** Return the current split and advance to the next.
 
