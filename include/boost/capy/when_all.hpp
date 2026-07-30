@@ -782,8 +782,8 @@ template<IoAwaitableRange R>
 
     @par Await-effects
 
-    Creates one wrapper coroutine per argument, then posts every wrapper
-    to the caller's executor. All children therefore run concurrently,
+    Creates and posts one wrapper coroutine per argument to the caller's
+    executor, in argument order. All children therefore run concurrently,
     each awaited with the caller's executor and frame allocator and with
     a stop token owned by this operation. The overload requires at least
     one awaitable, so there is no empty case.
@@ -809,8 +809,9 @@ template<IoAwaitableRange R>
 
     Each `vi` is the payload the i-th child itself await-returned, even
     when that child or a sibling reported an `ec`. A failed child
-    therefore still contributes its own partial payload. This differs from
-    the range overloads, which discard all payloads once any child fails.
+    therefore still contributes whatever payload it produced. This
+    differs from the range overloads, which discard all payloads once any
+    child fails.
 
     If any child exits via an exception, the first such exception is
     rethrown instead of await-returning, even when a child also reported

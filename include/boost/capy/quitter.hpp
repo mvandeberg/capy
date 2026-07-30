@@ -83,9 +83,9 @@ struct quitter_return_base<void>
     Let `q` be a `quitter<T>`. `co_await q` always suspends the awaiting
     coroutine, then transfers control directly into the quitter's
     coroutine body on the current thread; no executor operation is
-    posted. The caller's executor, stop token, and frame allocator are
-    stored in the quitter and propagated to every `co_await` inside the
-    body.
+    posted. The quitter records the caller's environment (executor, stop
+    token, and frame allocator) by pointer rather than copying it, and
+    propagates it to every `co_await` inside the body.
 
     Unlike @ref task, the stop token is checked at every point where the
     body would resume: before the body's first statement, and again each

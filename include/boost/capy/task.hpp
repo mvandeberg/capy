@@ -73,9 +73,10 @@ struct task_return_base<void>
 
     Let `t` be a `task<T>`. `co_await t` always suspends the awaiting
     coroutine, then transfers control directly into the task's coroutine
-    body on the current thread; no executor operation is posted. The
-    caller's executor, stop token, and frame allocator are stored in the
-    task and propagated to every `co_await` inside the body.
+    body on the current thread; no executor operation is posted. The task
+    records the caller's environment (executor, stop token, and frame
+    allocator) by pointer rather than copying it, and propagates it to
+    every `co_await` inside the body.
 
     The body runs until it returns or exits via an exception, at which
     point control transfers directly back to the awaiting coroutine,

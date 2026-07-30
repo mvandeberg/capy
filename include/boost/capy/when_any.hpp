@@ -880,8 +880,8 @@ template<IoAwaitableRange R>
 
     @par Await-effects
 
-    Creates one wrapper coroutine per argument, then posts every wrapper
-    to the caller's executor. All children therefore run concurrently,
+    Creates and posts one wrapper coroutine per argument to the caller's
+    executor, in argument order. All children therefore run concurrently,
     each awaited with the caller's executor and frame allocator and with
     a stop token owned by this operation. The overload requires at least
     one awaitable, so there is no empty case.
