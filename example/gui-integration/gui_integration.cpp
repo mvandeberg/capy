@@ -44,8 +44,11 @@ void check(bool ok, char const* what)
 {
     if(ok)
         return;
-    std::cerr << "FAILED: " << what << "\n";
-    std::exit(EXIT_FAILURE);
+    std::cerr << "FAILED: " << what << std::endl;
+    // abort() rather than exit(): a failing check can fire on a pool
+    // thread, and exit() would run static destructors alongside the
+    // still-running threads.
+    std::abort();
 }
 // end::check[]
 
@@ -169,8 +172,6 @@ public:
         return std::noop_coroutine();
     }
 
-    // Reads c.h under the queue's lock and keeps nothing else, so the
-    // caller may destroy the continuation as soon as post returns.
     void post(capy::continuation& c) const
     {
         app_->post_to_gui_thread(c.h);
