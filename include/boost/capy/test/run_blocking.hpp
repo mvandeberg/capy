@@ -45,7 +45,10 @@ class blocking_context;
 */
 struct BOOST_CAPY_DECL blocking_executor
 {
-    /// Construct from a context pointer.
+    /** Construct from a context pointer.
+
+        @param ctx The owning execution context.
+    */
     explicit blocking_executor(
         blocking_context* ctx) noexcept
         : ctx_(ctx)
@@ -55,6 +58,10 @@ struct BOOST_CAPY_DECL blocking_executor
     /** Compare two blocking executors for equality.
 
         Two executors are equal if they share the same context.
+
+        @param other The executor to compare against.
+
+        @return `true` if both executors share the same context.
     */
     bool
     operator==(blocking_executor const& other) const noexcept;
@@ -124,6 +131,7 @@ class BOOST_CAPY_DECL blocking_context
     impl* impl_;
 
 public:
+    /// The executor type associated with this context.
     using executor_type = blocking_executor;
 
     /** Construct a blocking context.
@@ -201,10 +209,16 @@ public:
 template<class H1, class H2>
 struct blocking_handler_wrapper
 {
+    /// The context signalled once the handler returns.
     blocking_context* ctx_;
+
+    /// The success and error handlers to forward to.
     detail::handler_pair<H1, H2> handlers_;
 
-    /** Invoke the handler with a non-void result. */
+    /** Invoke the handler with a non-void result.
+
+        @param v The result value to forward to the handler.
+    */
     template<class T>
     void operator()(T&& v)
     {
@@ -235,7 +249,10 @@ struct blocking_handler_wrapper
         ctx_->signal_done();
     }
 
-    /** Invoke the handler with an exception. */
+    /** Invoke the handler with an exception.
+
+        @param ep The exception to forward to the error handler.
+    */
     void operator()(std::exception_ptr ep)
     {
         try
@@ -300,10 +317,33 @@ public:
     {
     }
 
-    run_blocking_wrapper(run_blocking_wrapper const&) = delete;
-    run_blocking_wrapper(run_blocking_wrapper&&) = delete;
-    run_blocking_wrapper& operator=(run_blocking_wrapper const&) = delete;
-    run_blocking_wrapper& operator=(run_blocking_wrapper&&) = delete;
+    /** Copy construction is disabled; the wrapper is single-use.
+
+        @param other The wrapper that would be copied.
+    */
+    run_blocking_wrapper(run_blocking_wrapper const& other) = delete;
+
+    /** Move construction is disabled; the wrapper is single-use.
+
+        @param other The wrapper that would be moved from.
+    */
+    run_blocking_wrapper(run_blocking_wrapper&& other) = delete;
+
+    /** Copy assignment is disabled; the wrapper is single-use.
+
+        @param other The wrapper that would be assigned from.
+
+        @return A reference to `*this`.
+    */
+    run_blocking_wrapper& operator=(run_blocking_wrapper const& other) = delete;
+
+    /** Move assignment is disabled; the wrapper is single-use.
+
+        @param other The wrapper that would be moved from.
+
+        @return A reference to `*this`.
+    */
+    run_blocking_wrapper& operator=(run_blocking_wrapper&& other) = delete;
 
     /** Launch the task and block until completion.
 

@@ -165,10 +165,33 @@ class stream
     make_stream_pair(fuse);
 
 public:
-    stream(stream const&) = delete;
-    stream& operator=(stream const&) = delete;
-    stream(stream&&) = default;
-    stream& operator=(stream&&) = default;
+    /** Copy construction is disabled; a stream end is move-only.
+
+        @param other The stream end that would be copied.
+    */
+    stream(stream const& other) = delete;
+
+    /** Copy assignment is disabled; a stream end is move-only.
+
+        @param other The stream end that would be assigned from.
+
+        @return A reference to `*this`.
+    */
+    stream& operator=(stream const& other) = delete;
+
+    /** Move constructor.
+
+        @param other The stream end to move from.
+    */
+    stream(stream&& other) = default;
+
+    /** Move assignment.
+
+        @param other The stream end to move from.
+
+        @return A reference to `*this`.
+    */
+    stream& operator=(stream&& other) = default;
 
     /** Signal end-of-stream to the peer.
 

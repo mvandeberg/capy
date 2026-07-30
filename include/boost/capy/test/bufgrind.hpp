@@ -133,14 +133,35 @@ public:
     }
 
     /** Awaitable returned by @ref next.
+
+        Computes the current split synchronously, so awaiting it
+        never suspends the calling coroutine.
     */
     struct next_awaitable
     {
+        /// The grinder that produced this awaitable.
         bufgrind* self_;
 
-        bool await_ready() const noexcept { return true; }
-        std::coroutine_handle<> await_suspend(std::coroutine_handle<> h, io_env const*) const noexcept { return h; }
+        /** Report whether the awaitable is ready.
 
+            @return `true` always; the split is available without suspending.
+        */
+        bool await_ready() const noexcept { return true; }
+
+        /** Resume the caller inline without suspending.
+
+            @param h The awaiting coroutine handle.
+
+            @param env The I/O environment (unused).
+
+            @return @p h, so the caller resumes immediately.
+        */
+        std::coroutine_handle<> await_suspend(std::coroutine_handle<> h, io_env const* env) const noexcept { (void)env; return h; }
+
+        /** Return the current split and advance to the next.
+
+            @return The `(b1, b2)` split at the current position.
+        */
         split_type
         await_resume()
         {

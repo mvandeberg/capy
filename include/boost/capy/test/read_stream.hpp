@@ -103,7 +103,10 @@ public:
         pos_ = 0;
     }
 
-    /// Return the number of bytes available for reading.
+    /** Return the number of bytes available for reading.
+
+        @return The number of provided bytes not yet consumed.
+    */
     std::size_t
     available() const noexcept
     {

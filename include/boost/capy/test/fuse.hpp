@@ -276,7 +276,10 @@ public:
         /// True if the test completed without a failure.
         bool success = true;
 
-        /// Return @ref success.
+        /** Return whether the test completed without a failure.
+
+            @return @ref success.
+        */
         constexpr explicit operator bool() const noexcept
         {
             return success;
@@ -841,6 +844,10 @@ public:
         });
         @endcode
 
+        @param fn The test function to run under failure injection.
+
+        @return The @ref result of the armed run.
+
         @see armed
     */
     template<class F>
@@ -851,6 +858,10 @@ public:
     }
 
     /** Alias for @ref armed (coroutine overload).
+
+        @param fn The test coroutine factory to run under failure injection.
+
+        @return The @ref result of the armed run.
 
         @see armed
     */

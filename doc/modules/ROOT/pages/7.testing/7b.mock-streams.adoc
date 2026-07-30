@@ -16,9 +16,9 @@ partial-transfer paths.
 
 == read_stream
 
-`read_stream` implements the `ReadStream` concept. Test code stages bytes
+cpp:test::read_stream[] implements the `ReadStream` concept. Test code stages bytes
 via `provide()`, then the system under test (or the test body) calls
-`read_some()` to consume them. The attached `fuse` injects errors at
+`read_some()` to consume them. The attached cpp:test::fuse[] injects errors at
 every read call, exercising the caller's error-handling paths. Because
 `fuse` copies share state (see
 xref:7.testing/7a.drivers.adoc#_shared_state_across_copies[Shared State Across Copies]),
@@ -80,7 +80,7 @@ include::example$snippets/7b_mock_streams.cpp[tag=read_stream_eof,indent=0]
 
 == write_stream
 
-`write_stream` implements the `WriteStream` concept. The system under
+cpp:test::write_stream[] implements the `WriteStream` concept. The system under
 test calls `write_some()` and the test inspects what was written via
 `data()`. Test code may also call `expect()` to register the data it
 anticipates; any mismatch between written bytes and that prefix causes
@@ -147,8 +147,8 @@ include::example$snippets/7b_mock_streams.cpp[tag=write_stream_expect,indent=0]
 
 == stream
 
-`stream` is a connected bidirectional test double. Create a pair with
-`make_stream_pair(f)`. Bytes written to one end become readable on the
+cpp:test::stream[] is a connected bidirectional test double. Create a pair with
+cpp:test::make_stream_pair[]`(f)`. Bytes written to one end become readable on the
 other. If `read_some` is called on an end with no buffered data, the
 calling coroutine suspends until the peer calls `write_some`. This
 makes `stream` useful for testing client/server code without real

@@ -96,7 +96,10 @@ public:
     {
     }
 
-    /// Return the written data as a string view.
+    /** Return the written data as a string view.
+
+        @return A view of bytes written but not yet matched by @ref expect.
+    */
     std::string_view
     data() const noexcept
     {
@@ -120,7 +123,10 @@ public:
         return consume_match_();
     }
 
-    /// Return the number of bytes written.
+    /** Return the number of bytes written.
+
+        @return The number of bytes written but not yet matched by @ref expect.
+    */
     std::size_t
     size() const noexcept
     {
