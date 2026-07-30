@@ -438,31 +438,31 @@ public:
 
     // Non-copyable, non-movable (must be used immediately)
 
-    /** Copying is not permitted; the wrapper must be used immediately.
+    /** Copy construction is disabled; the wrapper must be used immediately.
 
-        @param other The wrapper to copy.
+        @param other The wrapper that would be copied.
     */
     run_async_wrapper(run_async_wrapper const& other) = delete;
 
-    /** Moving is not permitted; the wrapper must be used immediately.
+    /** Move construction is disabled; the wrapper must be used immediately.
 
-        @param other The wrapper to move from.
+        @param other The wrapper that would be moved from.
     */
     run_async_wrapper(run_async_wrapper&& other) = delete;
 
-    /** Copy assignment is not permitted.
+    /** Copy assignment is disabled; the wrapper must be used immediately.
 
-        @param other The wrapper to copy.
+        @param other The wrapper that would be assigned from.
 
-        @return `*this`.
+        @return A reference to `*this`.
     */
     run_async_wrapper& operator=(run_async_wrapper const& other) = delete;
 
-    /** Move assignment is not permitted.
+    /** Move assignment is disabled; the wrapper must be used immediately.
 
-        @param other The wrapper to move from.
+        @param other The wrapper that would be moved from.
 
-        @return `*this`.
+        @return A reference to `*this`.
     */
     run_async_wrapper& operator=(run_async_wrapper&& other) = delete;
 

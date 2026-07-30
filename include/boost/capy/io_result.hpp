@@ -112,7 +112,8 @@ struct [[nodiscard]] io_result
         @tparam I The element index. Must be less than
             `1 + sizeof...(Ts)`.
 
-        @return The element, moved out of the result.
+        @return An rvalue reference to the element, suitable for moving
+            out of the result.
     */
     template<std::size_t I>
     decltype(auto) get() && noexcept
@@ -125,7 +126,8 @@ struct [[nodiscard]] io_result
 
 /** Return the `I`-th element of the tuple protocol.
 
-    @tparam I The element index.
+    @tparam I The element index. Must be less than
+        `1 + sizeof...(Ts)`.
 
     @param r The result to access.
 
@@ -139,7 +141,8 @@ decltype(auto) get(io_result<Ts...>& r) noexcept
 
 /** Return the `I`-th element of the tuple protocol.
 
-    @tparam I The element index.
+    @tparam I The element index. Must be less than
+        `1 + sizeof...(Ts)`.
 
     @param r The result to access.
 
@@ -153,11 +156,13 @@ decltype(auto) get(io_result<Ts...> const& r) noexcept
 
 /** Return the `I`-th element of the tuple protocol, moved.
 
-    @tparam I The element index.
+    @tparam I The element index. Must be less than
+        `1 + sizeof...(Ts)`.
 
     @param r The result to access.
 
-    @return The element, moved out of `r`.
+    @return An rvalue reference to the element, suitable for moving out
+        of `r`.
 */
 template<std::size_t I, class... Ts>
 decltype(auto) get(io_result<Ts...>&& r) noexcept

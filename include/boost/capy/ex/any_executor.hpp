@@ -178,7 +178,7 @@ public:
 
         @param other The executor to copy.
 
-        @return `*this`.
+        @return A reference to `*this`.
 
         @par Postconditions
         @li `*this == other`

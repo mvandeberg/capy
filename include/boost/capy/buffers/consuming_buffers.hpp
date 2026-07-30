@@ -78,13 +78,13 @@ public:
 
     /** Reject construction from a temporary (the view would dangle).
 
-        @param s The sequence to consume.
+        @param s The sequence that would be consumed.
     */
     consuming_buffers(Seq const&& s) = delete;
 
     /** Return the remaining (unconsumed) bytes as a buffer sequence.
 
-        @return A `slice_of` view over the bytes not yet consumed.
+        @return The bytes not yet consumed, as a buffer sequence.
     */
     detail::slice_of<Seq>
     data() const noexcept

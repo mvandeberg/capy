@@ -136,7 +136,7 @@ public:
 
         @param other The reference to copy.
 
-        @return `*this`.
+        @return A reference to `*this`.
     */
     executor_ref& operator=(executor_ref const& other) = default;
 

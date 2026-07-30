@@ -129,26 +129,41 @@ public:
         Creates a strand that shares serialization state with
         the original. Coroutines dispatched through either strand
         will be serialized with respect to each other.
+
+        @param other The strand to copy.
     */
-    strand(strand const&) = default;
+    strand(strand const& other) = default;
 
     /** Construct by moving.
 
+        @param other The strand to move from.
+
         @note A moved-from strand is only safe to destroy
             or reassign.
     */
-    strand(strand&&) = default;
+    strand(strand&& other) = default;
 
     /** Assign by copying.
+
+        Shares serialization state with `other`, as the copy
+        constructor does.
+
+        @param other The strand to copy.
+
+        @return A reference to `*this`.
     */
-    strand& operator=(strand const&) = default;
+    strand& operator=(strand const& other) = default;
 
     /** Assign by moving.
 
+        @param other The strand to move from.
+
+        @return A reference to `*this`.
+
         @note A moved-from strand is only safe to destroy
             or reassign.
     */
-    strand& operator=(strand&&) = default;
+    strand& operator=(strand&& other) = default;
 
     /** Return the underlying executor.
 

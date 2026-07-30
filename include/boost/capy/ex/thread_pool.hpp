@@ -89,17 +89,17 @@ public:
         std::size_t num_threads = 0,
         std::string_view thread_name_prefix = "capy-pool-");
 
-    /** Copying is not permitted; a pool owns its worker threads.
+    /** Copy construction is disabled; a pool owns its worker threads.
 
-        @param other The pool to copy.
+        @param other The pool that would be copied.
     */
     thread_pool(thread_pool const& other) = delete;
 
-    /** Copy assignment is not permitted.
+    /** Copy assignment is disabled; a pool owns its worker threads.
 
-        @param other The pool to copy.
+        @param other The pool that would be assigned from.
 
-        @return `*this`.
+        @return A reference to `*this`.
     */
     thread_pool& operator=(thread_pool const& other) = delete;
 

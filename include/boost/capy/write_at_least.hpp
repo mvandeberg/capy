@@ -84,8 +84,8 @@ namespace capy {
     @param n The minimum number of bytes to write. Must not exceed
     `buffer_size(buffers)`.
 
-    @return A task yielding `io_result<std::size_t>` destructuring as
-    `[ec, count]`, where `count` is the number of bytes written.
+    @return A task yielding `io_result<std::size_t>` whose second element
+    is the number of bytes written.
 
     @par Remarks
     Supports _IoAwaitable cancellation_.

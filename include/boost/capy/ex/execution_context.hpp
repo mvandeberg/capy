@@ -191,17 +191,17 @@ public:
 
     //------------------------------------------------
 
-    /** Copying is not permitted; a context owns its services.
+    /** Copy construction is disabled; a context owns its services.
 
-        @param other The context to copy.
+        @param other The context that would be copied.
     */
     execution_context(execution_context const& other) = delete;
 
-    /** Copy assignment is not permitted.
+    /** Copy assignment is disabled; a context owns its services.
 
-        @param other The context to copy.
+        @param other The context that would be assigned from.
 
-        @return `*this`.
+        @return A reference to `*this`.
     */
     execution_context& operator=(execution_context const& other) = delete;
 

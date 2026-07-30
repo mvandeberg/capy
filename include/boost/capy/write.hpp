@@ -73,8 +73,8 @@ namespace capy {
     sequence represented by `buffers` ends
     before the coroutine finishes, the behavior is undefined.
 
-    @return A task yielding `io_result<std::size_t>` destructuring as
-    `[ec, n]`, where `n` is the number of bytes written.
+    @return A task yielding `io_result<std::size_t>` whose second element
+    is the number of bytes written.
 
     @par Remarks
 

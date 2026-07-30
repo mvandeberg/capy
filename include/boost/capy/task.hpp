@@ -435,8 +435,19 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
         h_ = nullptr;
     }
 
-    task(task const&) = delete;
-    task& operator=(task const&) = delete;
+    /** Copy construction is disabled; a task uniquely owns its frame.
+
+        @param other The task that would be copied.
+    */
+    task(task const& other) = delete;
+
+    /** Copy assignment is disabled; a task uniquely owns its frame.
+
+        @param other The task that would be assigned from.
+
+        @return A reference to `*this`.
+    */
+    task& operator=(task const& other) = delete;
 
     /** Construct by moving, transferring ownership of the frame.
 

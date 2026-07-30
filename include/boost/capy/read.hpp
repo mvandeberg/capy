@@ -65,9 +65,8 @@ namespace capy {
     @param buffers The buffer sequence to fill. If the lifetime of the buffer
     sequence represented by `buffers` ends before the coroutine finishes, the behavior is undefined.
 
-    @return A task yielding `io_result<std::size_t>` destructuring as
-    `[ec, n]`, where `n` is the number of bytes read.
-
+    @return A task yielding `io_result<std::size_t>` whose second element
+    is the number of bytes read.
 
     @par Remarks
     Supports _IoAwaitable cancellation_.

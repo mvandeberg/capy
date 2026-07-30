@@ -55,7 +55,7 @@ struct const_buffer_archetype_
 
         @param other The archetype to copy.
 
-        @return `*this`.
+        @return A reference to `*this`.
     */
     const_buffer_archetype_& operator=(const_buffer_archetype_ const& other) = default;
 
@@ -63,7 +63,7 @@ struct const_buffer_archetype_
 
         @param other The archetype to move from.
 
-        @return `*this`.
+        @return A reference to `*this`.
     */
     const_buffer_archetype_& operator=(const_buffer_archetype_&& other) = default;
 
@@ -120,7 +120,7 @@ struct mutable_buffer_archetype_
 
         @param other The archetype to copy.
 
-        @return `*this`.
+        @return A reference to `*this`.
     */
     mutable_buffer_archetype_& operator=(mutable_buffer_archetype_ const& other) = default;
 
@@ -128,7 +128,7 @@ struct mutable_buffer_archetype_
 
         @param other The archetype to move from.
 
-        @return `*this`.
+        @return A reference to `*this`.
     */
     mutable_buffer_archetype_& operator=(mutable_buffer_archetype_&& other) = default;
 

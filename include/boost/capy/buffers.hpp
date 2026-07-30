@@ -62,7 +62,7 @@ public:
 
         @param other The buffer to copy.
 
-        @return `*this`.
+        @return A reference to `*this`.
     */
     mutable_buffer& operator=(
         mutable_buffer const& other) = default;
@@ -110,7 +110,7 @@ public:
 
         @param n Bytes to skip. Clamped to `size()`.
 
-        @return `*this`.
+        @return A reference to `*this`.
     */
     mutable_buffer&
     operator+=(std::size_t n) noexcept
@@ -151,7 +151,7 @@ public:
 
         @param other The buffer to copy.
 
-        @return `*this`.
+        @return A reference to `*this`.
     */
     const_buffer& operator=(
         const_buffer const& other) = default;
@@ -210,7 +210,7 @@ public:
 
         @param n Bytes to skip. Clamped to `size()`.
 
-        @return `*this`.
+        @return A reference to `*this`.
     */
     const_buffer&
     operator+=(std::size_t n) noexcept

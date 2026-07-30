@@ -111,17 +111,17 @@ public:
 
         The awaitable caches are per-instance and cannot be shared.
 
-        @param other The wrapper to copy.
+        @param other The wrapper that would be copied.
     */
     any_stream(any_stream const& other) = delete;
 
-    /** Copy assignment is not permitted.
+    /** Copy assignment is disabled.
 
         The awaitable caches are per-instance and cannot be shared.
 
-        @param other The wrapper to copy.
+        @param other The wrapper that would be assigned from.
 
-        @return `*this`.
+        @return A reference to `*this`.
     */
     any_stream& operator=(any_stream const& other) = delete;
 
