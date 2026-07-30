@@ -249,9 +249,12 @@ public:
 
             Otherwise it stores `h` and `env->executor`, links itself into
             the event's wait queue, and registers a stop callback on
-            `env->stop_token`. Whichever of `set()` and that callback runs
-            first posts `h` through the stored executor; the other does
-            nothing.
+            `env->stop_token`. Exactly one of `set()` and that callback posts
+            `h` through the stored executor, whichever claims the waiter
+            first. Only the post is subject to that race: a losing stop
+            callback does nothing at all, but `set()` unlinks every waiter it
+            pops whether it claims it or not. That is why @ref await_resume
+            unlinks a canceled waiter only when it is still linked.
 
             @param h The awaiting coroutine, resumed when the event is set
             or the wait is canceled.

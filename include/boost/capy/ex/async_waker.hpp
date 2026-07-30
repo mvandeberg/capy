@@ -262,6 +262,11 @@ public:
 
         /** Consume a latched token, completing synchronously.
 
+            This is not a pure query: the check is a compare-exchange that
+            takes the token. Calling it twice is not idempotent: the second
+            call reports `false`, because the first already consumed the
+            wakeup.
+
             @return `true` if a pending wakeup token was latched and has now
             been consumed, in which case the awaiting coroutine does not
             suspend; otherwise `false`.
