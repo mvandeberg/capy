@@ -58,6 +58,14 @@ warn-unnamed-param: true
 warn-broken-ref: true
 warn-if-doc-error: true
 
+# Two further MrDocs 0.8.0 limitations stay grandfathered in
+# doc/lint/baseline.json instead of being fixed here. The reasoning lives next
+# to the affected code so it is findable from either end:
+#   include/boost/capy/buffers/front.hpp -- the six buffer CPO
+#     "variable is undocumented" findings
+#   include/boost/capy/ex/run.hpp -- "run: Documented parameter 'alloc'
+#     does not exist"
+
 # Automation
 auto-function-metadata: false
 

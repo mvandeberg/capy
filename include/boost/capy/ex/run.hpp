@@ -742,6 +742,14 @@ run(std::pmr::memory_resource* mr)
     return detail::run_wrapper<true, std::pmr::memory_resource*>{mr};
 }
 
+// MrDocs 0.8.0 reports `run: Documented parameter 'alloc' does not exist` and
+// pins it to the run(Ex) overload near the top of this namespace:
+// `detail::Allocator` is implementation-defined, so the constraint is erased
+// and the two single-parameter `run` overloads collapse onto one page. The
+// finding is grandfathered in doc/lint/baseline.json. Deleting the `@param
+// alloc` below clears it and produces no replacement finding, because MrDocs
+// has no model of this overload at all -- so it would silently drop real
+// documentation. Keep the `@param`.
 /** Run a task with a custom standard allocator.
 
     The task inherits the caller's executor. The allocator is used
