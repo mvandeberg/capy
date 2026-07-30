@@ -79,7 +79,21 @@ namespace capy {
 */
 struct continuation
 {
+    /** The coroutine handle to resume.
+
+        Set by the code that creates or reuses the continuation, and read
+        by the executor when it dequeues it.
+    */
     std::coroutine_handle<> h;
+
+    /** Pointer-sized scratch slot, available only before submission.
+
+        Authors of awaitable algorithms may commandeer it for their own
+        node links until the continuation is submitted to an executor. On
+        submission the executor clobbers it to link the continuation into
+        its own queue, after which the value carries no meaning. See the
+        class description for the full contract.
+    */
     void* reserved = nullptr;
 };
 

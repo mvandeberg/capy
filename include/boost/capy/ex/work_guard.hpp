@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2025 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2026 Michael Vandeberg
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -158,7 +159,17 @@ public:
             ex_.on_work_finished();
     }
 
-    work_guard& operator=(work_guard const&) = delete;
+    /** Copy assignment is disabled.
+
+        A guard takes its work reference at construction and releases it at
+        destruction or through @ref reset. No operation rebinds an existing
+        guard to a different executor.
+
+        @param other The work guard that would be assigned from.
+
+        @return A reference to `*this`.
+    */
+    work_guard& operator=(work_guard const& other) = delete;
 
     /** Return the underlying executor by reference.
 
