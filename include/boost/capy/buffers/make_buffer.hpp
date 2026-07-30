@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2023 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2026 Michael Vandeberg
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -239,6 +240,12 @@ concept const_contiguous_range =
     whether passed as an lvalue or a temporary. The returned buffer
     refers to the range's storage, which must outlive the buffer.
     Its size, in bytes, is `size() * sizeof(element)`.
+
+    @param data The range whose storage is referenced. It must
+        outlive the returned buffer.
+
+    @return A buffer of size `size() * sizeof(element)` referring to
+        the range's storage.
 */
 template<detail::mutable_contiguous_range T>
 [[nodiscard]]
@@ -282,6 +289,12 @@ make_buffer(
     string literals. The returned buffer refers to the range's
     storage, which must outlive the buffer. Its size, in bytes,
     is `size() * sizeof(element)`.
+
+    @param data The range whose storage is referenced. It must
+        outlive the returned buffer.
+
+    @return A buffer of size `size() * sizeof(element)` referring to
+        the range's storage.
 */
 template<detail::non_buffer_contiguous_range T>
 [[nodiscard]]

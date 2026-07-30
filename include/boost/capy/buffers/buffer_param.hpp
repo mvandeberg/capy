@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2025 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2026 Michael Vandeberg
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -243,7 +244,10 @@ public:
     }
 };
 
-// CTAD deduction guide
+/** Deduce the sequence type from the constructor argument.
+
+    @tparam BS The buffer sequence type.
+*/
 template<class BS>
 buffer_param(BS const&) -> buffer_param<BS>;
 

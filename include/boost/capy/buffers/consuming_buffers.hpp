@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2026 Steve Gerbino
+// Copyright (c) 2026 Michael Vandeberg
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -75,10 +76,16 @@ public:
     {
     }
 
-    /// Reject construction from a temporary (the view would dangle).
-    consuming_buffers(Seq const&&) = delete;
+    /** Reject construction from a temporary (the view would dangle).
 
-    /// Return the remaining (unconsumed) bytes as a buffer sequence.
+        @param s The sequence to consume.
+    */
+    consuming_buffers(Seq const&& s) = delete;
+
+    /** Return the remaining (unconsumed) bytes as a buffer sequence.
+
+        @return A `slice_of` view over the bytes not yet consumed.
+    */
     detail::slice_of<Seq>
     data() const noexcept
     {
@@ -110,7 +117,10 @@ public:
     }
 };
 
-// CTAD: deduce the sequence type from the constructor argument.
+/** Deduce the sequence type from the constructor argument.
+
+    @tparam Seq The buffer sequence type.
+*/
 template<class Seq>
 consuming_buffers(Seq const&) -> consuming_buffers<Seq>;
 

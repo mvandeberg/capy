@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2025 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2026 Michael Vandeberg
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -50,13 +51,21 @@ public:
     /// Construct an empty buffer.
     mutable_buffer() = default;
 
-    /// Construct a copy.
-    mutable_buffer(
-        mutable_buffer const&) = default;
+    /** Construct a copy.
 
-    /// Assign by copying.
+        @param other The buffer to copy.
+    */
+    mutable_buffer(
+        mutable_buffer const& other) = default;
+
+    /** Assign by copying.
+
+        @param other The buffer to copy.
+
+        @return `*this`.
+    */
     mutable_buffer& operator=(
-        mutable_buffer const&) = default;
+        mutable_buffer const& other) = default;
 
     /** Construct from a pointer and size.
 
@@ -64,6 +73,10 @@ public:
         cast, since the buffer represents a raw, untyped writable
         region. Stored internally as `unsigned char*` for byte-wise
         pointer arithmetic (see `operator+=`).
+
+        @param data A pointer to the first byte of the region.
+
+        @param size The size of the region, in bytes.
     */
     constexpr mutable_buffer(
         void* data, std::size_t size) noexcept
@@ -76,13 +89,18 @@ public:
 
         Returns `void*`, symmetric with the constructor, so the
         caller can reinterpret the raw region as whatever type it needs.
+
+        @return A pointer to the first byte of the region.
     */
     constexpr void* data() const noexcept
     {
         return p_;
     }
 
-    /// Return the size in bytes.
+    /** Return the size in bytes.
+
+        @return The size of the region, in bytes.
+    */
     constexpr std::size_t size() const noexcept
     {
         return n_;
@@ -91,6 +109,8 @@ public:
     /** Advance the buffer start, shrinking the region.
 
         @param n Bytes to skip. Clamped to `size()`.
+
+        @return `*this`.
     */
     mutable_buffer&
     operator+=(std::size_t n) noexcept
@@ -121,10 +141,18 @@ public:
     /// Construct an empty buffer.
     const_buffer() = default;
 
-    /// Construct a copy.
-    const_buffer(const_buffer const&) = default;
+    /** Construct a copy.
 
-    /// Assign by copying.
+        @param other The buffer to copy.
+    */
+    const_buffer(const_buffer const& other) = default;
+
+    /** Assign by copying.
+
+        @param other The buffer to copy.
+
+        @return `*this`.
+    */
     const_buffer& operator=(
         const_buffer const& other) = default;
 
@@ -134,6 +162,10 @@ public:
         without a cast, since the buffer represents a raw, untyped
         read-only region. Stored internally as `unsigned char const*`
         for byte-wise pointer arithmetic (see `operator+=`).
+
+        @param data A pointer to the first byte of the region.
+
+        @param size The size of the region, in bytes.
     */
     constexpr const_buffer(
         void const* data, std::size_t size) noexcept
@@ -142,7 +174,10 @@ public:
     {
     }
 
-    /// Construct from mutable_buffer.
+    /** Construct from mutable_buffer.
+
+        @param b The writable buffer whose region is referenced.
+    */
     constexpr const_buffer(
         mutable_buffer const& b) noexcept
         : p_(static_cast<unsigned char const*>(b.data()))
@@ -154,13 +189,18 @@ public:
 
         Returns `void const*`, symmetric with the constructor, so the
         caller can reinterpret the raw region as whatever type it needs.
+
+        @return A pointer to the first byte of the region.
     */
     constexpr void const* data() const noexcept
     {
         return p_;
     }
 
-    /// Return the size in bytes.
+    /** Return the size in bytes.
+
+        @return The size of the region, in bytes.
+    */
     constexpr std::size_t size() const noexcept
     {
         return n_;
@@ -169,6 +209,8 @@ public:
     /** Advance the buffer start, shrinking the region.
 
         @param n Bytes to skip. Clamped to `size()`.
+
+        @return `*this`.
     */
     const_buffer&
     operator+=(std::size_t n) noexcept
@@ -421,6 +463,10 @@ length_impl(It first, It last, long)
     Counts the number of individual buffer objects, not bytes.
     For a single buffer, returns 1. For a range, returns the
     distance from `begin` to `end`.
+
+    @param bs The buffer sequence.
+
+    @return The number of buffers in `bs`.
 
     @see buffer_size
 */

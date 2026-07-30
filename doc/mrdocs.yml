@@ -17,6 +17,13 @@ exclude-symbols:
   - 'boost::capy::test::blocking_handler_wrapper'
   - 'boost::capy::test::run_blocking_wrapper'
   - 'boost::capy::test::bufgrind::next_awaitable'
+# Private members of buffer_param's anonymous union. `inaccessible-members:
+# never` does not reach variant members of an anonymous union in this MrDocs
+# build, so these two private fields leak into the reference as "[variant
+# member]" rows. They are storage internals, not API. The `**` spans the
+# unnamed union's own scope, which sits between the class and the members.
+  - 'boost::capy::buffer_param::**::dummy_'
+  - 'boost::capy::buffer_param::**::arr_'
 implementation-defined:
   - 'boost::capy::detail'
   - 'boost::capy::*::detail'
