@@ -7,7 +7,8 @@
 // Each check contributes a `count` and a `fingerprints` array (stable
 // per-finding strings) so a later comparator (check-no-new-violations.mjs)
 // can diff a fresh run against this snapshot and flag genuinely new
-// findings, independent of how many pre-existing ones remain.
+// findings, independent of how many pre-existing ones remain. Fingerprints
+// deliberately carry no line number — see occurrenceKey() below.
 //
 // Usage: node doc/lint/baseline.mjs [--skip-a11y] [outFile]
 //   outFile defaults to doc/lint/baseline.json; check-no-new-violations.mjs
@@ -30,6 +31,30 @@ function run(cmd, args, opts = {}) {
   return r;
 }
 
+// Fingerprints must survive line shifts. Keying on the reported line number made
+// every finding BELOW an insertion point look new: commit df68f9bc, a comment-only
+// docstring addition, renamed 27 grandfathered MrDocs findings and red-lined the
+// blocking MrDocs-no-warnings gate without introducing a single warning. So the
+// line number is replaced by a per-group occurrence index: the Nth finding sharing
+// the same (head, tail) pair is keyed `#N`. That keeps multiplicity — the same
+// warning appearing one MORE time in the same file is still new — while making the
+// key independent of where in the file it appears.
+//
+// The index goes exactly where the line number was, mid-key. Do not move it to the
+// tail: .github/workflows/docs.yml gates on `doc_lint:^(A1|A6|B2|D2):` (head-anchored)
+// and `vale_adoc:Capy\.PartHeadings$` (TAIL-anchored), and the regexes are tested
+// against the whole fingerprint, so a trailing index would make the PartHeadings
+// gate match nothing and fail open.
+//
+// The counter is per-base-key, never a raw iteration counter, so the resulting key
+// multiset is {base:#1 .. base:#k} whatever order the findings arrive in.
+function occurrenceKey(seen, head, tail) {
+  const base = `${head}\u0000${tail}`; // NUL separator: neither part can contain it
+  const n = (seen.get(base) ?? 0) + 1;
+  seen.set(base, n);
+  return `${head}:#${n}:${tail}`;
+}
+
 function valeFingerprints(target) {
   const r = run('vale', ['--output=JSON', target], { cwd: DOC_DIR });
   if (r.error) {
@@ -49,8 +74,9 @@ function valeFingerprints(target) {
     return { count: 0, skipped: true, reason: `vale on '${target}' did not produce findings (exit ${r.status}): ${tail}`, fingerprints: [] };
   }
   const fingerprints = [];
+  const seen = new Map();
   for (const [file, alerts] of Object.entries(parsed)) {
-    for (const a of alerts) fingerprints.push(`${path.relative(DOC_DIR, file)}:${a.Line}:${a.Check}`);
+    for (const a of alerts) fingerprints.push(occurrenceKey(seen, path.relative(DOC_DIR, file), a.Check));
   }
   return { count: fingerprints.length, fingerprints: fingerprints.sort() };
 }
@@ -59,8 +85,9 @@ function docLintFingerprints() {
   const r = run('node', [path.join(SCRIPT_DIR, 'doc-lint.mjs')]);
   const parsed = JSON.parse(r.stdout || '{"summary":{},"findings":{}}');
   const fingerprints = [];
+  const seen = new Map();
   for (const [check, items] of Object.entries(parsed.findings || {})) {
-    for (const it of items) fingerprints.push(`${check}:${it.file}:${it.line ?? ''}:${it.message}`);
+    for (const it of items) fingerprints.push(occurrenceKey(seen, `${check}:${it.file}`, it.message));
   }
   return { count: fingerprints.length, byRule: parsed.summary, fingerprints: fingerprints.sort() };
 }
@@ -70,7 +97,8 @@ function mrdocsFingerprints() {
   let parsed = {};
   try { parsed = JSON.parse(r.stdout || '{}'); } catch { /* fall through */ }
   if (parsed.error) return { count: 0, skipped: true, reason: parsed.error, fingerprints: [] };
-  const fingerprints = (parsed.findings || []).map((f) => `${f.file ?? '?'}:${f.line ?? ''}:${f.message}`);
+  const seen = new Map();
+  const fingerprints = (parsed.findings || []).map((f) => occurrenceKey(seen, f.file ?? '?', f.message));
   return { count: fingerprints.length, fingerprints: fingerprints.sort() };
 }
 
@@ -101,7 +129,9 @@ const baseline = {
   generatedAt: new Date().toISOString(),
   note: 'Snapshot of current violations (Task 2, Style Guide Part F.0). Non-blocking: ' +
         'this records the backlog so a future comparator can flag NEW findings without ' +
-        'failing on the ones already known about.',
+        'failing on the ones already known about. Fingerprints are line-insensitive: ' +
+        'the `#N` component is the Nth occurrence of that (file, message) pair, NOT a ' +
+        'line number, so inserting text above a finding does not rename it.',
   checks: Object.fromEntries(Object.entries(results).map(([k, v]) => [k, {
     count: v.count, skipped: v.skipped || false, reason: v.reason,
     byRule: v.byRule, contrastCount: v.contrastCount,
