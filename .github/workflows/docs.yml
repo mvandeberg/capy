@@ -30,6 +30,15 @@ on:
       - '*.adoc'
       - 'README.adoc'
       - '.github/workflows/docs.yml'
+  # Manual trigger, for authoring a replacement doc/lint/baseline.json in the CI
+  # environment — see the "Baseline reseed" steps at the end of the antora job.
+  # A reseed REWRITES the reference point of the blocking doc-quality gate, so it
+  # must never happen on push or pull_request: an automatic reseed would absorb
+  # real regressions into the grandfathered backlog, which is precisely what the
+  # gate exists to prevent. workflow_dispatch is the only trigger that reaches
+  # those steps (they are additionally guarded on github.event_name), and they
+  # only upload an artifact for a human to review and commit.
+  workflow_dispatch:
 
 jobs:
   antora:
@@ -231,3 +240,84 @@ jobs:
             --gate 'doc_lint:^(A1|A6|B2|D2):' \
             --gate 'vale_adoc:Capy\.PartHeadings$' \
             --gate 'mrdocs_warnings:.*'
+
+      # --- Baseline reseed (workflow_dispatch only) ---------------------------
+      # doc/lint/baseline.json is the gate's reference point: anything in it is
+      # grandfathered. It goes stale as the backlog is worked down (a fix removes
+      # findings but not their baseline entries), and a stale-high baseline
+      # grandfathers findings that no longer exist — so they can be reintroduced
+      # and the gate stays green. Retiring them needs a regenerated baseline.
+      #
+      # Regenerating on a developer machine is NOT safe: a local run differs from
+      # a CI run by hundreds of fingerprints (measured: 297 — a different MrDocs
+      # 0.8.0 build hash, chromium vs google-chrome, file-processing order), and
+      # committing those differences would grandfather environment drift as if it
+      # were the real backlog. So the candidate is authored HERE, by the same job,
+      # on the same runner image, with the same PATH (Ruby asciidoctor for Vale's
+      # .adoc scope, doc/node_modules/.bin, the RUNNER_TEMP vale binary) and the
+      # same PA11Y_CHROME_PATH the blocking gate above just used. Reusing the gate's
+      # own job — rather than a second job that re-creates its setup — is
+      # deliberate: an imitated environment is exactly the bug this avoids, and it
+      # cannot drift from the gate's environment because it IS the gate's
+      # environment.
+      #
+      # Two safety properties of the ordering and paths below:
+      #   * these steps run AFTER the blocking gate, and
+      #   * the candidate is written to RUNNER_TEMP, never to the checked-out
+      #     doc/lint/baseline.json,
+      # so the gate in this same run still compares against the COMMITTED
+      # baseline. A candidate that overwrote it first would make the gate compare
+      # a run against itself and pass unconditionally.
+      #
+      # The job never commits or pushes. It uploads a candidate for review; a
+      # human reads the diff and commits it. Maintainer procedure, including how
+      # to read the report and when NOT to reseed: doc/lint/README.md.
+      - name: Baseline reseed - regenerate a candidate in the CI environment
+        if: always() && github.event_name == 'workflow_dispatch'
+        working-directory: boost-root/libs/capy/doc
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/baseline-candidate"
+          node lint/baseline.mjs "$RUNNER_TEMP/baseline-candidate/baseline.json"
+
+      # Reports per-check counts before/after and, per check and rule, which
+      # fingerprints the candidate would ADD (grandfather) and REMOVE (retire).
+      # The gate spec passed here is the same one the blocking step above uses:
+      # any ADDED fingerprint matching it is a finding a reseed would silently
+      # un-gate, and is called out by name. Fails the step if a check is SKIPPED
+      # in the candidate, because a skipped check snapshots an empty slice and
+      # would wipe that slice's whole backlog.
+      - name: Baseline reseed - report what the candidate would change
+        if: always() && github.event_name == 'workflow_dispatch'
+        working-directory: boost-root/libs/capy/doc
+        run: |
+          set -uo pipefail
+          out="$RUNNER_TEMP/baseline-candidate"
+          status=0
+          node lint/baseline-diff.mjs lint/baseline.json "$out/baseline.json" \
+            --gate 'doc_lint:^(A1|A6|B2|D2):' \
+            --gate 'vale_adoc:Capy\.PartHeadings$' \
+            --gate 'mrdocs_warnings:.*' \
+            | tee "$out/baseline-diff.txt" || status=$?
+          # Full text diff of the file itself: the only place a single changed
+          # fingerprint is visible verbatim. `diff` exits 1 when files differ.
+          diff -u lint/baseline.json "$out/baseline.json" > "$out/baseline.json.diff" || true
+          {
+            echo '## Candidate doc/lint/baseline.json'
+            echo
+            echo 'Download the `doc-lint-baseline-candidate` artifact. Do not commit it'
+            echo 'without accounting for every ADDED fingerprint below.'
+            echo
+            echo '```'
+            cat "$out/baseline-diff.txt"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+
+      - name: Baseline reseed - upload the candidate for review
+        if: always() && github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: doc-lint-baseline-candidate
+          path: ${{ runner.temp }}/baseline-candidate
+          if-no-files-found: error

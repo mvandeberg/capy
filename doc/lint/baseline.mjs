@@ -55,6 +55,20 @@ function occurrenceKey(seen, head, tail) {
   return `${head}:#${n}:${tail}`;
 }
 
+// Vale is spawned below with cwd=DOC_DIR, so the keys of its JSON output are
+// paths relative to DOC_DIR (or absolute). `path.relative(DOC_DIR, file)`
+// resolved a *relative* `file` against process.cwd(), NOT against DOC_DIR — so
+// regenerating from anywhere other than doc/ prefixed every Vale path with
+// `../` and silently renamed all ~3900 Vale fingerprints at once, retiring the
+// entire grandfathered Vale backlog and re-minting it under new keys. Resolve
+// against DOC_DIR explicitly so the key depends only on the file, never on
+// where the generator happened to be invoked from. The separator normalisation
+// is a no-op on POSIX (path.sep === '/') and keeps a Windows run from minting a
+// parallel backslash-keyed key set.
+function valeRelPath(file) {
+  return path.relative(DOC_DIR, path.resolve(DOC_DIR, file)).split(path.sep).join('/');
+}
+
 function valeFingerprints(target) {
   const r = run('vale', ['--output=JSON', target], { cwd: DOC_DIR });
   if (r.error) {
@@ -76,7 +90,7 @@ function valeFingerprints(target) {
   const fingerprints = [];
   const seen = new Map();
   for (const [file, alerts] of Object.entries(parsed)) {
-    for (const a of alerts) fingerprints.push(occurrenceKey(seen, path.relative(DOC_DIR, file), a.Check));
+    for (const a of alerts) fingerprints.push(occurrenceKey(seen, valeRelPath(file), a.Check));
   }
   return { count: fingerprints.length, fingerprints: fingerprints.sort() };
 }
