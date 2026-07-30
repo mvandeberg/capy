@@ -10,6 +10,13 @@ file-patterns:
 # Filters
 include-symbols:
   - 'boost::capy::**'
+# Internal-only test helper types: implementation machinery of the public
+# run_blocking / bufgrind toolkit, not user-facing API. Omitted from the
+# reference (Doxygen @cond does not suppress warnings in this MrDocs build).
+exclude-symbols:
+  - 'boost::capy::test::blocking_handler_wrapper'
+  - 'boost::capy::test::run_blocking_wrapper'
+  - 'boost::capy::test::bufgrind::next_awaitable'
 implementation-defined:
   - 'boost::capy::detail'
   - 'boost::capy::*::detail'
