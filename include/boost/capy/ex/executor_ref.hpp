@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2025 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2026 Michael Vandeberg
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -126,11 +127,18 @@ public:
         Copies the internal pointers, preserving identity.
         This enables the same-executor optimization when passing
         executor_ref through coroutine chains.
-    */
-    executor_ref(executor_ref const&) = default;
 
-    /** Copy assignment operator. */
-    executor_ref& operator=(executor_ref const&) = default;
+        @param other The reference to copy.
+    */
+    executor_ref(executor_ref const& other) = default;
+
+    /** Copy assignment operator.
+
+        @param other The reference to copy.
+
+        @return `*this`.
+    */
+    executor_ref& operator=(executor_ref const& other) = default;
 
     /** Constructs from any executor type.
 

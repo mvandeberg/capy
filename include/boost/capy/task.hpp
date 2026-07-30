@@ -363,7 +363,9 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
 
         @return The result value for non-void `T`; otherwise `void`.
 
-        @throws The exception captured by the coroutine body, if any.
+        @par Exception Safety
+        If the coroutine body captured an exception, that exception is
+        rethrown here.
     */
     auto await_resume()
     {

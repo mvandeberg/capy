@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2025 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2026 Michael Vandeberg
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -109,9 +110,20 @@ public:
     /** Non-copyable.
 
         The awaitable caches are per-instance and cannot be shared.
+
+        @param other The wrapper to copy.
     */
-    any_stream(any_stream const&) = delete;
-    any_stream& operator=(any_stream const&) = delete;
+    any_stream(any_stream const& other) = delete;
+
+    /** Copy assignment is not permitted.
+
+        The awaitable caches are per-instance and cannot be shared.
+
+        @param other The wrapper to copy.
+
+        @return `*this`.
+    */
+    any_stream& operator=(any_stream const& other) = delete;
 
     /** Construct by moving.
 

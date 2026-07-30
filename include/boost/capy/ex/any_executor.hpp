@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2025 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2026 Michael Vandeberg
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -164,19 +165,25 @@ public:
         Creates a new `any_executor` sharing ownership of the
         underlying executor with `other`.
 
+        @param other The executor to copy.
+
         @par Postconditions
         @li `*this == other`
     */
-    any_executor(any_executor const&) = default;
+    any_executor(any_executor const& other) = default;
 
     /** Copy assignment operator.
 
         Shares ownership of the underlying executor with `other`.
 
+        @param other The executor to copy.
+
+        @return `*this`.
+
         @par Postconditions
         @li `*this == other`
     */
-    any_executor& operator=(any_executor const&) = default;
+    any_executor& operator=(any_executor const& other) = default;
 
     /** Constructs from any executor type.
 

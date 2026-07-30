@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2025 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2026 Michael Vandeberg
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -185,9 +186,19 @@ public:
 
     //------------------------------------------------
 
-    execution_context(execution_context const&) = delete;
+    /** Copying is not permitted; a context owns its services.
 
-    execution_context& operator=(execution_context const&) = delete;
+        @param other The context to copy.
+    */
+    execution_context(execution_context const& other) = delete;
+
+    /** Copy assignment is not permitted.
+
+        @param other The context to copy.
+
+        @return `*this`.
+    */
+    execution_context& operator=(execution_context const& other) = delete;
 
     /** Destructor.
 

@@ -86,6 +86,9 @@ namespace capy {
     @param n The minimum number of bytes to read. Must not exceed
     `buffer_size(buffers)`.
 
+    @return A task yielding `io_result<std::size_t>` destructuring as
+    `[ec, count]`, where `count` is the number of bytes read.
+
     @par Remarks
     Supports _IoAwaitable cancellation_.
 

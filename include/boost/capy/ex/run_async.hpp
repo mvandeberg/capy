@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2025 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2026 Michael Vandeberg
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -436,10 +437,34 @@ public:
     }
 
     // Non-copyable, non-movable (must be used immediately)
-    run_async_wrapper(run_async_wrapper const&) = delete;
-    run_async_wrapper(run_async_wrapper&&) = delete;
-    run_async_wrapper& operator=(run_async_wrapper const&) = delete;
-    run_async_wrapper& operator=(run_async_wrapper&&) = delete;
+
+    /** Copying is not permitted; the wrapper must be used immediately.
+
+        @param other The wrapper to copy.
+    */
+    run_async_wrapper(run_async_wrapper const& other) = delete;
+
+    /** Moving is not permitted; the wrapper must be used immediately.
+
+        @param other The wrapper to move from.
+    */
+    run_async_wrapper(run_async_wrapper&& other) = delete;
+
+    /** Copy assignment is not permitted.
+
+        @param other The wrapper to copy.
+
+        @return `*this`.
+    */
+    run_async_wrapper& operator=(run_async_wrapper const& other) = delete;
+
+    /** Move assignment is not permitted.
+
+        @param other The wrapper to move from.
+
+        @return `*this`.
+    */
+    run_async_wrapper& operator=(run_async_wrapper&& other) = delete;
 
     /** Launch the task for execution.
 

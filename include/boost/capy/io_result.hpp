@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2025 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2026 Michael Vandeberg
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -55,14 +56,28 @@ struct [[nodiscard]] io_result
     /// Construct a default io_result.
     io_result() = default;
 
-    /// Construct from an error code and payload values.
+    /** Construct from an error code and payload values.
+
+        @param ec_ The error code for the operation.
+
+        @param ts The payload values, in declaration order.
+    */
     io_result(std::error_code ec_, Ts... ts)
         : ec(ec_)
         , values(std::move(ts)...)
     {
     }
 
-    /// @cond
+    /** Return the `I`-th element of the tuple protocol.
+
+        Index 0 is @ref ec; index `I` for `I > 0` is the `I - 1`-th
+        payload value. This is the accessor structured bindings use.
+
+        @tparam I The element index. Must be less than
+            `1 + sizeof...(Ts)`.
+
+        @return A reference to the element.
+    */
     template<std::size_t I>
     decltype(auto) get() & noexcept
     {
@@ -71,6 +86,16 @@ struct [[nodiscard]] io_result
         else return std::get<I - 1>(values);
     }
 
+    /** Return the `I`-th element of the tuple protocol.
+
+        Index 0 is @ref ec; index `I` for `I > 0` is the `I - 1`-th
+        payload value. This is the accessor structured bindings use.
+
+        @tparam I The element index. Must be less than
+            `1 + sizeof...(Ts)`.
+
+        @return A const reference to the element.
+    */
     template<std::size_t I>
     decltype(auto) get() const& noexcept
     {
@@ -79,6 +104,16 @@ struct [[nodiscard]] io_result
         else return std::get<I - 1>(values);
     }
 
+    /** Return the `I`-th element of the tuple protocol, moved.
+
+        Index 0 is @ref ec; index `I` for `I > 0` is the `I - 1`-th
+        payload value.
+
+        @tparam I The element index. Must be less than
+            `1 + sizeof...(Ts)`.
+
+        @return The element, moved out of the result.
+    */
     template<std::size_t I>
     decltype(auto) get() && noexcept
     {
@@ -86,28 +121,49 @@ struct [[nodiscard]] io_result
         if constexpr (I == 0) return std::move(ec);
         else return std::get<I - 1>(std::move(values));
     }
-    /// @endcond
 };
 
-/// @cond
+/** Return the `I`-th element of the tuple protocol.
+
+    @tparam I The element index.
+
+    @param r The result to access.
+
+    @return A reference to the element.
+*/
 template<std::size_t I, class... Ts>
 decltype(auto) get(io_result<Ts...>& r) noexcept
 {
     return r.template get<I>();
 }
 
+/** Return the `I`-th element of the tuple protocol.
+
+    @tparam I The element index.
+
+    @param r The result to access.
+
+    @return A const reference to the element.
+*/
 template<std::size_t I, class... Ts>
 decltype(auto) get(io_result<Ts...> const& r) noexcept
 {
     return r.template get<I>();
 }
 
+/** Return the `I`-th element of the tuple protocol, moved.
+
+    @tparam I The element index.
+
+    @param r The result to access.
+
+    @return The element, moved out of `r`.
+*/
 template<std::size_t I, class... Ts>
 decltype(auto) get(io_result<Ts...>&& r) noexcept
 {
     return std::move(r).template get<I>();
 }
-/// @endcond
 
 } // namespace capy
 } // namespace boost

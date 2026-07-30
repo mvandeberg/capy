@@ -89,8 +89,19 @@ public:
         std::size_t num_threads = 0,
         std::string_view thread_name_prefix = "capy-pool-");
 
-    thread_pool(thread_pool const&) = delete;
-    thread_pool& operator=(thread_pool const&) = delete;
+    /** Copying is not permitted; a pool owns its worker threads.
+
+        @param other The pool to copy.
+    */
+    thread_pool(thread_pool const& other) = delete;
+
+    /** Copy assignment is not permitted.
+
+        @param other The pool to copy.
+
+        @return `*this`.
+    */
+    thread_pool& operator=(thread_pool const& other) = delete;
 
     /** Wait for all outstanding work to complete.
 
@@ -175,7 +186,11 @@ public:
     */
     executor_type() = default;
 
-    /// Return the underlying thread pool.
+    /** Return the underlying thread pool.
+
+        @return A reference to the associated pool. The behavior is
+            undefined if the executor is not associated with a pool.
+    */
     thread_pool&
     context() const noexcept
     {
@@ -238,7 +253,12 @@ public:
     void
     post(continuation& c) const;
 
-    /// Return true if two executors refer to the same thread pool.
+    /** Return true if two executors refer to the same thread pool.
+
+        @param other The executor to compare against.
+
+        @return `true` if both executors refer to the same pool.
+    */
     bool
     operator==(executor_type const& other) const noexcept
     {
