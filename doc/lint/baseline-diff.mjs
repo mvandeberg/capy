@@ -29,21 +29,33 @@
 // ':', regex tested against the whole fingerprint). Pass the live gate spec and
 // any added fingerprint that would have blocked a merge is reported separately,
 // in full, and as a GitHub error annotation — those are the entries a reseed
-// would grandfather away.
+// would grandfather away. The CI step derives these specs from the blocking step
+// in .github/workflows/docs.yml rather than restating them, so they cannot rot
+// apart; see the reseed steps there.
+//
+// --allow-emptied <check>  acknowledges that a gated check legitimately reached
+// zero findings (its backlog is genuinely closed). Repeatable. Without it, a
+// gated check that is empty in the candidate while non-empty in the committed
+// baseline is FATAL — see emptiedGated below.
 //
 // Exit status:
-//   0  candidate is explainable (it may still add findings — read the report)
-//   1  candidate is NOT safe to commit: a check is skipped in it (a skipped check
-//      snapshots an empty slice, wiping that slice's grandfathered backlog), or a
-//      file could not be read.
-// A non-zero exit is deliberately independent of whether findings were added:
-// adding findings can be legitimate (an intentional new backlog), a skipped
-// check never is.
+//   0  candidate is explainable (it may still add ungated findings — read the report)
+//   1  candidate must not be committed as-is. Three reasons, all fail-closed:
+//        * a check is `skipped` in it (a skipped check snapshots an empty slice,
+//          wiping that slice's grandfathered backlog),
+//        * a GATED check collapsed to zero findings without being marked skipped
+//          (same wipe, but arrives looking like success — see emptiedGated),
+//        * an added fingerprint matches the gate spec (a finding that would have
+//          blocked a merge is about to become grandfathered).
+// Adding *ungated* findings is not by itself an error: those slices are still
+// being worked down, so an intentional new backlog is legitimate. A gated
+// addition never is without justification, and neither is an unverifiable check.
 //
 import fs from 'node:fs';
 
 const argv = process.argv.slice(2);
 const gateByCheck = new Map(); // check -> [RegExp]
+const allowEmptied = new Set();
 const positional = [];
 let examples = 5;
 for (let i = 0; i < argv.length; i++) {
@@ -53,6 +65,8 @@ for (let i = 0; i < argv.length; i++) {
   else if (a.startsWith('--gate=')) spec = a.slice('--gate='.length);
   else if (a === '--examples') { examples = Number(argv[++i]); continue; }
   else if (a.startsWith('--examples=')) { examples = Number(a.slice('--examples='.length)); continue; }
+  else if (a === '--allow-emptied') { allowEmptied.add(argv[++i]); continue; }
+  else if (a.startsWith('--allow-emptied=')) { allowEmptied.add(a.slice('--allow-emptied='.length)); continue; }
   else { positional.push(a); continue; }
   const idx = spec.indexOf(':');
   if (idx < 0) {
@@ -64,7 +78,7 @@ for (let i = 0; i < argv.length; i++) {
   gateByCheck.get(check).push(new RegExp(spec.slice(idx + 1)));
 }
 if (positional.length !== 2) {
-  console.error('usage: baseline-diff.mjs <committed.json> <candidate.json> [--gate spec ...] [--examples N]');
+  console.error('usage: baseline-diff.mjs <committed.json> <candidate.json> [--gate spec ...] [--allow-emptied check ...] [--examples N]');
   process.exit(2);
 }
 const [committedPath, candidatePath] = positional;
@@ -113,6 +127,7 @@ function ruleOf(check, fp) {
 const out = [];
 const say = (s = '') => out.push(s);
 const annotations = [];
+const emptiedGated = [];
 let fatal = false;
 
 say('=== doc-lint baseline candidate: what committing it would change ===');
@@ -143,6 +158,26 @@ for (const check of checkNames) {
   if (cand.skipped) {
     fatal = true;
     annotations.push(`::error title=Baseline candidate unusable::check '${check}' is SKIPPED in the candidate (${cand.reason ?? 'no reason given'}). Committing it would wipe that check's grandfathered backlog. Fix the environment and re-run.`);
+  } else if (gateRes && candSet.size === 0 && baseSet.size > 0 && !allowEmptied.has(check)) {
+    // A GATED check reporting zero findings where the committed baseline has some
+    // is treated as a crash until proven otherwise. This is the fail-open that the
+    // `skipped` flag does NOT catch: a check that dies with empty stdout used to be
+    // recorded as `count: 0, skipped: false`, and the resulting candidate read
+    // "retires 214, grandfathers 0, none gated" — an actively reassuring report for
+    // a candidate that would wipe a merge-blocking check's entire backlog.
+    // (baseline.mjs now marks such crashes skipped; this is the independent
+    // second line, because it does not care WHY the slice is empty.)
+    //
+    // Emptiness, not a removal-fraction threshold: a crash produces exactly zero,
+    // never 40% fewer, so emptiness targets the real failure mode with no magic
+    // number and no arbitrary cliff. A percentage would fire on the very first
+    // legitimate reseed here (mrdocs_warnings drops 195 of 214 = 91%), training
+    // maintainers to wave it through — the worst outcome for a guard. The one
+    // legitimate zero, a gated backlog genuinely closing, is a milestone worth an
+    // explicit --allow-emptied <check>, which records the decision in the run log.
+    fatal = true;
+    emptiedGated.push(check);
+    annotations.push(`::error title=Baseline candidate unusable::gated check '${check}' reports 0 findings but the committed baseline has ${baseSet.size}. A crashed check looks exactly like this. Verify the check really ran; if the backlog is genuinely closed, re-run with --allow-emptied ${check}.`);
   }
 }
 
@@ -214,13 +249,25 @@ if (gateByCheck.size === 0) {
 say();
 
 if (fatal) {
-  say('RESULT: candidate is NOT safe to commit (a check is SKIPPED in it — see the table).');
+  say('RESULT: candidate is NOT safe to commit. Do not use this file.');
+  for (const check of checkNames) {
+    if (candidate.checks?.[check]?.skipped) say(`  - ${check} is SKIPPED in the candidate: the check could not run at all.`);
+  }
+  for (const check of emptiedGated) {
+    say(`  - ${check} is GATED and reports 0 findings against ${committed.checks?.[check]?.count ?? '?'} in the`);
+    say('    committed baseline. A crashed check looks exactly like this. Confirm the check really');
+    say(`    ran; if that backlog is genuinely closed, re-run with --allow-emptied ${check}.`);
+  }
 } else if (totalGated > 0) {
-  say('RESULT: candidate needs justification for its gated additions before it is committed.');
+  say('RESULT: candidate must not be committed until its gated additions are justified (see above).');
 } else {
   say(`RESULT: candidate retires ${totalRemoved} and grandfathers ${totalAdded} fingerprint(s), none gated.`);
+  if (allowEmptied.size > 0) say(`(--allow-emptied accepted a zero-finding gated check: ${[...allowEmptied].join(', ')})`);
 }
 
 console.log(out.join('\n'));
 if (process.env.GITHUB_ACTIONS) for (const a of annotations) console.log(a);
-process.exit(fatal ? 1 : 0);
+// Gated additions exit 1 too: the skip path already fails closed, and a green step
+// beside a red annotation is how a warning gets skimmed past. An ungated addition
+// alone is not an error (those slices are still being worked down).
+process.exit(fatal || totalGated > 0 ? 1 : 0);

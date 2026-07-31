@@ -97,28 +97,48 @@ absorb real regressions into the grandfathered backlog.
 ### 2. Read the report before downloading anything
 
 Open the finished run and read its **Summary** page, under "Candidate
-doc/lint/baseline.json". Check three things, in this order:
+doc/lint/baseline.json". The report ends in a `RESULT:` line; **if it does not say
+`candidate retires … none gated`, the reseed step has failed and you must not commit the
+file.** Then check four things, in this order:
 
 1. **A `SKIPPED` cell in the per-check table.** Stop if you see one. A skipped check means a
    tool could not run (most often Ruby `asciidoctor` missing, which breaks the `vale_adoc`
    slice; or a MrDocs cache miss). The candidate would wipe that check's entire grandfathered
-   backlog. The step will already have failed with a red annotation. Fix the environment,
-   re-run, discard this candidate.
+   backlog. Fix the environment, re-run, discard this candidate.
+
+   The same applies to a **gated check showing `0` findings** against a non-zero committed
+   count: a check that crashes reports zero, and zero looks like success. That is also fatal.
+   If a gated backlog has *genuinely* reached zero — a milestone, not an accident — confirm
+   the check really ran and re-run the comparator with `--allow-emptied <check>`.
 
 2. **"ADDED fingerprints that the merge gate WOULD have blocked."** If it says `(none — …)`,
    good. Anything listed is either **a real regression** you are about to grandfather away —
-   go fix the documentation instead — or **an environment difference you have positively
-   identified as such**. Do not accept a candidate with unexplained entries here. This section
-   is the entire safety mechanism.
+   go fix the documentation instead — or **an environment difference**. Do not accept a
+   candidate with unexplained entries here; this section is the entire safety mechanism. Two
+   checks that settle which it is:
 
-3. **The ADDED / REMOVED breakdown by check and rule.** REMOVED is what you came for: stale
-   entries being retired. ADDED becomes permanently grandfathered; additions in ungated slices
-   are tolerable while those slices are still being worked down, but read the rule names and
-   confirm they are the classes you expect.
+   - **Does the fingerprint's file and rule correspond to something that changed at the ref
+     you dispatched?** `git log --oneline <default-branch>..<ref> -- <that file>`. A real
+     regression has a change behind it; drift does not.
+   - **Re-dispatch against the default branch and see whether the same fingerprint appears.**
+     Environment drift reproduces on a ref that contains none of your work. A regression
+     introduced at your ref does not.
+
+3. **The ADDED / REMOVED breakdown by check and rule.** ADDED becomes permanently
+   grandfathered; additions in ungated slices are tolerable while those slices are still being
+   worked down, but read the rule names and confirm they are the classes you expect.
+
+4. **REMOVED is what you came for — so confirm it is what you did.** The rule breakdown should
+   match the work that has actually landed since the last reseed. A retirement far larger than
+   the work, or spread across rules nobody touched, means a tool linted less than it should
+   have rather than that the backlog shrank. (Precedent: a malformed code span once made
+   `asciidoctor` swallow real prose and collapsed the linted surface from 1576 alerts to 412,
+   with no error anywhere.)
 
 ### 3. Accept it
 
 ```bash
+cd "$(git rev-parse --show-toplevel)"          # paths below are repo-root-relative
 gh run download <run-id> -n doc-lint-baseline-candidate -D /tmp/cand
 cp /tmp/cand/baseline.json doc/lint/baseline.json
 git diff --stat doc/lint/baseline.json
@@ -144,9 +164,10 @@ Open a PR. The Documentation workflow on that PR runs the gate against your new 
 
 ### Reading a candidate by hand (diagnosis only)
 
-`baseline-diff.mjs` compares any two snapshots. Keep the `--gate` values identical to the ones
-in the blocking step of `.github/workflows/docs.yml`; if they drift apart the report stops
-flagging the additions that matter.
+`baseline-diff.mjs` compares any two snapshots. The CI step derives its `--gate` values from
+the blocking step in `.github/workflows/docs.yml` so the two cannot rot apart; when you run it
+by hand, copy them from that step — a report run with a stale or missing gate spec prints
+`none gated` and means nothing.
 
 ```bash
 cd doc
@@ -156,8 +177,10 @@ node lint/baseline-diff.mjs lint/baseline.json /path/to/candidate.json \
   --gate 'mrdocs_warnings:.*'
 ```
 
-Exit 0 means the candidate is explainable (it may still add findings — read the report); exit
-1 means it is not safe to commit at all.
+Exit 0 means the candidate is explainable (it may still add *ungated* findings — read the
+report). Exit 1 means it must not be committed as-is, for one of three reasons, all named in
+the `RESULT:` line: a check is `skipped`, a gated check collapsed to zero findings, or an added
+fingerprint matches the gate spec.
 
 ### Running the checks locally
 

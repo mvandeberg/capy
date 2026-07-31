@@ -95,9 +95,36 @@ function valeFingerprints(target) {
   return { count: fingerprints.length, fingerprints: fingerprints.sort() };
 }
 
+// A crashed check must report as SKIPPED, never as zero findings. doc-lint.mjs and
+// mrdocs-warnings.mjs have no error path for an *uncaught throw*: they die with a
+// non-zero status and an empty stdout. Defaulting that to an empty findings object
+// yielded `count: 0, skipped: false` — a crashed check indistinguishable from a
+// clean one. Both are GATED, and the comparator only treats a `skipped` check as
+// unverifiable, so the zero sailed through as "backlog empty": the reseed reporter
+// called it "0 added, none gated" and the merge gate called it "0 new". That is the
+// fail-open shape this toolchain exists to prevent, so the exit status is now
+// checked before the output is believed. (mrdocs-warnings.mjs's *designed*
+// failures — no binary, version-pin miss, MrDocs itself failing — already emit
+// `{error}` on exit 0 and are handled below; this only covers crashes.)
+function crashed(r, script) {
+  if (!r.error && r.status === 0) return null;
+  const tail = (r.stderr || r.error?.message || r.stdout || '(no output)').trim().slice(-500);
+  return { count: 0, skipped: true, reason: `${script} failed (exit ${r.status}): ${tail}`, fingerprints: [] };
+}
+
 function docLintFingerprints() {
   const r = run('node', [path.join(SCRIPT_DIR, 'doc-lint.mjs')]);
-  const parsed = JSON.parse(r.stdout || '{"summary":{},"findings":{}}');
+  const bad = crashed(r, 'doc-lint.mjs');
+  if (bad) return bad;
+  let parsed;
+  try {
+    parsed = JSON.parse(r.stdout || '');
+  } catch {
+    return {
+      count: 0, skipped: true, fingerprints: [],
+      reason: `doc-lint.mjs produced unparseable output: ${(r.stdout || '(empty)').trim().slice(-500)}`,
+    };
+  }
   const fingerprints = [];
   const seen = new Map();
   for (const [check, items] of Object.entries(parsed.findings || {})) {
@@ -108,6 +135,8 @@ function docLintFingerprints() {
 
 function mrdocsFingerprints() {
   const r = run('node', [path.join(SCRIPT_DIR, 'mrdocs-warnings.mjs')]);
+  const bad = crashed(r, 'mrdocs-warnings.mjs');
+  if (bad) return bad;
   let parsed = {};
   try { parsed = JSON.parse(r.stdout || '{}'); } catch { /* fall through */ }
   if (parsed.error) return { count: 0, skipped: true, reason: parsed.error, fingerprints: [] };

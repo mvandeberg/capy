@@ -300,6 +300,15 @@ and the snippet is compiled in CI.
 > #28 callback-interop examples, #29 GUI example, #30 platform-issues page; plus docstring
 > completeness for changed symbols. Template = Task 10.
 
+- [ ] **Phase-3 exit — reseed `doc/lint/baseline.json` from CI (owed follow-up).** Phase 3 closed
+  195 `mrdocs_warnings` findings (214 → 19) but the committed baseline still records 214, so all
+  195 stay grandfathered and can be reintroduced without failing the gate. The reseed mechanism
+  is the `workflow_dispatch` reseed steps in `.github/workflows/docs.yml`; the procedure is
+  `doc/lint/README.md`. GitHub only offers `workflow_dispatch` for workflows present on the
+  **default branch**, so the order is: merge the branch → dispatch **Documentation** → review the
+  candidate's diff → commit it. Never regenerate the baseline locally (measured: a local run adds
+  357 fingerprints a CI run would not).
+
 ---
 
 ## Phase 4 — Capy: Wording (STE pass, last)

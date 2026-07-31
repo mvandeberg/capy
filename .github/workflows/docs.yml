@@ -282,34 +282,72 @@ jobs:
 
       # Reports per-check counts before/after and, per check and rule, which
       # fingerprints the candidate would ADD (grandfather) and REMOVE (retire).
-      # The gate spec passed here is the same one the blocking step above uses:
-      # any ADDED fingerprint matching it is a finding a reseed would silently
-      # un-gate, and is called out by name. Fails the step if a check is SKIPPED
-      # in the candidate, because a skipped check snapshots an empty slice and
-      # would wipe that slice's whole backlog.
+      # Any ADDED fingerprint matching the gate spec is a finding a reseed would
+      # silently un-gate; those are named individually and fail this step. So do a
+      # SKIPPED check and a GATED check that collapsed to zero findings — both
+      # would wipe a merge-blocking check's whole grandfathered backlog.
+      #
+      # The gate spec is EXTRACTED from this workflow file rather than restated
+      # here. A second verbatim copy is a rot hazard with a silent failure mode:
+      # promote a rule in the blocking step above, forget this one, and the report
+      # keeps printing "none gated" for a rule that now blocks merges — the safety
+      # net stops covering exactly the rule that was just deemed important enough
+      # to gate. Extraction means there is one copy, in the blocking step, and this
+      # step cannot disagree with it. If extraction yields nothing (someone
+      # reformatted the blocking step's arguments), the step FAILS rather than
+      # reporting against an empty gate spec, which would look identical to "no
+      # gated additions."
       - name: Baseline reseed - report what the candidate would change
         if: always() && github.event_name == 'workflow_dispatch'
         working-directory: boost-root/libs/capy/doc
         run: |
           set -uo pipefail
           out="$RUNNER_TEMP/baseline-candidate"
+          workflow=../.github/workflows/docs.yml
+
+          # Read ONLY the blocking step's run block: from its comparator invocation
+          # to the blank line that ends it, then stop. `awk ... {exit}` rather than a
+          # sed range because a sed range restarts at every match of its start
+          # pattern — including the copy of that pattern in this very extractor,
+          # which silently pulled the extractor's own quoting into the gate spec.
+          # Stopping at the first block also makes the source of truth unambiguous:
+          # the step that actually blocks merges. `grep -o` takes every occurrence
+          # per line, in case the arguments are ever reflowed onto one.
+          gate_args=()
+          while IFS= read -r spec; do
+            gate_args+=(--gate "$spec")
+          done < <(
+            awk '/check-no-new-violations\.mjs --strict/ { inblock = 1 }
+                 inblock && /^[[:space:]]*$/ { exit }
+                 inblock' "$workflow" \
+              | grep -o -- "--gate '[^']*'" \
+              | sed "s/^--gate '//; s/'\$//" \
+              | sort -u
+          )
+          if [ "${#gate_args[@]}" -eq 0 ]; then
+            echo "::error title=Gate spec not found::could not extract any --gate spec from $workflow; refusing to report against an empty gate spec"
+            exit 1
+          fi
+          echo "gate spec extracted from $workflow: ${gate_args[*]}"
+
           status=0
           node lint/baseline-diff.mjs lint/baseline.json "$out/baseline.json" \
-            --gate 'doc_lint:^(A1|A6|B2|D2):' \
-            --gate 'vale_adoc:Capy\.PartHeadings$' \
-            --gate 'mrdocs_warnings:.*' \
-            | tee "$out/baseline-diff.txt" || status=$?
+            "${gate_args[@]}" | tee "$out/baseline-diff.txt" || status=$?
           # Full text diff of the file itself: the only place a single changed
           # fingerprint is visible verbatim. `diff` exits 1 when files differ.
           diff -u lint/baseline.json "$out/baseline.json" > "$out/baseline.json.diff" || true
+          # GitHub rejects a step summary over 1 MiB. A real report is ~14 KB, but a
+          # pathological candidate must not turn a reporting step into an infra
+          # failure, so cap it and point at the artifact for the full text.
           {
             echo '## Candidate doc/lint/baseline.json'
             echo
             echo 'Download the `doc-lint-baseline-candidate` artifact. Do not commit it'
-            echo 'without accounting for every ADDED fingerprint below.'
+            echo 'without accounting for every ADDED fingerprint below. Full untruncated'
+            echo 'report: `baseline-diff.txt` in that artifact.'
             echo
             echo '```'
-            cat "$out/baseline-diff.txt"
+            head -c 900000 "$out/baseline-diff.txt"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
           exit "$status"
