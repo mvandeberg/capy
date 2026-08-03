@@ -4,9 +4,9 @@ Two tasks communicating via an async event, with strand serialization.
 
 == What You Will Learn
 
-* Using `async_event` for coroutine synchronization
-* Running multiple concurrent tasks with `when_all`
-* Using `strand` to serialize access to shared state
+* Using cpp:async_event[] for coroutine synchronization
+* Running multiple concurrent tasks with cpp:when_all[]
+* Using cpp:strand[] to serialize access to shared state
 * Task-to-task communication patterns
 
 == Prerequisites

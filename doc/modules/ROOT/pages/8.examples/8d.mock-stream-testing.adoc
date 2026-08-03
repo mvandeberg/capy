@@ -4,9 +4,9 @@ Unit testing protocol code with mock streams and error injection.
 
 == What You Will Learn
 
-* Using `test::read_stream` and `test::write_stream`
-* Error injection with `fuse`
-* Synchronous testing with `run_blocking`
+* Using cpp:test::read_stream[test::read_stream] and cpp:test::write_stream[test::write_stream]
+* Error injection with cpp:test::fuse[fuse]
+* Synchronous testing with cpp:test::run_blocking[run_blocking]
 
 == Prerequisites
 
@@ -37,7 +37,7 @@ target_link_libraries(mock_stream_testing PRIVATE capy)
 include::example$snippets/8d_mock_stream_testing.cpp[tag=mock_streams,indent=0]
 ----
 
-`test::stream` is a bidirectional mock that satisfies both `ReadStream` and `WriteStream`:
+cpp:test::stream[test::stream] is a bidirectional mock that satisfies both cpp:ReadStream[] and cpp:WriteStream[]:
 
 * Streams are obtained in connected pairs from `make_stream_pair(f)`; the shared `fuse` enables error injection
 * `provide(data)` — Supplies data for the peer's reads
@@ -51,7 +51,7 @@ include::example$snippets/8d_mock_stream_testing.cpp[tag=mock_streams,indent=0]
 include::example$mock-stream-testing/mock_stream_testing.cpp[tag=any_stream,indent=0]
 ----
 
-Use pointer construction (`&a`) so the `any_stream` wrapper references the stream end without taking ownership. This allows inspecting `b.data()` after operations.
+Use pointer construction (`&a`) so the cpp:any_stream[] wrapper references the stream end without taking ownership. This allows inspecting `b.data()` after operations.
 
 === Synchronous Testing
 

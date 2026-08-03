@@ -4,7 +4,7 @@ Echo server demonstrating the compilation firewall pattern.
 
 == What You Will Learn
 
-* Using `any_stream` for transport-independent code
+* Using cpp:any_stream[] for transport-independent code
 * Physical isolation through separate compilation
 * Build time benefits of type erasure
 
@@ -56,7 +56,7 @@ target_link_libraries(echo_demo PRIVATE echo_lib)
 include::example$type-erased-echo/echo.hpp[tag=session_decl]
 ----
 
-The header declares only the signature. It includes `any_stream` and `task`, but no concrete transport types.
+The header declares only the signature. It includes `any_stream` and cpp:task[], but no concrete transport types.
 
 Clients of this header:
 
