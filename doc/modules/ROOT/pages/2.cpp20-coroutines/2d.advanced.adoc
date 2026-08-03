@@ -216,4 +216,4 @@ You have now learned the complete mechanics of {cpp}20 coroutines:
 * *Allocation* — Custom allocation and HALO optimization
 * *Exception handling* — Capturing and propagating exceptions across suspension points
 
-These fundamentals prepare you for understanding Capy's `task<T>` type and the IoAwaitable protocol, which build on standard coroutine machinery with executor affinity and stop token propagation.
+These fundamentals prepare you for understanding Capy's cpp:task[task<T>] type and the IoAwaitable protocol, which build on standard coroutine machinery with executor affinity and stop token propagation.
