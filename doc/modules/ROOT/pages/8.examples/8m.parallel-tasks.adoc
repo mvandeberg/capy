@@ -4,8 +4,8 @@ Distributing CPU-bound work across a thread pool and collecting results.
 
 == What You Will Learn
 
-* Running tasks in parallel on a `thread_pool`
-* Collecting results with `when_all` structured bindings
+* Running tasks in parallel on a cpp:thread_pool[]
+* Collecting results with cpp:when_all[] structured bindings
 * Observing thread IDs to verify parallel execution
 
 == Prerequisites
@@ -45,7 +45,7 @@ The range `[0, 10000)` is divided into 4 equal chunks, one per task. Each task c
 include::example$programs/8m_parallel_tasks_variadic.cpp[tag=when_all_variadic,indent=0]
 ----
 
-`when_all` launches all four tasks concurrently on the thread pool. Each task may run on a different thread. The result is `io_result<long long, long long, long long, long long>`, a single `ec` plus the four partial sums in input order.
+`when_all` launches all four tasks concurrently on the thread pool. Each task may run on a different thread. The result is cpp:io_result[io_result]`<long long, long long, long long, long long>`, a single `ec` plus the four partial sums in input order.
 
 === Observing Thread IDs
 

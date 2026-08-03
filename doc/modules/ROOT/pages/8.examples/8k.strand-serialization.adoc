@@ -4,9 +4,9 @@ Protecting shared state with a strand instead of a mutex.
 
 == What You Will Learn
 
-* Using a `strand` to serialize coroutine access to shared state
+* Using a cpp:strand[] to serialize coroutine access to shared state
 * Lock-free shared state management
-* Combining `when_all` with strand-based serialization
+* Combining cpp:when_all[] with strand-based serialization
 
 == Prerequisites
 
@@ -55,7 +55,7 @@ Multiple coroutines increment the same `counter` without any locks. The strand s
 include::example$strand-serialization/strand_serialization.cpp[tag=run_on_strand,indent=0]
 ----
 
-Passing the strand `s` to `run_async` ensures the entire coroutine tree executes through the strand. Even though the underlying `thread_pool` has 4 threads, the strand constrains execution to one coroutine at a time.
+Passing the strand `s` to cpp:run_async[] ensures the entire coroutine tree executes through the strand. Even though the underlying cpp:thread_pool[] has 4 threads, the strand constrains execution to one coroutine at a time.
 
 == Output
 
