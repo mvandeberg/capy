@@ -5,7 +5,7 @@ Implementing the Executor concept with a single-threaded run loop.
 == What You Will Learn
 
 * Satisfying the cpp:Executor[] concept
-* Implementing cpp:execution_context[], `dispatch`, and `post`
+* Implementing cpp:execution_context[], cpp:Executor::dispatch[dispatch], and cpp:Executor::post[post]
 * Running Capy coroutines on a custom scheduling system
 
 == Prerequisites
@@ -42,11 +42,11 @@ Custom execution contexts inherit from `execution_context` and pass `this` to th
 
 The nested `executor_type` must provide:
 
-* `context()` -- returns a reference to the owning `execution_context`
-* `on_work_started()` / `on_work_finished()` -- work-tracking hooks
+* cpp:Executor::context[context()] -- returns a reference to the owning `execution_context`
+* cpp:Executor::on_work_started[on_work_started()] / cpp:Executor::on_work_finished[on_work_finished()] -- work-tracking hooks
 * `dispatch(c)` -- resume immediately if already on this context, otherwise enqueue. Takes a cpp:continuation[]`&` and returns `std::coroutine_handle<>`.
 * `post(c)` -- always enqueue for later execution. Takes a `continuation&`.
-* `operator==` -- compare two executors for identity
+* cpp:Executor::operator==[+operator==+] -- compare two executors for identity
 
 [source,cpp]
 ----
