@@ -72,7 +72,7 @@ Every composition allocates. This leads to:
 
 == The Concept-Driven Alternative
 
-Instead of concrete types, use concepts. Define `ConstBufferSequence` as "any type that can produce a sequence of buffers":
+Instead of concrete types, use concepts. Define cpp:ConstBufferSequence[] as "any type that can produce a sequence of buffers":
 
 [source,cpp]
 ----
@@ -81,10 +81,10 @@ include::example$snippets/5a_overview.cpp[tag=concept_signature,indent=0]
 
 This single signature accepts:
 
-* A single `const_buffer`
+* A single cpp:const_buffer[]
 * A `span<const_buffer>`
 * A `vector<const_buffer>`
-* A `string_view` wrapped with `make_buffer` (which yields a single `const_buffer`)
+* A `string_view` wrapped with cpp:make_buffer[] (which yields a single `const_buffer`)
 * A custom composite type
 * *Any composition of the above—without allocation*
 
@@ -112,7 +112,7 @@ Even `std::byte` imposes a semantic opinion. POSIX uses `void*` for semantic neu
 
 But `span<void>` doesn't compile—{cpp} can't express type-agnostic buffer abstraction with `span`.
 
-Capy provides `const_buffer` and `mutable_buffer` as semantically neutral buffer types. They have known layout compatible with OS structures (`iovec`, `WSABUF`) without imposing `std::byte` semantics.
+Capy provides `const_buffer` and cpp:mutable_buffer[] as semantically neutral buffer types. They have known layout compatible with OS structures (`iovec`, `WSABUF`) without imposing `std::byte` semantics.
 
 == Summary
 
