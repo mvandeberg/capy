@@ -2,7 +2,7 @@
 
 == Overview
 
-This document describes the design of the `ReadStream` concept: the fundamental partial-read primitive in the concept hierarchy. It explains why `read_some` is the correct building block, how composed algorithms build on top of it, and the relationship to `ReadSource`.
+This document describes the design of the cpp:ReadStream[] concept: the fundamental partial-read primitive in the concept hierarchy. It explains why `read_some` is the correct building block, how composed algorithms build on top of it, and the relationship to `ReadSource`.
 
 == Definition
 
@@ -11,7 +11,7 @@ This document describes the design of the `ReadStream` concept: the fundamental 
 include::example$snippets/9c_read_stream.cpp[tag=concept_definition,indent=0]
 ----
 
-The `requires` clause checks `read_some` against a single representative buffer, `mutable_buffer_archetype`, because a {cpp} concept cannot quantify over "every buffer sequence." The contract is stronger than what the compiler verifies: a `ReadStream` must accept *any* `MutableBufferSequence`—a single buffer or a range of them—and the archetype stands in for that universally-quantified requirement. Read this as a textual requirement that the concept can only sample, not a claim that conformance is limited to the archetype type.
+The `requires` clause checks `read_some` against a single representative buffer, cpp:mutable_buffer_archetype[], because a {cpp} concept cannot quantify over "every buffer sequence." The contract is stronger than what the compiler verifies: a `ReadStream` must accept *any* cpp:MutableBufferSequence[]—a single buffer or a range of them—and the archetype stands in for that universally-quantified requirement. Read this as a textual requirement that the concept can only sample, not a claim that conformance is limited to the archetype type.
 
 A `ReadStream` provides a single operation:
 
@@ -113,7 +113,7 @@ include::example$snippets/9c_read_stream.cpp[tag=echo,indent=0]
 | Read Side | Write Side
 
 | `ReadStream::read_some`
-| `WriteStream::write_some`
+| cpp:WriteStream::write_some[WriteStream::write_some]
 
 | `read` free function (composed)
 | `write_now` (composed, eager)
@@ -134,7 +134,7 @@ The `(error_code, size_t)` return type carries both a byte count and a condition
 
 A condition such as end-of-stream is a property of the stream, not of the bytes that were just delivered. If a read happens to fill the buffer exactly as the stream reaches its end, the bytes are still good and the read still succeeded. Reporting EOF on that same completion would force every caller to reconcile "I got all my bytes" with "but there was also an error," which is precisely the ambiguity the contract removes. Instead the condition surfaces on the next read, when `n` is necessarily less than the buffer size, and the caller observes it cleanly.
 
-This is what lets generic composition algorithms such as `when_all` and `when_any` distinguish a completed transfer from a failure by inspecting `n` alone. A short read signals a condition; a full read does not.
+This is what lets generic composition algorithms such as cpp:when_all[] and cpp:when_any[] distinguish a completed transfer from a failure by inspecting `n` alone. A short read signals a condition; a full read does not.
 
 === The Implementation Burden Is Internal
 
@@ -150,7 +150,7 @@ This flexibility permits zero-length operations to serve as probes (fd validatio
 
 === Why EOF Is an Error
 
-EOF is reported as an error code (`cond::eof`) rather than as a success with `n == 0`, for two reasons:
+EOF is reported as an error code (cpp:cond::eof[cond::eof]) rather than as a success with `n == 0`, for two reasons:
 
 *Composed operations need EOF-as-error to report early termination.* The composed cpp:read[]`(stream, buffer(buf, 100))` promises to fill exactly 100 bytes. If the stream ends after 50, the operation did not fulfill its contract. Reporting `{success, 50}` would be misleading. Reporting `{eof, 50}` tells the caller both what happened (50 bytes landed in the buffer) and why the operation stopped (the stream ended).
 

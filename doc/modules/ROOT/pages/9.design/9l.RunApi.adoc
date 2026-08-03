@@ -164,7 +164,7 @@ capy::on(ex).with(st).with(alloc).spawn(my_task(), h1, h2);
 ----
 + The current syntax makes the interface boundary explicit: the first call captures _all_ context, the second call accepts the task. There is no dot-chain to extend.
 
-- **Erases the test boundary.** `run_blocking` lives in `capy::test` deliberately -- it is a test utility, not a production API. The proposed `on(ex).block(t)` places it alongside `.spawn()` and `.call()` as if it were a first-class production method. That is a promotion this API has not earned.
+- **Erases the test boundary.** cpp:test::run_blocking[run_blocking] lives in `capy::test` deliberately -- it is a test utility, not a production API. The proposed `on(ex).block(t)` places it alongside `.spawn()` and `.call()` as if it were a first-class production method. That is a promotion this API has not earned.
 
 - **Hidden critical ordering.** The two-phase invocation exists for a mechanical reason (allocator timing, described below). With `on(ex).spawn(t)`, the critical sequencing guarantee is buried behind what looks like a casual method call. The `()()` syntax is pedagogically valuable -- it signals that something important happens in two distinct steps.
 

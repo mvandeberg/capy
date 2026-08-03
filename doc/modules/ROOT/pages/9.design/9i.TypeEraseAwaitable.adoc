@@ -8,7 +8,7 @@ The vtable layout depends on how many async operations the wrapper exposes and w
 
 == Single-Operation: Flat Vtable
 
-When a wrapper exposes exactly one async operation (e.g. `any_read_stream` with `read_some`, or `any_write_stream` with `write_some`), all function pointers live in a single flat vtable:
+When a wrapper exposes exactly one async operation (e.g. cpp:any_read_stream[] with `read_some`, or cpp:any_write_stream[] with `write_some`), all function pointers live in a single flat vtable:
 
 [source,cpp,role=pseudocode]
 ----
