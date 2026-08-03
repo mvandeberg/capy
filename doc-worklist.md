@@ -22,10 +22,11 @@ develop`) against `DOC_REVIEW_FEEDBACK.md` Section 2. One row per finding that i
 | finding# | library | surface | pages/headers | phase | owner |
 |---|---|---|---|---|---|
 | 1 | capy | adoc | **PARTIAL — Phase-1 and Phase-3 scopes COMPLETE, bare-mention tail deferred to Phase 4 (not closed).** All signature-restatements converted to `cpp:` links, plus the 5 top-offender pages and `9l.RunApi` fully converted. Phase 3 additionally closed the `7b.mock-streams` `test::` tail: `include/boost/capy/test.hpp` now exposes the `boost::capy::test::` toolkit to the MrDocs reference (commit `1c385cf6`), so the deferred `test::read_stream` / `test::write_stream` / `test::stream` / `test::fuse` / `test::make_stream_pair` spans are `cpp:` xrefs. Remaining: the bare-mention long tail across the other `doc/modules/ROOT/pages/**` pages (~160 hand-typed API-term hits originally), intentionally deferred to Phase 4 per the approved Phase-1 scope decision, **as its own Phase-4 task, linking rule: first mention per page, not every occurrence** (avoids link spam). | 4 | unassigned |
+| 3 | capy | adoc | **PARTIAL — docstring leg CLOSED 2026-08-03 (see dated note), adoc leg OPEN (not closed).** `doc/modules/ROOT/pages/4.coroutines/4b.launching.adoc:40-49`'s `[WARNING]` block lists only the rvalue-qualified-wrapper case (`auto wrapper = run_async(...); wrapper(compute());`) — the one case caught at compile time, i.e. the benign one. `doc/modules/ROOT/pages/4.coroutines/4g.allocators.adoc` lists none of the other cases (grepping that page for "preconstructed", "wrapper function", and "dangerous" separately finds none of the three; the only related hit is line 24, "This is why `run_async` uses two-call syntax:"). The preconstructed-task case, the wrapper-function case, and the Frame Allocators rationale link are all present in `include/boost/capy/ex/run_async.hpp:343-366`'s `run_async_wrapper` docstring but never reached either exposition page — a tutorial reader gets no warning about either silent-failure case. | 4 | unassigned |
 | 6 | both | adoc | `doc/modules/ROOT/pages/why-capy.adoc` (line 275), `doc/modules/ROOT/pages/9.design/9a.CapyLayering.adoc` (line 61), plus 9 more pages flagged by `grep -rlni "simply\|basically\|essentially\|obviously\|of course\|note that\|in order to"` (Corosio side not checked here) | 4 | unassigned |
 | 7 | both | adoc | **PARTIAL — same underlying gap as #1; Phase-1 and Phase-3 scopes COMPLETE, bare-mention tail deferred to Phase 4 (not closed).** `cpp:` macro extension (configured in `doc/antora.yml`/`doc/package.json`) is now in active use — signature-restatements + 5 top pages + `9l.RunApi` converted, and Phase 3 added the `7b.mock-streams` `test::` xrefs via the `boost/capy/test.hpp` umbrella (see #1). Remaining bare-mention conversions deferred to Phase 4 with #1, **as its own Phase-4 task, linking rule: first mention per page, not every occurrence** (avoids link spam). | 4 | unassigned |
-| 8 | both | adoc | **PARTIAL — genuine bug fixed, safe-in-context leg undocumented on the page (not closed).** Commit `289cf6bc` fixed the real dangling-by-reference bug: `test/doc/snippets/4f_composition.cpp` `process_item` took `item const&` while `process_all` (current: line 342) stores the returned `io_task<int>` in a vector and awaits it later via `when_all` — a deferred read of a reference bound at construction time. `process_item` now takes `item` by value (current: lines 340, 359), so the rendered `fan_out` snippet (`doc/modules/ROOT/pages/4.coroutines/4f.composition.adoc:138`) is correct. `test/doc/snippets/5c_sequences.cpp` `read_all(Stream& stream, Buffers buffers)` (current: line 142, included at `doc/modules/ROOT/pages/5.buffers/5c.sequences.adoc:99`) was left unchanged — correctly, per the commit body: the stream is caller-owned and awaited immediately, the safe idiom. **Residual:** that safe-in-context rationale lives only in the `289cf6bc` commit message; neither adoc page carries it, so a reader comparing the two signatures (`item` by value vs `Stream&`) has no on-page explanation for the asymmetry. Belongs to Phase 4 (wording/clarity) as a short note on `5c.sequences.adoc` near the `read_all` snippet (or `4f.composition.adoc` near `fan_out`) stating why one takes a reference and the other doesn't. | 2 | unassigned |
-| 15 | capy | docstring | **OUT OF PHASE 4 — maintainer API-naming decision, not a doc task (ruled during Phase-4 pre-flight).** `include/boost/capy/concept/execution_context.hpp:73` (`concept ExecutionContext`) vs `include/boost/capy/ex/execution_context.hpp` (`class execution_context`); `include/boost/capy/ex/executor_ref.hpp`; `include/boost/capy/buffers.hpp:335` (`buffer_size`) vs `:409` (`buffer_length`) — a doc-side change here would either document the inconsistency as intentional or silently pick a winner, so the row stays open pending a maintainer naming decision outside this plan. | 4 | unassigned |
+| 8 | both | adoc | **PARTIAL — latent dangling-reference hazard closed, safe-in-context leg undocumented on the page (not closed). Reclassified from phase = 2 to phase 4 by controller ruling (residual is Phase-4 wording work).** Commit `289cf6bc` closed a latent dangling-by-reference hazard in `test/doc/snippets/4f_composition.cpp`: `process_item` took `item const&`, and `process_all` (current: line 342) stores each returned `io_task<int>` in a vector and awaits it later via `when_all` — a deferred read of a reference bound at construction time. In the snippet as written nothing actually dangled (`items` outlives the `when_all`), but the commit body states the precise hazard correctly: "`process_item(temporary)` would dangle" if a caller ever passed one. `process_item` now takes `item` by value (current: lines 340, 359), so the rendered `fan_out` snippet (`doc/modules/ROOT/pages/4.coroutines/4f.composition.adoc:138`) is correct. `test/doc/snippets/5c_sequences.cpp` `read_all(Stream& stream, Buffers buffers)` (current: line 142, included at `doc/modules/ROOT/pages/5.buffers/5c.sequences.adoc:99`) was left unchanged — correctly, per the commit body: the stream is caller-owned and awaited immediately, the safe idiom. **Residual:** that safe-in-context rationale lives only in the `289cf6bc` commit message; neither adoc page carries it, so a reader comparing the two signatures (`item` by value vs `Stream&`) has no on-page explanation for the asymmetry. Belongs to Phase 4 (wording/clarity) as a short note on `5c.sequences.adoc` near the `read_all` snippet (or `4f.composition.adoc` near `fan_out`) stating why one takes a reference and the other doesn't. | 4 | unassigned |
+| 15 | capy | docstring | **OUT OF PHASE 4 — maintainer API-naming decision, not a doc task (ruled during Phase-4 pre-flight).** `include/boost/capy/concept/execution_context.hpp:73` (`concept ExecutionContext`) vs `include/boost/capy/ex/execution_context.hpp` (`class execution_context`); `include/boost/capy/ex/executor_ref.hpp`; `include/boost/capy/buffers.hpp:397` (`buffer_size`) vs `:475` (`buffer_length`) — a doc-side change here would either document the inconsistency as intentional or silently pick a winner, so the row stays open pending a maintainer naming decision outside this plan. | 4 | unassigned |
 | 18 | both | adoc | **DEFERRED — Review-tier (E2 reclassified Gate->Review in `6944132f`); verify-by-eye only, NOT actionable in this repo.** Verified in the built site (2026-07-28): long design pages (e.g. `9m.WhyNotCobalt.adoc`, 616 lines) render only the left page-tree nav, no right-rail per-page section ToC. `.toc-menu` styling ships in the shared boost-website UI bundle assets (`_/css/site.css`, `_/js/site.js`) but no page activates it — the right-rail ToC is a set-once theme format owned by that external UI bundle. | 1 | unassigned |
 
 ## Deferred findings (Corosio — Phase 5)
@@ -78,29 +79,47 @@ page names cited in `DOC_REVIEW_FEEDBACK.md` Section 3, unverified against that 
   since `b4ba0daf` ("docs: re-baseline review feedback against develop") and are
   stale for every finding closed in Phases 1–3. This file, not that one, is the
   authoritative status for Phases 1–4.
-- **2026-08-03 (Phase-4 pre-flight re-verification):** Supersedes the 2026-07-30
-  "not verified in this wave" note above. Rows **#3** and **#22** re-verified as
-  **fully done** against current code and removed:
-  **#3** — commit `cfa41dcb` rewrote all 18 `run_async` overload briefs (now e.g.
-  "Bind an executor to produce a launcher; invoke the launcher with a task to start
-  it.", `include/boost/capy/ex/run_async.hpp:514` et al.) and expanded the
-  `run_async_wrapper` `@warning` to cover all three defeat patterns — stored wrapper,
-  preconstructed task, wrapper-function forwarding — with a link to the Frame
-  Allocators guide (`include/boost/capy/ex/run_async.hpp:343-366`, guide confirmed to
-  exist at `doc/modules/ROOT/pages/4.coroutines/4g.allocators.adoc`); both parts of
-  Plan Task 9 are present in the tree. **#22** — commit `2cbd29ad` added the
+- **2026-08-03 (Phase-4 pre-flight re-verification):** Supersedes the now-deleted
+  2026-07-30 "not verified in this wave" note. Row **#22** re-verified as **fully
+  done** against current code and removed: commit `2cbd29ad` added the
   await_suspend-only rationale to `IoAwaitable`
-  (`include/boost/capy/concept/io_awaitable.hpp:28-34,71-76`) and the `void*`/`void
+  (`include/boost/capy/concept/io_awaitable.hpp:28-34,71-75`) and the `void*`/`void
   const*` pointer-and-storage rationale to `mutable_buffer`/`const_buffer`'s
-  constructor and `data()` (`include/boost/capy/buffers.hpp:70-79,88-93` and
-  `:159-168,187-193`); no signature change, docs match code. Row **#8** re-verified
-  as **partial, kept**: the underlying bug (dangling-by-reference in the fan-out
-  example, commit `289cf6bc`) was genuinely fixed, and the companion `read_all`
-  reference parameter was correctly left alone as the safe caller-keeps-stream-alive
-  idiom — Phase 2's genuine-bug-vs-safe-in-context investigation happened and reached
-  the right call — but the rationale for why one takes a reference and the other
-  takes a value exists only in the `289cf6bc` commit message, not on either adoc
-  page; see the row for the residual. Also recorded per Phase-4 pre-flight maintainer
-  ruling: row **#15** is out of Phase 4 (API-naming decision, not a doc fix); rows
-  **#1**/**#7**'s deferred bare-mention tail is confirmed as its own Phase-4 task with
-  a first-mention-per-page linking rule.
+  constructor and `data()` (`include/boost/capy/buffers.hpp:70-80,88-94` and
+  `:159-169,188-194`); no signature change, docs match code. Finding #22's parent
+  (`DOC_REVIEW_FEEDBACK.md:106`) lists five sub-points — buffer-handle lifetime,
+  `void*` rationale, `buffer_slice` naming/semiregular, "`Slice` concept
+  unnecessary", `IoAwaitable` looseness — and this row tracked only the two
+  docstring sub-points named in its own line anchors, so the row closes only
+  those two; the other three were checked and found substantively addressed
+  elsewhere, not overlooked: `include/boost/capy/buffers/buffer_slice.hpp:37-68`
+  documents the buffer-handle lifetime contract (`@par Lifetime`) and deletes the
+  rvalue overload that would otherwise dangle; no `concept Slice` exists anywhere
+  in `include/` (confirmed by grep), so there is no such concept to remove.
+  Row **#3**'s **docstring** leg re-verified as **fully done** and closed:
+  commit `cfa41dcb` rewrote all 18 `run_async` overload briefs (now e.g. "Bind an
+  executor to produce a launcher; invoke the launcher with a task to start it.",
+  `include/boost/capy/ex/run_async.hpp:514` et al.) and expanded the
+  `run_async_wrapper` `@warning` to cover all three defeat patterns — stored
+  wrapper, preconstructed task, wrapper-function forwarding — with a link to the
+  Frame Allocators guide (`include/boost/capy/ex/run_async.hpp:343-366`, guide
+  confirmed to exist at `doc/modules/ROOT/pages/4.coroutines/4g.allocators.adoc`).
+  **Finding #3 is NOT wholly closed**: it has an **adoc** leg (Rainer/Gennaro/Alan's
+  "warning lists too few dangerous cases; rationale/trade-offs not explained" per
+  `DOC_REVIEW_FEEDBACK.md:87`) that the docstring fix never reached — see row #3,
+  re-added with `surface = adoc` to track it rather than let it be rediscovered at
+  the Boost re-review. Row **#8** re-verified as **partial, kept, and reclassified
+  from phase = 2 to phase 4 by controller ruling** (its residual is Phase-4 wording
+  work, so a phase-4 sweep must be able to select it): the underlying hazard
+  (dangling-by-reference in the fan-out example, commit `289cf6bc`) was a real,
+  if latent, defect — nothing dangled in the snippet as written, but the commit
+  body correctly identifies that a caller passing a temporary would dangle — and
+  it is closed; the companion `read_all` reference parameter was correctly left
+  alone as the safe caller-keeps-stream-alive idiom — Phase 2's
+  genuine-bug-vs-safe-in-context investigation happened and reached the right
+  call — but the rationale for why one takes a reference and the other takes a
+  value exists only in the `289cf6bc` commit message, not on either adoc page;
+  see the row for the residual. Also recorded per Phase-4 pre-flight maintainer
+  ruling: row **#15** is out of Phase 4 (API-naming decision, not a doc fix);
+  rows **#1**/**#7**'s deferred bare-mention tail is confirmed as its own Phase-4
+  task with a first-mention-per-page linking rule.
