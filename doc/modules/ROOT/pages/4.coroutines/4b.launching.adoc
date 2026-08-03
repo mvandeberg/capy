@@ -1,6 +1,6 @@
 = Launching Coroutines
 
-This section explains how to launch coroutines for execution. You will learn about `run_async` for entry from non-coroutine code and `run` for executor hopping within coroutine code.
+This section explains how to launch coroutines for execution. You will learn about `run_async` for entry from non-coroutine code and cpp:run[] for executor hopping within coroutine code.
 
 == Prerequisites
 
