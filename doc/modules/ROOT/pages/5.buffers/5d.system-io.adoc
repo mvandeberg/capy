@@ -13,7 +13,7 @@ User-facing APIs use concepts for composition flexibility. But at type-erasure b
 
 Capy's design:
 
-* *User-facing API* — Accepts `ConstBufferSequence` or `MutableBufferSequence` concepts
+* *User-facing API* — Accepts cpp:ConstBufferSequence[] or cpp:MutableBufferSequence[] concepts
 * *Internal boundary* — Converts to concrete arrays for virtual dispatch
 * *OS interface* — Translates to platform-specific structures
 
