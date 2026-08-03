@@ -5,7 +5,7 @@ This section explains executors and execution contexts—the mechanisms that con
 == Prerequisites
 
 * Completed xref:4.coroutines/4b.launching.adoc[Launching Coroutines]
-* Understanding of `run_async` and `run`
+* Understanding of `run_async` and cpp:run[]
 
 [#the-same-executor-invariant]
 == The Same-Executor Invariant
@@ -58,20 +58,20 @@ Returns a reference to the execution context that owns this executor. The contex
 
 == executor_ref: Type-Erased Executor
 
-`executor_ref` wraps any executor in a type-erased container, allowing code to work with executors without knowing their concrete type:
+cpp:executor_ref[] wraps any executor in a type-erased container, allowing code to work with executors without knowing their concrete type:
 
 [source,cpp]
 ----
 include::example$programs/4c_executors_executor_ref.cpp[tag=full]
 ----
 
-Here `make_suspended_work` launches a coroutine on the pool and returns the `continuation` it parked; posting that continuation through the type-erased `ex` resumes it.
+Here `make_suspended_work` launches a coroutine on the pool and returns the cpp:continuation[] it parked; posting that continuation through the type-erased `ex` resumes it.
 
 `executor_ref` stores a reference to the underlying executor—the original executor must outlive the `executor_ref`.
 
 == thread_pool: Multi-Threaded Execution
 
-`thread_pool` manages a pool of worker threads that execute coroutines concurrently:
+cpp:thread_pool[] manages a pool of worker threads that execute coroutines concurrently:
 
 [source,cpp]
 ----
@@ -94,7 +94,7 @@ Work posted to a `thread_pool` may execute on any of its worker threads. If your
 
 == execution_context: Base Class
 
-`execution_context` is the base class for execution contexts. It provides:
+cpp:execution_context[] is the base class for execution contexts. It provides:
 
 * Frame allocator access via `get_frame_allocator()`
 * Service infrastructure for extensibility
@@ -108,7 +108,7 @@ include::example$snippets/4c_executors.cpp[tag=my_context]
 
 == strand: Serialization Without Mutexes
 
-A `strand` ensures that handlers are executed in order, with no two handlers executing concurrently. This eliminates the need for mutexes when all access to shared data goes through the strand.
+A cpp:strand[] ensures that handlers are executed in order, with no two handlers executing concurrently. This eliminates the need for mutexes when all access to shared data goes through the strand.
 
 [source,cpp]
 ----
