@@ -20,7 +20,7 @@ This example is built when a `Boost::asio` target is available. The full source 
 
 == The Completion Token
 
-Asio async operations accept a _completion token_ that decides what the call returns. `use_capy` is a token whose `async_result` returns an `IoAwaitable`. When co-awaited, its `await_suspend` starts the Asio operation and arranges the completion handler to post the resumption through the caller's executor—so the coroutine resumes on the executor it was launched with, never on whatever thread Asio completed on. From `example/asio/api/use_capy.hpp`:
+Asio async operations accept a _completion token_ that decides what the call returns. `use_capy` is a token whose `async_result` returns an cpp:IoAwaitable[]. When co-awaited, its `await_suspend` starts the Asio operation and arranges the completion handler to post the resumption through the caller's executor—so the coroutine resumes on the executor it was launched with, never on whatever thread Asio completed on. From `example/asio/api/use_capy.hpp`:
 
 [source,cpp]
 ----
@@ -29,14 +29,14 @@ include::example$asio/api/use_capy.hpp[tag=await_suspend,indent=0]
 
 == Using the Token
 
-Pass `use_capy` where an Asio operation expects a completion token. The `co_await` yields an `io_result` carrying the error code and the operation's result:
+Pass `use_capy` where an Asio operation expects a completion token. The `co_await` yields an cpp:io_result[] carrying the error code and the operation's result:
 
 [source,cpp]
 ----
 include::example$asio/use_capy_example.cpp[tag=writer]
 ----
 
-The reader is symmetric, using `async_read_some`. `run_example` drives both concurrently over a connected socket pair with `when_all`, then reports completion.
+The reader is symmetric, using `async_read_some`. `run_example` drives both concurrently over a connected socket pair with cpp:when_all[], then reports completion.
 
 == Output
 

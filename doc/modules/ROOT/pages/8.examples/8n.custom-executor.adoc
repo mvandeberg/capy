@@ -4,8 +4,8 @@ Implementing the Executor concept with a single-threaded run loop.
 
 == What You Will Learn
 
-* Satisfying the `Executor` concept
-* Implementing `execution_context`, `dispatch`, and `post`
+* Satisfying the cpp:Executor[] concept
+* Implementing cpp:execution_context[], `dispatch`, and `post`
 * Running Capy coroutines on a custom scheduling system
 
 == Prerequisites
@@ -44,7 +44,7 @@ The nested `executor_type` must provide:
 
 * `context()` -- returns a reference to the owning `execution_context`
 * `on_work_started()` / `on_work_finished()` -- work-tracking hooks
-* `dispatch(c)` -- resume immediately if already on this context, otherwise enqueue. Takes a `continuation&` and returns `std::coroutine_handle<>`.
+* `dispatch(c)` -- resume immediately if already on this context, otherwise enqueue. Takes a cpp:continuation[]`&` and returns `std::coroutine_handle<>`.
 * `post(c)` -- always enqueue for later execution. Takes a `continuation&`.
 * `operator==` -- compare two executors for identity
 
@@ -73,9 +73,9 @@ include::example$custom-executor/custom_executor.cpp[tag=dispatch,indent=0]
 include::example$custom-executor/custom_executor.cpp[tag=drive,indent=0]
 ----
 
-`run_async` enqueues the initial coroutine. `loop.run()` drains the queue, resuming coroutines one by one until all work completes. This is analogous to a GUI event loop or game tick loop.
+cpp:run_async[] enqueues the initial coroutine. `loop.run()` drains the queue, resuming coroutines one by one until all work completes. This is analogous to a GUI event loop or game tick loop.
 
-Note that `run()` uses `capy::safe_resume(h)` instead of `h.resume()`. This saves and restores the thread-local frame allocator around each resumption, preventing coroutines from spoiling each other's allocator. All custom executor event loops must use `safe_resume` -- see xref:../4.coroutines/4g.allocators.adoc#_tls_preservation[TLS Preservation] for details.
+Note that `run()` uses `capy::safe_resume(h)` instead of `h.resume()`. This saves and restores the thread-local frame allocator around each resumption, preventing coroutines from spoiling each other's allocator. All custom executor event loops must use cpp:safe_resume[] -- see xref:../4.coroutines/4g.allocators.adoc#_tls_preservation[TLS Preservation] for details.
 
 == Output
 

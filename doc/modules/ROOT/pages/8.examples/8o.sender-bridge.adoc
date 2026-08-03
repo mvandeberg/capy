@@ -6,7 +6,7 @@ Awaiting a `std::execution` (P2300) sender from inside a Capy coroutine.
 
 * How to `co_await` a foreign awaitable that does not implement the xref:4.coroutines/4d.io-awaitable.adoc[IoAwaitable protocol]
 * How a bridge restores the xref:4.coroutines/4c.executors.adoc#the-same-executor-invariant[same-executor invariant] by posting the resumption through the caller's executor
-* How a sender's value and error completion channels map onto `io_result`
+* How a sender's value and error completion channels map onto cpp:io_result[]
 
 == Prerequisites
 
@@ -20,7 +20,7 @@ This example is built only when `BOOST_CAPY_BUILD_P2300_EXAMPLES=ON` (it require
 
 == The Bridge
 
-A P2300 sender is a foreign awaitable: it has no two-argument `await_suspend`, so a Capy `task` cannot `co_await` it directly. `await_sender` wraps it in an `IoAwaitable`. The key move is in the bridge's _receiver_: when the sender completes—on whatever thread its scheduler chose—it does not resume the coroutine inline. It stores the result and posts the continuation back through the caller's executor. From `example/sender-bridge/sender_awaitable.hpp`:
+A P2300 sender is a foreign awaitable: it has no two-argument `await_suspend`, so a Capy cpp:task[] cannot `co_await` it directly. `await_sender` wraps it in an cpp:IoAwaitable[]. The key move is in the bridge's _receiver_: when the sender completes—on whatever thread its scheduler chose—it does not resume the coroutine inline. It stores the result and posts the continuation back through the caller's executor. From `example/sender-bridge/sender_awaitable.hpp`:
 
 [source,cpp]
 ----
@@ -38,7 +38,7 @@ include::example$sender-bridge/sender_bridge.cpp[tag=full]
 
 == Output
 
-The sender runs on the `run_loop` thread, but the coroutine resumes on the `thread_pool` executor it was launched with—the invariant holds across the bridge:
+The sender runs on the `run_loop` thread, but the coroutine resumes on the cpp:thread_pool[] executor it was launched with—the invariant holds across the bridge:
 
 ----
 main thread: 139667952822976
