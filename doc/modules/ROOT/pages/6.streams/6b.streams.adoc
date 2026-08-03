@@ -1,6 +1,6 @@
 = Streams (Partial I/O)
 
-This section explains the `ReadStream` and `WriteStream` concepts for partial I/O operations.
+This section explains the cpp:ReadStream[] and cpp:WriteStream[] concepts for partial I/O operations.
 
 == Prerequisites
 
@@ -16,7 +16,7 @@ A type satisfies `ReadStream` if it provides partial read operations via `read_s
 include::example$snippets/6b_streams.cpp[tag=read_stream_concept]
 ----
 
-The `requires` clause names a single representative buffer (`mutable_buffer_archetype`) because a {cpp} concept cannot say "works with every buffer sequence." The real contract is that `read_some` accepts *any* `MutableBufferSequence`—one buffer or a range; the archetype only samples that requirement.
+The `requires` clause names a single representative buffer (cpp:mutable_buffer_archetype[]) because a {cpp} concept cannot say "works with every buffer sequence." The real contract is that `read_some` accepts *any* cpp:MutableBufferSequence[]—one buffer or a range; the archetype only samples that requirement.
 
 === read_some Semantics
 
@@ -67,7 +67,7 @@ A type satisfies `WriteStream` if it provides partial write operations via `writ
 include::example$snippets/6b_streams.cpp[tag=write_stream_concept]
 ----
 
-As with `ReadStream`, the `const_buffer_archetype` is only a representative: the real contract is that `write_some` accepts *any* `ConstBufferSequence`, which a {cpp} concept cannot fully express.
+As with `ReadStream`, the cpp:const_buffer_archetype[] is only a representative: the real contract is that `write_some` accepts *any* cpp:ConstBufferSequence[], which a {cpp} concept cannot fully express.
 
 === write_some Semantics
 

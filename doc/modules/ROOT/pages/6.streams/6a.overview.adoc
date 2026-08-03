@@ -14,15 +14,15 @@ Capy defines three concepts for I/O operations:
 |===
 | Concept | Direction | Description
 
-| `ReadStream`
+| cpp:ReadStream[]
 | Read
 | Partial reads—returns whatever is available
 
-| `WriteStream`
+| cpp:WriteStream[]
 | Write
 | Partial writes—writes as much as possible
 
-| `Stream`
+| cpp:Stream[]
 | Read + Write
 | A connected pair—satisfies both `ReadStream` and `WriteStream`
 |===
@@ -49,13 +49,13 @@ Each concept has a corresponding type-erasing wrapper:
 | Concept | Wrapper
 
 | `ReadStream`
-| `any_read_stream`
+| cpp:any_read_stream[]
 
 | `WriteStream`
-| `any_write_stream`
+| cpp:any_write_stream[]
 
 | (Both)
-| `any_stream`
+| cpp:any_stream[]
 |===
 
 These wrappers enable:
