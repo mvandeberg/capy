@@ -53,7 +53,7 @@ Many IoAwaitables return `std::coroutine_handle<>` to enable symmetric transfer,
 
 == IoAwaitable Concept
 
-An awaitable satisfies `IoAwaitable` if `a.await_suspend(h, env)` is a valid expression:
+An awaitable satisfies cpp:IoAwaitable[] if `a.await_suspend(h, env)` is a valid expression:
 
 [source,cpp]
 ----
@@ -64,7 +64,7 @@ The concept constrains only the two-argument `await_suspend` that receives the `
 
 == IoRunnable Concept
 
-For tasks that can be launched from non-coroutine contexts, the `IoRunnable` concept refines `IoAwaitable` and requires a `promise_type` plus the following:
+For tasks that can be launched from non-coroutine contexts, the cpp:IoRunnable[] concept refines `IoAwaitable` and requires a `promise_type` plus the following:
 
 * `handle()`: Access the typed coroutine handle
 * `release()`: Transfer ownership of the frame
@@ -77,7 +77,7 @@ These methods exist because launch functions like `run_async` cannot `co_await` 
 
 The context injection methods `set_continuation` and `set_environment` are part of the `IoRunnable` concept: it requires them on the `promise_type`. Launch functions access them through the typed handle provided by `handle()`.
 
-Capy's `task<T>` satisfies this concept.
+Capy's cpp:task[task<T>] satisfies this concept.
 
 == How Context Flows
 
@@ -102,7 +102,7 @@ Forward propagation offers several advantages:
 * *Composability* — Any IoAwaitable works with any IoRunnable task
 * *Explicit flow* — Context flows downward through the call chain, not queried upward
 
-This design enables Capy's type-erased wrappers (`any_stream`, etc.) to work without knowing the concrete executor type.
+This design enables Capy's type-erased wrappers (cpp:any_stream[], etc.) to work without knowing the concrete executor type.
 
 == A Vocabulary for Coroutine Interop
 
@@ -201,7 +201,7 @@ Capy does not provide a generic `co_await foreign_awaitable(x)` that adapts _arb
 
 Two complete, buildable bridges live in the examples:
 
-* xref:8.examples/8o.sender-bridge.adoc[Bridging a P2300 Sender] — `await_sender` adapts a `std::execution` sender, mapping its completion channels onto `io_result` and posting the resumption through the executor.
+* xref:8.examples/8o.sender-bridge.adoc[Bridging a P2300 Sender] — `await_sender` adapts a `std::execution` sender, mapping its completion channels onto cpp:io_result[] and posting the resumption through the executor.
 * xref:8.examples/8p.asio-use-capy.adoc[Calling Asio from a Capy Coroutine] — the `use_capy` completion token turns any Asio async operation into an `IoAwaitable`.
 
 == Reference
