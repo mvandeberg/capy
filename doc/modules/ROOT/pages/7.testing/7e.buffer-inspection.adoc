@@ -129,7 +129,7 @@ include::example$snippets/7e_buffer_inspection.cpp[tag=reconstruct,indent=0]
 == Putting It Together
 
 The following snippet tests a hypothetical parser that reads from a
-`read_stream`. `bufgrind` exercises every split of the input so the parser
+cpp:test::read_stream[read_stream]. `bufgrind` exercises every split of the input so the parser
 is run against every possible chunk boundary; `buffer_to_string` verifies
 the output at each split:
 
