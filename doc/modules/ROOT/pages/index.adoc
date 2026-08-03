@@ -6,7 +6,7 @@ Capy abstracts away sockets, files, and asynchrony with type-erased streams and 
 
 Capy is two things at once:
 
-* *A protocol.* `IoAwaitable` is a protocol for propagating a coroutine's _execution environment_—its executor, stop token, and allocator—forward through `co_await` chains. This is the vocabulary that lets awaitable-based coroutine libraries interoperate.
+* *A protocol.* cpp:IoAwaitable[] is a protocol for propagating a coroutine's _execution environment_—its executor, stop token, and allocator—forward through `co_await` chains. This is the vocabulary that lets awaitable-based coroutine libraries interoperate.
 * *A reference implementation.* A concrete library—thread pool, task types, byte streams, buffer sequences, synchronization primitives—that proves the protocol works in practice.
 
 The protocol is the smaller, more general library living inside Capy. Without a shared protocol, _N_ coroutine libraries need _N_×(_N_−1) adapters to interoperate; with one shared protocol for environment propagation, a single bridge covers everyone. This is the role `IoAwaitable` plays.
@@ -26,11 +26,11 @@ Capy is _not_ an all-purpose coroutine framework, and it is _not_ an implementat
 
 == What This Library Does
 
-* *Lazy coroutine tasks* — `task<T>` with forward-propagating stop tokens and automatic cancellation
+* *Lazy coroutine tasks* — cpp:task[task<T>] with forward-propagating stop tokens and automatic cancellation
 * *Buffer sequences* — taken straight from Asio and improved
-* *Stream concepts* — three coroutine stream concepts: `ReadStream`, `WriteStream`, `Stream`
-* *Type-erased streams* — `any_stream`, `any_read_stream`, `any_write_stream` for fast compilation
-* *Concurrency facilities* — executors, strands, thread pools, `when_all`, `when_any`
+* *Stream concepts* — three coroutine stream concepts: cpp:ReadStream[], cpp:WriteStream[], cpp:Stream[]
+* *Type-erased streams* — cpp:any_stream[], cpp:any_read_stream[], cpp:any_write_stream[] for fast compilation
+* *Concurrency facilities* — executors, strands, thread pools, cpp:when_all[], cpp:when_any[]
 * *Test utilities* — mock streams, mock sources/sinks, error injection
 
 == What This Library Does Not Do
@@ -114,7 +114,7 @@ include::example$programs/index_page_echo.cpp[tag=full]
 
 The `echo` function accepts an `any_stream&`—a type-erased wrapper that works with any concrete stream implementation. The function reads data into a buffer, then writes it back. Both operations use `co_await` to suspend until the I/O completes.
 
-The `task<>` return type (equivalent to `task<void>`) creates a lazy coroutine that does not start executing until awaited or launched with `run_async`.
+The `task<>` return type (equivalent to `task<void>`) creates a lazy coroutine that does not start executing until awaited or launched with cpp:run_async[].
 
 == Next Steps
 
