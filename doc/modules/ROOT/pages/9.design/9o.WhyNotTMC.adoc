@@ -297,7 +297,7 @@ TMC integrates with Asio via `aw_asio.hpp`/`ex_asio.hpp`. Corosio provides nativ
 
 | Type erasure
 | Asio handler + `ex_any`
-| `executor_ref` only
+| cpp:executor_ref[] only
 
 | Tuple packing
 | Yes (init args)
@@ -322,7 +322,7 @@ The critical path difference is completion. TMC+Asio goes through `resume_contin
 
 *Capy:*
 
-* `any_stream`, `any_read_stream`, `any_write_stream`
+* cpp:any_stream[], cpp:any_read_stream[], cpp:any_write_stream[]
 * Write a function taking `any_stream&` - it compiles once
 * One virtual call per I/O operation
 * Clean ABI boundaries
@@ -399,7 +399,7 @@ TMC for compute scheduling, Capy/Corosio for I/O. They can coexist at different 
 | Compute scheduling
 
 | Threading
-| Multi-threaded (`thread_pool`)
+| Multi-threaded (cpp:thread_pool[])
 | Multi-threaded (work-stealing)
 
 | Executor mobility
@@ -407,7 +407,7 @@ TMC for compute scheduling, Capy/Corosio for I/O. They can coexist at different 
 | Mid-body switching (`resume_on`)
 
 | Serialization
-| `strand` (ordering preserved across suspend)
+| cpp:strand[] (ordering preserved across suspend)
 | `ex_braid` (lock released on suspend)
 
 | Context propagation
@@ -431,7 +431,7 @@ TMC for compute scheduling, Capy/Corosio for I/O. They can coexist at different 
 | No (use Asio)
 
 | Stream concepts
-| Yes (`ReadStream`, `WriteStream`, etc.)
+| Yes (cpp:ReadStream[], cpp:WriteStream[], etc.)
 | No
 
 | Type-erased streams

@@ -192,12 +192,12 @@ When algorithms operate on type-erased interfaces, testing becomes deterministic
 
 Capy's mock types:
 
-* `test::read_stream`, `test::write_stream` — partial I/O mocks
-* `test::stream` — connected pair for bidirectional testing
+* cpp:test::read_stream[test::read_stream], cpp:test::write_stream[test::write_stream] — partial I/O mocks
+* cpp:test::stream[test::stream] — connected pair for bidirectional testing
 * `test::read_source`, `test::write_sink` — complete I/O mocks
 * `test::buffer_source`, `test::buffer_sink` — zero-copy mocks
 
-`test::fuse` injects errors systematically at every I/O operation point. `test::run_blocking` executes coroutines synchronously for deterministic unit tests. `max_read_size` and `max_write_size` simulate chunked delivery. `expect()` validates written data.
+cpp:test::fuse[test::fuse] injects errors systematically at every I/O operation point. cpp:test::run_blocking[test::run_blocking] executes coroutines synchronously for deterministic unit tests. `max_read_size` and `max_write_size` simulate chunked delivery. `expect()` validates written data.
 
 Tests run without sockets or network access, eliminating non-determinism.
 
