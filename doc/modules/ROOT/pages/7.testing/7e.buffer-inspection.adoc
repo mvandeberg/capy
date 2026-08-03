@@ -9,9 +9,9 @@
 
 = Buffer Inspection
 
-Two small utilities round out the toolkit. `bufgrind` iterates every split
+Two small utilities round out the toolkit. cpp:test::bufgrind[bufgrind] iterates every split
 point of a buffer sequence, exercising every chunk-boundary condition in the
-system under test. `buffer_to_string` concatenates buffer sequences into a
+system under test. cpp:test::buffer_to_string[buffer_to_string] concatenates buffer sequences into a
 `std::string` for assertion.
 
 == bufgrind
@@ -64,10 +64,10 @@ two positions: 0 and size.
 
 === Mutability Preservation
 
-`bufgrind` is templated on a `ConstBufferSequence` but the slices it
+`bufgrind` is templated on a cpp:ConstBufferSequence[] but the slices it
 produces follow the mutability of the input. Each half is itself a
-buffer sequence (`slice_type`). Passing a `mutable_buffer` yields halves
-that model `MutableBufferSequence`; passing a `const_buffer` yields
+buffer sequence (cpp:test::bufgrind::slice_type[slice_type]). Passing a cpp:mutable_buffer[] yields halves
+that model cpp:MutableBufferSequence[]; passing a cpp:const_buffer[] yields
 halves that model `ConstBufferSequence`. This matters for tests that
 need to write into the produced buffers rather than only read from them.
 

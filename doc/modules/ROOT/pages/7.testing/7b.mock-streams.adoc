@@ -16,7 +16,7 @@ partial-transfer paths.
 
 == read_stream
 
-cpp:test::read_stream[] implements the `ReadStream` concept. Test code stages bytes
+cpp:test::read_stream[] implements the cpp:ReadStream[] concept. Test code stages bytes
 via `provide()`, then the system under test (or the test body) calls
 `read_some()` to consume them. The attached cpp:test::fuse[] injects errors at
 every read call, exercising the caller's error-handling paths. Because
@@ -45,7 +45,7 @@ include::example$snippets/7b_mock_streams.cpp[tag=read_stream_chunked,indent=0]
 === EOF Behavior
 
 When all provided data has been consumed, `read_some` returns
-`cond::eof` with a byte count of zero. The stream does not
+cpp:cond::eof[cond::eof] with a byte count of zero. The stream does not
 suspend; the result is available immediately.
 
 [source,cpp]
@@ -80,11 +80,11 @@ include::example$snippets/7b_mock_streams.cpp[tag=read_stream_eof,indent=0]
 
 == write_stream
 
-cpp:test::write_stream[] implements the `WriteStream` concept. The system under
+cpp:test::write_stream[] implements the cpp:WriteStream[] concept. The system under
 test calls `write_some()` and the test inspects what was written via
 `data()`. Test code may also call `expect()` to register the data it
 anticipates; any mismatch between written bytes and that prefix causes
-`write_some()` to return `error::test_failure` directly. The fuse is a
+`write_some()` to return cpp:error::test_failure[error::test_failure] directly. The fuse is a
 separate concern used only for error injection. Because `fuse` copies
 share state (see
 xref:7.testing/7a.drivers.adoc#_shared_state_across_copies[Shared State Across Copies]),
