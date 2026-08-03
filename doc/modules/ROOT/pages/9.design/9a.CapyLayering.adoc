@@ -20,7 +20,7 @@ One abstraction level cannot serve all of these needs simultaneously. The insigh
 
 Capy offers three layers. They coexist. They interoperate. Users pick the one that matches their constraints.
 
-The first layer is concepts. These are the template-based interfaces: `ReadStream`, `WriteStream`, `Stream`. Algorithms written against concepts get full optimization. The compiler sees through everything. There is no indirection, no vtable, no allocation overhead. This is what you use for hot inner loops, for protocol parsing, for any path where performance dominates:
+The first layer is concepts. These are the template-based interfaces: cpp:ReadStream[], cpp:WriteStream[], cpp:Stream[]. Algorithms written against concepts get full optimization. The compiler sees through everything. There is no indirection, no vtable, no allocation overhead. This is what you use for hot inner loops, for protocol parsing, for any path where performance dominates:
 
 [source,cpp]
 ----
@@ -29,7 +29,7 @@ include::example$snippets/9a_capy_layering.cpp[tag=write_signature,indent=0]
 
 The cost is that templates propagate. Every caller sees the full implementation. Compile times grow. You cannot hide this behind a `.cpp` file.
 
-The second layer is type-erased wrappers. `any_stream`, `any_read_stream`, `any_write_stream`. These use a vtable internally, similar to `std::function` but specialized for I/O. You can write an algorithm against `any_stream&` and it compiles once, lives in a single translation unit, and works with any stream type:
+The second layer is type-erased wrappers. cpp:any_stream[], cpp:any_read_stream[], cpp:any_write_stream[]. These use a vtable internally, similar to `std::function` but specialized for I/O. You can write an algorithm against `any_stream&` and it compiles once, lives in a single translation unit, and works with any stream type:
 
 [source,cpp]
 ----
@@ -38,7 +38,7 @@ include::example$snippets/9a_capy_layering.cpp[tag=any_stream_echo,indent=0]
 
 The cost is a virtual call per I/O operation. For operations dominated by syscalls and network latency, this cost is invisible. For tight loops over in-memory buffers, it matters.
 
-The third layer is coroutine type erasure via `task<>`. This is the most powerful form of type erasure in the language. Inside a coroutine, when you write `co_await`, everything in the awaitable becomes type-erased from the perspective of the caller. The caller sees a `task<>`. The implementation is invisible. A pure virtual function returning `task<>` hides the stream type, the buffer strategy, the algorithm, the error handling - everything:
+The third layer is coroutine type erasure via cpp:task[task<>]. This is the most powerful form of type erasure in the language. Inside a coroutine, when you write `co_await`, everything in the awaitable becomes type-erased from the perspective of the caller. The caller sees a `task<>`. The implementation is invisible. A pure virtual function returning `task<>` hides the stream type, the buffer strategy, the algorithm, the error handling - everything:
 
 [source,cpp]
 ----
@@ -69,7 +69,7 @@ The pump mechanism extends this by allowing multiple inline completions before r
 
 The trade-off is P99 latency. While the pump is running inline completions, queued work waits. For latency-sensitive workloads, you want to return to the queue more frequently so that every piece of work gets prompt attention. The pump is configurable. You can disable it entirely for HFT-style workloads that care about tail latency, or let it ramp up for servers that care about throughput.
 
-The frame recycler is a per-thread cache of coroutine frames. Chain workloads that allocate and free frames in sequence benefit from this cache. Fan-out workloads that spawn many concurrent tasks can exhaust it. The `right_now` pattern addresses this for repeated invocations of the same operation: declare a stack object with a one-element frame cache, and repeated calls reuse that cache without touching the recycler at all. `when_all` could carry its own private frame cache sized to its arity, giving each child a frame from the parent's stash via a TLS hook. Every use case that you make better can make another use case worse. You have to pay attention to that which is not seen.
+The frame recycler is a per-thread cache of coroutine frames. Chain workloads that allocate and free frames in sequence benefit from this cache. Fan-out workloads that spawn many concurrent tasks can exhaust it. The `right_now` pattern addresses this for repeated invocations of the same operation: declare a stack object with a one-element frame cache, and repeated calls reuse that cache without touching the recycler at all. cpp:when_all[] could carry its own private frame cache sized to its arity, giving each child a frame from the parent's stash via a TLS hook. Every use case that you make better can make another use case worse. You have to pay attention to that which is not seen.
 
 
 == The Type System as Architecture
