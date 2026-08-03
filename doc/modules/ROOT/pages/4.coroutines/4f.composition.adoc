@@ -1,6 +1,6 @@
 = Concurrent Composition
 
-This section explains how to run multiple tasks concurrently using `when_all` and `when_any`.
+This section explains how to run multiple tasks concurrently using cpp:when_all[] and cpp:when_any[].
 
 == Prerequisites
 
@@ -25,7 +25,7 @@ include::example$snippets/4f_composition.cpp[tag=concurrent,indent=0]
 
 == when_all: Wait for All Tasks
 
-`when_all` launches multiple `io_task` children concurrently and waits for all of them to complete. It returns cpp:task[task]`<io_result<R1, R2, ..., Rn>>`, a single `ec` plus the flattened payloads:
+`when_all` launches multiple cpp:io_task[] children concurrently and waits for all of them to complete. It returns cpp:task[task]`<io_result<R1, R2, ..., Rn>>`, a single `ec` plus the flattened payloads:
 
 [source,cpp]
 ----
@@ -34,7 +34,7 @@ include::example$snippets/4f_composition.cpp[tag=when_all_basic,indent=0]
 
 === Result Type
 
-`when_all` returns `io_result<R1, ..., Rn>` where each `Ri` is the child's payload flattened: `io_result<T>` contributes `T`, `io_result<>` contributes `tuple<>`. Check `ec` first; values are only meaningful when `!ec`.
+`when_all` returns cpp:io_result[io_result]`<R1, ..., Rn>` where each `Ri` is the child's payload flattened: `io_result<T>` contributes `T`, `io_result<>` contributes `tuple<>`. Check `ec` first; values are only meaningful when `!ec`.
 
 === Void io_tasks
 
