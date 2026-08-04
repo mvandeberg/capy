@@ -344,13 +344,15 @@ make_trampoline(Ex, Handlers, Alloc)
     two-call expression `run_async(ex)(task)`.** The wrapper's constructor
     installs the frame allocator in thread-local storage. The task's
     `operator new` reads that thread-local state. Splitting the two calls
-    apart allocates the task's coroutine frame under the wrong allocator,
-    silently, with no compile error. Any of the following splits them:
-    @li *Stored wrapper.* Naming the wrapper (`auto w = run_async(ex);`)
-        is caught at compile time by the rvalue ref-qualifier described
-        earlier. Naming the *task* instead
-        (`auto t = my_task(); run_async(ex)(std::move(t));`) is not
-        caught: `t`'s frame is allocated before `run_async(ex)` ever runs.
+    apart in any of the following ways allocates the task's coroutine
+    frame under the wrong allocator. Each does so silently, with no
+    compile error.
+    @li *Stored wrapper.* Storing the wrapper itself
+        (`auto w = run_async(ex);`) does not compile, because of the
+        rvalue ref-qualifier described earlier. The silent variant is
+        storing the *task*
+        (`auto t = my_task(); run_async(ex)(std::move(t));`): `t`'s frame
+        is allocated before `run_async(ex)` ever runs.
     @li *Preconstructed task.* Passing an already-constructed task object
         has the same effect as the stored-wrapper case. So does passing a
         moved-from local, or a task returned from an earlier statement.

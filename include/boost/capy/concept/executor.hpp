@@ -77,7 +77,7 @@ class execution_context;
 
     @li If the executor determines it is safe to resume inline,
         returns `c.h` for the caller to use in symmetric transfer.
-        One such case is already running on the correct thread.
+        One such case is an executor already on the correct thread.
     @li Otherwise, posts the continuation for later execution and
         returns `std::noop_coroutine()`.
     @li The caller must use the returned handle appropriately.

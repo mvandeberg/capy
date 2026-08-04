@@ -664,8 +664,8 @@ public:
 
     @par Await-postcondition
     Every child has finished. If at least one child await-returned a zero
-    `ec`, the result holds index 1. If producing the winner's payload
-    threw, that exception is rethrown instead. Otherwise the result
+    `ec`, the result holds index 1, unless producing the winner's payload
+    threw, in which case that exception is rethrown. Otherwise the result
     holds index 0, or a failed child's exception is rethrown.
 
     @par Remarks
@@ -916,8 +916,8 @@ template<IoAwaitableRange R>
 
     @par Await-postcondition
     Every child has finished. If at least one child await-returned a zero
-    `ec`, the result holds the index of the winning child. If producing
-    the winner's payload threw, that exception is rethrown instead.
+    `ec`, the result holds the index of the winning child, unless producing
+    the winner's payload threw, in which case that exception is rethrown.
     Otherwise the result holds index 0, or a failed child's exception is
     rethrown.
 
