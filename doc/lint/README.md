@@ -17,6 +17,7 @@ site build. Node built-ins only, no dependencies of their own.
 | `doc-lint.mjs` | Structural AsciiDoc/nav rules (A1, A6, B2, D2, …). JSON on stdout. |
 | `extract-docstrings.mjs` | Extracts header docstrings into `.docstrings/*.adoc` so Vale can lint them. |
 | `sentence-length.mjs` | **The authority for C2** (no sentence over 25 words), over both corpora. JSON on stdout. |
+| ↳ | Emits `C2` (hard slice), `advisory-C2` (design essays) and `BACKTICK` (unbalanced code span). |
 | `mrdocs-warnings.mjs` | Runs the pinned MrDocs 0.8.0 directly and parses its reference-surface warnings. |
 | `run-a11y.mjs` | pa11y-ci contrast/a11y scan over the built site (`doc/build/site`). |
 | `baseline.mjs` | Runs every check and snapshots their findings to `baseline.json`. |
@@ -37,7 +38,7 @@ Fingerprints are built by `baseline.mjs` and their shape is load-bearing:
 | Check | Fingerprint |
 |---|---|
 | `doc_lint` | `rule:file:#N:message` — rule at the **head** |
-| `sentence_length` | `C2:file:#N:message` — rule at the **head**, same shape as `doc_lint` |
+| `sentence_length` | `C2:file:#N:message` (hard), `advisory-C2:…`, `BACKTICK:…` — rule at the **head** |
 | `vale_adoc`, `vale_docstrings` | `file:#N:Check.Name` — check name at the **tail** |
 | `mrdocs_warnings` | `file:#N:message` |
 | `a11y` | `url:code:selector` |
@@ -49,6 +50,24 @@ name would make that gate match nothing while still exiting 0.
 
 **Never hand-edit `baseline.json`.**
 
+### C2: gate the script, not the Vale rule
+
+`Capy.SentenceLength` is `level: suggestion` (see the comment in
+`.vale/styles/Capy/SentenceLength.yml`), so it never enters a Vale fingerprint set. The
+obvious-looking spec by analogy with `vale_adoc:Capy\.PartHeadings$` is therefore **vacuous** —
+measured: `--gate 'vale_adoc:Capy\.SentenceLength$'` gives `gated: true, gatedNew: 0`, exit 0,
+while checking nothing. Gate the script:
+
+```
+--gate 'sentence_length:^C2:'      # measured: exit 1, gatedNew 135
+```
+
+`^C2:` binds the **hard** slice only — the `include/**` docstrings plus every `.adoc` page outside
+`modules/ROOT/pages/9.design/` and `modules/ROOT/pages/A.specification-methods/`. The design-essay
+findings are keyed `advisory-C2` (`DOC_STYLE_GUIDE.md` Part C2 makes the limit soft in essays), and
+that key deliberately does not begin with `C2` so a mis-written `^C2` cannot reach them. Verified:
+the gated slice contains 0 `advisory-C2` fingerprints.
+
 ### `sentence_length` has no baseline entry yet
 
 `sentence_length` was added after the committed `baseline.json` was taken, so every one of its
@@ -58,8 +77,7 @@ block a merge: the check is deliberately absent from the `--gate` spec in
 
 * the report's `totalNew` is dominated by the C2 backlog, and
 * a **crash** of `sentence-length.mjs` is reported as `SKIPPED` on stderr but does not fail the
-  gate, because only a skip of a *gated* check does. Gating it (`--gate 'sentence_length:^C2:'`)
-  is Phase-4-exit's job.
+  gate, because only a skip of a *gated* check does. Gating it is Phase-4-exit's job.
 
 ---
 

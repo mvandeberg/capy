@@ -21,17 +21,18 @@
 //
 //   1. UNDER-COUNTING. A blanked span contributes ZERO words where a reader
 //      counts at least one, so the rule's 25-word budget is not the reader's.
-//      Measured over `modules`: 140 alerts as configured versus 170 with spans
-//      counted as one word each (+21%), of which the backtick clause accounts
-//      for +27 and the `cpp:` clause +3 (task P4-prereq).
+//      Two independent Vale-side measurements agree on the size of it: task
+//      P4-prereq got 140 -> 170 (+30) by rewriting `TokenIgnores` on the
+//      pre-BlockIgnores-fix config, and a re-measurement on today's corpus
+//      (every backtick span and `cpp:` macro outside code blocks replaced by one
+//      word) got 135 -> 164 (+29).
 //   2. MIS-ATTRIBUTION, which is worse. The blanking corrupts Vale's position
 //      mapping for `scope: sentence` rules, so an alert can be reported against
 //      the wrong block — which makes a genuinely over-limit block look
 //      unreported, and it produces no alert of its own to chase. Iterating
-//      `extract + vale` to a fixpoint does NOT find it. Real case, extracted
-//      from `concept/executor.hpp` at a2b9eb72: Vale flagged a 21-token block at
-//      line 31, which cannot exceed 25, and said nothing about the 43-token
-//      block at line 18.
+//      `extract + vale` to a fixpoint does NOT find it. Cleanest real case,
+//      hand-verified: `5.buffers/5b.types.adoc` holds two over-limit sentences in
+//      list items and Vale reports NONE.
 //
 // So this checker does its own segmentation and its own counting, and never
 // asks Vale where anything is. `TokenIgnores` in .vale.ini is deliberately left
@@ -46,10 +47,17 @@
 //
 //   * the offsets of everything after it stay valid, which is what lets a
 //     finding quote the real source text and name the real line, and
-//   * `\b(\w+)\b` — the same token the Vale rule used — counts it exactly once.
+//   * the word counter sees it exactly once.
 //
 // `xref:`/link macros are masked around their bracketed text instead: a reader
 // sees the link text, so the link text is what gets counted.
+//
+// Output
+// ------
+// Two rule keys, because C2 is hard in API docs and soft in essays — see
+// ADVISORY_DIRS below. `C2` is the hard slice and the one a gate binds;
+// `advisory-C2` is the design essays, measured and reported but never blocking.
+// A third key, `BACKTICK`, reports blocks whose inline code spans are unbalanced.
 //
 // Usage: node doc/lint/sentence-length.mjs [--max N] [corpusDir ...]
 //   Corpora default to `modules` (the Antora pages) and `lint/.docstrings` (the
@@ -176,23 +184,30 @@ function proseBlocks(text) {
 //
 // Each rule replaces its match with a same-length string. `keep: false` leaves
 // one `x` (the single word a reader sees); `keep: true` leaves capture group 1
-// (a link's visible text) and hides the rest. Order matters: the macros come
-// first so that a backtick span inside a macro's link text is not eaten by the
-// backtick rule, and an already-masked region cannot re-match because U+0001 is
-// in none of the patterns.
+// (a link's visible text) and hides the rest.
+//
+// Order matters: the macros run first so that a macro's target — which may
+// itself contain brackets, colons or backticks — is consumed as one unit rather
+// than being carved up by a later rule, and an already-masked region cannot
+// re-match because U+0001 appears in none of the patterns. Note that `keep: true`
+// deliberately PRESERVES the link text, including any backticks in it, so those
+// backticks stay visible to the backtick rule and to the unbalanced-backtick
+// guard below. That is intended — link text is prose — and it is also how a
+// backtick can pair across constructs, which is what the guard catches.
 const SPANS = [
   { re: /\b(?:xref|link|kbd|btn|menu|footnote):[^\s[]*\[([^\]]*)\]/g, keep: true },
   { re: /\bhttps?:\/\/\S*?\[([^\]]*)\]/g, keep: true },
   { re: /\b(?:cpp|image|icon|pass):[^\s[]*\[[^\]]*\]/g, keep: false },
-  { re: /``[^`]+``|`[^`\n]+`/g, keep: false },
+  { re: /``[^`]+``|`[^`\n]+`/g, keep: false, id: 'backtick' },
   { re: /\{[a-z][\w-]*\}/g, keep: false }, // attribute reference, e.g. {cpp}
 ];
 
 const hide = (n) => ''.repeat(n);
 
-function mask(s) {
+function mask(s, skip = null) {
   let out = s;
-  for (const { re, keep } of SPANS) {
+  for (const { re, keep, id } of SPANS) {
+    if (id !== undefined && id === skip) continue;
     out = out.replace(re, (m, g1) => {
       if (keep && g1) {
         const at = m.indexOf(g1);
@@ -204,13 +219,45 @@ function mask(s) {
   return out;
 }
 
+// A residual backtick in the masked text means the block held an UNBALANCED
+// inline code span, and the mask has already done damage: the stray backtick
+// pairs with an unrelated one and, because the mask preserves length, every word
+// between them collapses into a single `x`. Measured on a fixture, one stray
+// backtick turns a 30-word sentence into 6 — silent UNDER-reporting in a check
+// meant to feed a merge-blocking gate, i.e. the exact failure shape this script
+// exists to remove. So it is made visible instead: the block is re-masked with
+// the backtick rule disabled, which counts the span text as full prose
+// (over-reporting, the safe direction), and a `BACKTICK` finding names the file
+// and line. The rule's own `\n` guard is not enough because proseBlocks() joins a
+// block's lines with a space, so a stray backtick on one line can reach a
+// backtick on another. `BACKTICK` findings fingerprint as
+// `BACKTICK:file:#N:message`, which does NOT match a `^C2:` gate spec, so they
+// are visible without being blocking.
+function maskBlock(text) {
+  const masked = mask(text);
+  if (!masked.includes('`')) return { masked, unbalanced: false };
+  return { masked: mask(text, 'backtick'), unbalanced: true };
+}
+
 // --- segmentation ----------------------------------------------------------
 //
 // Terminal punctuation followed by whitespace or end of block, on the MASKED
 // text — so a `.` inside a code span or a URL cannot open a sentence boundary.
-// Abbreviations that legitimately end in a period are not boundaries.
-const BOUNDARY = /[.!?][)"'’”]*(?=\s|$)/g;
-const ABBREV = /(?:\b(?:e\.g|i\.e|etc|vs|cf|al|resp|approx|Dr|Mr|Mrs|Ms|Fig|No|Ch|Sec|Eq)\.|\s[A-Z]\.)$/;
+//
+// The inline-formatting marks are part of the boundary, not after it: AsciiDoc's
+// bold run-in lead (`*The library owns the handles.* Capy creates ...`) and the
+// same idiom in docstrings (`... `run_async(ex)(task)`.** The wrapper's ...`)
+// put `*` or `_` between the period and the space. Requiring whitespace
+// immediately after the period merged those leads into the following sentence and
+// over-reported its length — two confirmed false positives.
+//
+// Abbreviations that legitimately end in a period are not boundaries. There is
+// deliberately NO general "single capital letter plus period is an initial" rule:
+// this corpus has no personal initials, but it does end sentences on template
+// parameter names ("... can vary from 0 to N. It provides ..."), and such a rule
+// merged those into the next sentence.
+const BOUNDARY = /[.!?][)"'’”]*[*_`#]*(?=\s|$)/g;
+const ABBREV = /\b(?:e\.g|i\.e|etc|vs|cf|al|resp|approx|Dr|Mr|Mrs|Ms|Fig|No|Ch|Sec|Eq)\.$/;
 
 function sentenceRanges(masked) {
   const out = [];
@@ -227,11 +274,47 @@ function sentenceRanges(masked) {
   return out;
 }
 
-const countWords = (s) => (s.match(/\b(\w+)\b/g) || []).length;
+// Words as a READER counts them (maintainer ruling). The retired Vale rule's
+// token was `\b(\w+)\b`, which splits every hyphenated compound, possessive,
+// contraction, slashed pair and qualified identifier: `most-derived`,
+// `fine-grained`, `caller's`, `don't`, `I/O` and `this_coro::executor_tag` each
+// counted 2 or more where a reader counts 1. Inheriting that token over-counted
+// 26 of 239 findings past the limit — findings that are not violations and must
+// not be handed to a wording task. So `-`, `'`/`’`, `/` and `::` are word-internal
+// when they join two word characters.
+//
+// Known residual over-count, deliberately not fixed because it is outside the
+// ruling: a dotted abbreviation (`e.g.`, `0.8.0`, `buffer_array.hpp`) still counts
+// one per dotted part. `.` is not in the connector set. That over-counts, which is
+// the safe direction for a length limit.
+const WORD = /\w+(?:(?:[-'’/]|::)\w+)*/g;
+const countWords = (s) => (s.match(WORD) || []).length;
+
+// --- hard versus advisory slice (maintainer ruling) -------------------------
+//
+// DOC_STYLE_GUIDE.md Part C2 makes the limit "hard in API docs, soft in essays".
+// The flat 25 stays — a 20-word instruction limit was rejected as unimplementable,
+// since nothing classifies instruction-versus-descriptive prose reliably — but the
+// OUTPUT is split so a gate can bind only the hard part:
+//
+//   hard      the extracted `include/**` docstrings, plus every .adoc page NOT in
+//             the two essay directories below. This is the number that must reach
+//             zero, and the slice a `--gate 'sentence_length:^C2:'` spec binds.
+//   advisory  doc/modules/ROOT/pages/9.design/ and .../A.specification-methods/.
+//             Measured and reported, never blocking.
+//
+// The advisory rule key deliberately does NOT begin with `C2`, so that even a
+// mis-written head-anchored spec (`^C2` without the colon) cannot reach the
+// essays. Keep it that way.
+const ADVISORY_DIRS = [
+  'modules/ROOT/pages/9.design/',
+  'modules/ROOT/pages/A.specification-methods/',
+];
+const ruleFor = (rel) => (ADVISORY_DIRS.some((d) => rel.startsWith(d)) ? 'advisory-C2' : 'C2');
 
 // --- run -------------------------------------------------------------------
 
-const findings = [];
+const byRule = { C2: [], 'advisory-C2': [], BACKTICK: [] };
 const scanned = {};
 for (const corpus of corpora) {
   const root = path.resolve(DOC_DIR, corpus);
@@ -253,16 +336,28 @@ for (const corpus of corpora) {
     // and `test/read_stream.hpp` are different files, and two verification scripts on
     // this branch silently conflated exactly that pair.
     const rel = path.relative(DOC_DIR, file).split(path.sep).join('/');
+    const rule = ruleFor(rel);
     for (const block of proseBlocks(fs.readFileSync(file, 'utf8'))) {
-      const masked = mask(block.text);
+      const { masked, unbalanced } = maskBlock(block.text);
+      const lineOf = (at) => {
+        let line = block.line;
+        for (const e of block.map) if (e.at <= at) line = e.line;
+        return line;
+      };
+      if (unbalanced) {
+        byRule.BACKTICK.push({
+          file: rel,
+          line: block.line,
+          message: 'unbalanced backtick in block; inline code spans in it are counted as prose',
+          sentence: block.text.slice(0, 200).trim(),
+        });
+      }
       for (const [from, to] of sentenceRanges(masked)) {
         const words = countWords(masked.slice(from, to));
         if (words <= max) continue;
-        let line = block.line;
-        for (const e of block.map) if (e.at <= from) line = e.line;
-        findings.push({
+        byRule[rule].push({
           file: rel,
-          line,
+          line: lineOf(from),
           words,
           // The message is deliberately fixed text: baseline.mjs fingerprints a
           // doc_lint-shaped finding as `rule:file:#N:message`, and folding the
@@ -278,7 +373,14 @@ for (const corpus of corpora) {
 }
 
 console.log(JSON.stringify({
-  summary: { C2: findings.length, max, scanned },
-  findings: { C2: findings },
+  summary: {
+    hard: byRule.C2.length,
+    advisory: byRule['advisory-C2'].length,
+    unbalancedBackticks: byRule.BACKTICK.length,
+    max,
+    scanned,
+    advisoryDirs: ADVISORY_DIRS,
+  },
+  findings: byRule,
 }, null, 2));
 process.exit(0);
