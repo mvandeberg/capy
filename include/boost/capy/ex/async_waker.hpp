@@ -89,11 +89,11 @@ namespace capy {
 
     Distinct objects: Safe.@n
     Shared objects: `wake()` may be called from any thread.
-    `wait()` must only be awaited by one coroutine at a time, and
-    only on an executor that never runs the coroutine's
-    continuations concurrently: a single-threaded executor or a
-    strand over a multi-threaded one (the same threading model as
-    `async_event` and `async_mutex`). Awaiting `wait()` directly
+    `wait()` must only be awaited by one coroutine at a time. The
+    executor must never run the coroutine's continuations
+    concurrently: use a single-threaded executor, or a strand over
+    a multi-threaded one. That is the same threading model as
+    `async_event` and `async_mutex`. Awaiting `wait()` directly
     on a multi-threaded executor is undefined.
 
     This type is non-copyable and non-movable because a suspended
@@ -290,16 +290,16 @@ public:
             @li A stop request is already pending on `env->stop_token`: the
                 awaiter records the cancellation and does not arm.
 
-            @li The waker's slot is no longer empty, which under the
-                single-waiter precondition means a wakeup was latched after
-                `await_ready` looked: the token is consumed here instead and
-                the wait succeeds.
+            @li The waker's slot is no longer empty. Under the single-waiter
+                precondition that means a wakeup was latched after
+                `await_ready` looked, so the token is consumed here instead
+                and the wait succeeds.
 
             @li Otherwise the slot moves to the armed state, publishing this
                 awaiter to the waker, and a stop callback is registered on
                 `env->stop_token`. Whichever of `wake()` and that callback
                 wins the armed-to-empty transition posts `h` through
-                `env->executor`; the loser does nothing, and a losing
+                `env->executor`. The loser does nothing, and a losing
                 `wake()` re-latches its token for the next `wait()`.
 
             @param h The awaiting coroutine, resumed when the waker fires
@@ -359,8 +359,8 @@ public:
             the resumption already consumed.
 
             @return An empty `io_result<>` if the wait was woken, whether by
-            `wake()` or by a token consumed inline, or one holding
-            `error::canceled` if the stop token won the race.
+            `wake()` or by a token consumed inline. Otherwise one holding
+            `error::canceled`, which means the stop token won the race.
         */
         io_result<> await_resume() noexcept
         {
