@@ -251,7 +251,7 @@ public:
             the event's wait queue, and registers a stop callback on
             `env->stop_token`. Exactly one of `set()` and that callback posts
             `h` through the stored executor, whichever claims the waiter
-            first. Only the post is subject to that race: a losing stop
+            first. Only the post is subject to that race. A losing stop
             callback does nothing at all, but `set()` unlinks every waiter it
             pops whether it claims it or not. That is why @ref await_resume
             unlinks a canceled waiter only when it is still linked.
@@ -265,7 +265,7 @@ public:
 
             @return `h` if a stop request was already pending, which
             resumes the awaiting coroutine immediately without enqueuing
-            it; otherwise `std::noop_coroutine()`, which leaves the
+            it. Otherwise `std::noop_coroutine()`, which leaves the
             coroutine suspended and returns control to the resumer.
         */
         std::coroutine_handle<>
@@ -292,7 +292,7 @@ public:
 
             Destroys the stop callback if one is registered. If the wait
             was canceled while still linked into the event's wait queue,
-            unlinks it: `set()` pops every waiter, so a canceled waiter may
+            unlinks it. `set()` pops every waiter, so a canceled waiter may
             or may not still be linked when it resumes.
 
             @return An empty `io_result<>` if the event was set, or one
