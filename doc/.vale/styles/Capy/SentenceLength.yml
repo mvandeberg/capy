@@ -1,6 +1,37 @@
+# RETIRED AS AN AUTHORITY — demoted rather than deleted, the same treatment
+# .vale.ini gives the Google house-style pack. `doc/lint/sentence-length.mjs` is
+# the authority for C2 on both surfaces; this rule is kept only so that
+# `vale --minAlertLevel=suggestion` can still show what Vale made of a page.
+# `suggestion` is below .vale.ini's `MinAlertLevel = warning`, so it no longer
+# reaches baseline.json, the gate, or a default `vale modules` run.
+#
+# Three measured reasons it cannot be the authority, none fixable inside a Vale
+# rule (all `cwd=doc`, vale 3.15.1):
+#
+#   1. UNDER-COUNTS. It runs after .vale.ini's `TokenIgnores` blanks inline code
+#      spans, so a span contributes ZERO words where a reader counts at least
+#      one. On `modules`: 135 alerts as configured, 179 sentences over 25 words
+#      as a reader counts them. The +35 attributable purely to span counting was
+#      measured twice, independently — task P4-prereq via Vale with rewritten
+#      TokenIgnores (135 -> 170), and sentence-length.mjs with spans blanked
+#      versus as read (144 -> 179).
+#   2. MIS-ATTRIBUTES, which is worse: the missed block produces no alert to
+#      chase, so re-running to a fixpoint never finds it. The blanking corrupts
+#      Vale's position mapping for `scope: sentence` rules. Real cases:
+#      `5.buffers/5b.types.adoc` holds two over-limit sentences (27 and 39 words)
+#      and Vale reports NONE; `concept/executor.hpp` extracted at a2b9eb72 drew
+#      an alert on a 21-token block at line 31, which cannot exceed 25, and none
+#      on the 57-token block at line 18.
+#   3. FALSE-POSITIVES on under-segmentation. `4.coroutines/4f.composition.adoc:93`
+#      is flagged as one sentence; its four real sentences are 23, 14, 11 and 6
+#      words. Reproduced with that paragraph alone in a file.
+#
+# Do NOT re-promote this to warning/error without first showing, on a fixture,
+# that Vale's position mapping for `scope: sentence` is fixed. Two checkers
+# reporting different C2 numbers is how a gate loses credibility.
 extends: occurrence
 message: "Sentence over 25 words — split it (style guide C1/C2)."
-level: error
+level: suggestion
 scope: sentence
 token: \b(\w+)\b
 max: 25

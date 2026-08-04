@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 //
-// baseline.mjs — runs every Task 2 check and snapshots current violations to
+// baseline.mjs — runs every check and snapshots current violations to
 // doc/lint/baseline.json (Style Guide Part F.0, "no new violations" while the
 // backlog is worked down). Node built-ins only, no dependencies.
 //
@@ -133,6 +133,35 @@ function docLintFingerprints() {
   return { count: fingerprints.length, byRule: parsed.summary, fingerprints: fingerprints.sort() };
 }
 
+// C2 (sentence length) is checked by our own script, not by Vale — see the
+// header of sentence-length.mjs and the comment in Capy/SentenceLength.yml for
+// why. The finding shape is doc-lint.mjs's, so the fingerprint is the doc_lint
+// shape (`rule:file:#N:message`, rule at the HEAD) and a future gate spec reads
+// `--gate 'sentence_length:^C2:'`. Note this check has no entry in the
+// committed baseline.json yet, so every finding reports as NEW until the
+// maintainer reseeds; it is deliberately NOT in the gate spec, so that cannot
+// block a merge.
+function sentenceLengthFingerprints() {
+  const r = run('node', [path.join(SCRIPT_DIR, 'sentence-length.mjs')], { cwd: DOC_DIR });
+  const bad = crashed(r, 'sentence-length.mjs');
+  if (bad) return bad;
+  let parsed;
+  try {
+    parsed = JSON.parse(r.stdout || '');
+  } catch {
+    return {
+      count: 0, skipped: true, fingerprints: [],
+      reason: `sentence-length.mjs produced unparseable output: ${(r.stdout || '(empty)').trim().slice(-500)}`,
+    };
+  }
+  const fingerprints = [];
+  const seen = new Map();
+  for (const [check, items] of Object.entries(parsed.findings || {})) {
+    for (const it of items) fingerprints.push(occurrenceKey(seen, `${check}:${it.file}`, it.message));
+  }
+  return { count: fingerprints.length, byRule: parsed.summary, fingerprints: fingerprints.sort() };
+}
+
 function mrdocsFingerprints() {
   const r = run('node', [path.join(SCRIPT_DIR, 'mrdocs-warnings.mjs')]);
   const bad = crashed(r, 'mrdocs-warnings.mjs');
@@ -163,6 +192,10 @@ results.vale_adoc = valeFingerprints('modules');
 
 run('node', [path.join(SCRIPT_DIR, 'extract-docstrings.mjs')]);
 results.vale_docstrings = valeFingerprints('lint/.docstrings');
+
+// After extract-docstrings.mjs above: sentence-length.mjs lints BOTH corpora and
+// exits non-zero rather than reporting a clean zero for one it could not read.
+results.sentence_length = sentenceLengthFingerprints();
 
 results.doc_lint = docLintFingerprints();
 results.mrdocs_warnings = mrdocsFingerprints();

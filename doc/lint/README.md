@@ -16,9 +16,10 @@ site build. Node built-ins only, no dependencies of their own.
 |---|---|
 | `doc-lint.mjs` | Structural AsciiDoc/nav rules (A1, A6, B2, D2, …). JSON on stdout. |
 | `extract-docstrings.mjs` | Extracts header docstrings into `.docstrings/*.adoc` so Vale can lint them. |
+| `sentence-length.mjs` | **The authority for C2** (no sentence over 25 words), over both corpora. JSON on stdout. |
 | `mrdocs-warnings.mjs` | Runs the pinned MrDocs 0.8.0 directly and parses its reference-surface warnings. |
 | `run-a11y.mjs` | pa11y-ci contrast/a11y scan over the built site (`doc/build/site`). |
-| `baseline.mjs` | Runs all five checks and snapshots their findings to `baseline.json`. |
+| `baseline.mjs` | Runs every check and snapshots their findings to `baseline.json`. |
 | `check-no-new-violations.mjs` | **The gate.** Diffs a fresh run against `baseline.json` and fails on NEW findings. |
 | `baseline-diff.mjs` | Explains what replacing `baseline.json` with a candidate would change. |
 
@@ -36,6 +37,7 @@ Fingerprints are built by `baseline.mjs` and their shape is load-bearing:
 | Check | Fingerprint |
 |---|---|
 | `doc_lint` | `rule:file:#N:message` — rule at the **head** |
+| `sentence_length` | `C2:file:#N:message` — rule at the **head**, same shape as `doc_lint` |
 | `vale_adoc`, `vale_docstrings` | `file:#N:Check.Name` — check name at the **tail** |
 | `mrdocs_warnings` | `file:#N:message` |
 | `a11y` | `url:code:selector` |
@@ -46,6 +48,18 @@ text above a finding does not rename it. It sits mid-key on purpose: the gate sp
 name would make that gate match nothing while still exiting 0.
 
 **Never hand-edit `baseline.json`.**
+
+### `sentence_length` has no baseline entry yet
+
+`sentence_length` was added after the committed `baseline.json` was taken, so every one of its
+findings currently reports as **new** in the non-blocking report. That is expected and it cannot
+block a merge: the check is deliberately absent from the `--gate` spec in
+`.github/workflows/docs.yml`. Two consequences to know about until the maintainer reseeds:
+
+* the report's `totalNew` is dominated by the C2 backlog, and
+* a **crash** of `sentence-length.mjs` is reported as `SKIPPED` on stderr but does not fail the
+  gate, because only a skip of a *gated* check does. Gating it (`--gate 'sentence_length:^C2:'`)
+  is Phase-4-exit's job.
 
 ---
 
