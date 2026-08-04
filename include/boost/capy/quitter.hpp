@@ -107,7 +107,7 @@ struct quitter_return_base<void>
 
     If the coroutine completed as stopped, the internal sentinel
     exception is thrown instead of await-returning. Awaiting a stopped
-    `quitter` from another `quitter` therefore stops that one too; a
+    `quitter` from another `quitter` therefore stops that one too. A
     @ref task awaiting it sees the sentinel as an unhandled exception in
     its own body. When a quitter is started by `run_async`, a stopped
     completion reaches the error handler as the sentinel
@@ -539,7 +539,7 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
         @note Do not call `destroy()` on the returned handle while
         the quitter is being awaited. The quitter's lifetime is
         normally managed by `run_async`, `run`, or the awaiting
-        parent; manually destroying a suspended quitter that another
+        parent. Manually destroying a suspended quitter that another
         coroutine is awaiting produces undefined behavior. For
         cooperative cancellation, use `std::stop_token`.
 
@@ -552,10 +552,10 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
 
     /** Release ownership of the coroutine frame.
 
-        @note If the caller intends to call `destroy()` on the
-        released handle, it must do so only when the quitter has not
-        started or has fully completed. Destroying a suspended
-        quitter that is being awaited produces undefined behavior.
+        @note The caller may call `destroy()` on the released handle
+        only when the quitter has not started or has fully completed.
+        Destroying a suspended quitter that is being awaited produces
+        undefined behavior.
     */
     void release() noexcept
     {
