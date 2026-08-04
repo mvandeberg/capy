@@ -30,10 +30,10 @@ namespace capy {
 
     @par Syntactic Requirements
     @li `T` must provide a `read_some` member function template
-        accepting any @ref MutableBufferSequence
-    @li The return type of `read_some` must satisfy @ref IoAwaitable
+        accepting any @ref MutableBufferSequence.
+    @li The return type of `read_some` must satisfy @ref IoAwaitable.
     @li The awaitable's result must decompose to
-        `(error_code,std::size_t)` via structured bindings
+        `(error_code,std::size_t)` via structured bindings.
 
     @par Semantic Requirements
     Attempts to read up to `buffer_size( buffers )` bytes from
@@ -47,7 +47,7 @@ namespace capy {
         `n` is the number of bytes read before the I/O
         condition arose.
 
-    Equivalently, `n == buffer_size( buffers )` implies `!ec`: a
+    Equivalently, `n == buffer_size( buffers )` implies `!ec`. A
     completion that fills the buffer sequence is a success, even when
     the underlying operation also signals a condition such as
     end-of-stream. That condition is reported on a subsequent read.
@@ -61,11 +61,11 @@ namespace capy {
     Buffers in the sequence are filled in order.
 
     @par Error Reporting
-    I/O conditions arising from the underlying I/O system (EOF,
-    connection reset, broken pipe, etc.) are reported via the
-    `error_code` component of the return value. Failures in the
-    library wrapper itself (such as memory allocation failure)
-    are reported via exceptions.
+    I/O conditions arising from the underlying I/O system are
+    reported via the `error_code` component of the return value.
+    Examples are EOF, connection reset, and broken pipe. Failures
+    in the library wrapper itself (such as memory allocation
+    failure) are reported via exceptions.
 
     @throws std::bad_alloc If coroutine frame allocation fails.
 
@@ -80,12 +80,12 @@ namespace capy {
     @endcode
 
     @warning **Pass buffer sequences by value.** A by-value parameter
-    is copied into the coroutine frame (or the awaitable's state),
-    so the returned awaitable is self-contained and may be stored,
-    moved across threads, or wrapped into a sender without lifetime
-    concerns. A by-const-reference parameter binds to caller storage
-    and is only safe when the awaitable is consumed immediately by
-    `co_await` in the same scope; storing such an awaitable produces
+    is copied into the coroutine frame, or into the awaitable's state.
+    The returned awaitable is therefore self-contained. A caller may
+    store it, move it across threads, or wrap it into a sender without
+    lifetime concerns. A by-const-reference parameter binds to caller
+    storage. It is safe only when `co_await` consumes the awaitable
+    immediately, in the same scope. Storing such an awaitable produces
     a dangling reference.
 
     @note Callers who want to avoid copying an expensive buffer
