@@ -84,19 +84,19 @@ struct quitter_return_base<void>
     coroutine, then transfers control directly into the quitter's
     coroutine body on the current thread; no executor operation is
     posted. The quitter records the caller's environment (executor, stop
-    token, and frame allocator) by pointer rather than copying it, and
-    propagates it to every `co_await` inside the body.
+    token, and frame allocator) by pointer rather than copying it. It
+    propagates that environment to every `co_await` inside the body.
 
     Unlike @ref task, the stop token is checked at every point where the
-    body would resume: before the body's first statement, and again each
-    time an awaited operation resumes it. If a stop request is pending,
-    the body is not resumed. An internal sentinel exception unwinds it
-    instead, so RAII destructors run, and the coroutine completes as
-    stopped.
+    body would resume. Those points are before the body's first
+    statement, and again each time an awaited operation resumes it. If a
+    stop request is pending, the body is not resumed. An internal
+    sentinel exception unwinds it instead, so RAII destructors run, and
+    the coroutine completes as stopped.
 
     The body runs until it returns, exits via an exception, or is unwound
-    by a stop request, at which point control transfers directly back to
-    the awaiting coroutine, again without an executor operation.
+    by a stop request. Control then transfers directly back to the
+    awaiting coroutine, again without an executor operation.
 
     @par Await-returns
     The value the body passed to `co_return`, moved out of the quitter,
@@ -116,10 +116,10 @@ struct quitter_return_base<void>
     @par Await-postcondition
     The quitter's coroutine has run to completion and is suspended at its
     final suspend point; the body's RAII destructors have run. Exactly
-    one of the following holds: the body returned a value, which the
-    await moved out, so a quitter must not be awaited twice; the body
+    one of the following holds: the body returned a value; the body
     exited via an exception; or `handle().promise().stopped()` returns
-    `true`.
+    `true`. When the body returned a value, the await moved it out, so a
+    quitter must not be awaited twice.
 
     @par Remarks
     Supports _IoAwaitable cancellation_.
@@ -139,10 +139,10 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
         requirements and participates in the I/O awaitable protocol via
         @ref io_awaitable_promise_base. Unlike @ref task::promise_type,
         its `transform_awaitable` checks the stop token before each
-        awaited result reaches the body, throwing an internal sentinel
-        exception that unwinds to a "stopped" completion. It is part of
-        the coroutine machinery and is not intended to be used directly
-        by callers.
+        awaited result reaches the body. A pending stop request throws an
+        internal sentinel exception that unwinds to a "stopped"
+        completion. It is part of the coroutine machinery and is not
+        intended to be used directly by callers.
 
         Result storage and `return_value`/`return_void` are provided by
         `detail::quitter_return_base<T>`.
@@ -225,8 +225,8 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
             The coroutine always suspends at the initial suspend point,
             so the body does not start until the quitter is awaited. When
             the body is resumed, the awaiter restores the thread-local
-            frame allocator and, if stop has already been requested,
-            throws the internal sentinel exception so the body never
+            frame allocator. It then throws the internal sentinel
+            exception if stop is already requested, so the body never
             runs and the coroutine completes as stopped.
 
             @return An awaiter that suspends unconditionally.
@@ -330,9 +330,9 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
             Forwards the environment to the inner awaitable's
             environment-taking `await_suspend` and restores the
             thread-local frame allocator before the body resumes. Unlike
-            `task`'s, it also checks the stop token on resumption, throwing
-            the internal sentinel so a stop request unwinds the body before
-            it observes the I/O result.
+            `task`'s, it also checks the stop token on resumption. A
+            pending stop request throws the internal sentinel, so the body
+            unwinds before it observes the I/O result.
 
             @tparam Awaitable The awaitable being transformed.
         */
@@ -365,10 +365,10 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
                 Reinstalls the thread-local frame allocator from the stored
                 environment, then reads the environment's stop token. If a
                 stop request is pending, the internal sentinel exception is
-                thrown from here, so the body never observes the operation's
-                result and unwinds through its RAII destructors to a stopped
-                completion. This is the one place `quitter` differs from
-                @ref task::promise_type::transform_awaiter.
+                thrown from here. The body therefore never observes the
+                operation's result. It unwinds through its RAII destructors
+                to a stopped completion. This is the one place `quitter`
+                differs from @ref task::promise_type::transform_awaiter.
 
                 @return The wrapped awaitable's await-result, forwarded
                 unchanged, when no stop request is pending.
@@ -396,8 +396,8 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
                 This is the plain `await_suspend` the compiler calls for the
                 nested `co_await`. It forwards to the wrapped awaitable's
                 @ref IoAwaitable overload, supplying the promise's stored
-                environment as the second argument, and hands back that
-                call's result unchanged, so the wrapped awaitable's
+                environment as the second argument. It then hands back
+                that call's result unchanged, so the wrapped awaitable's
                 suspension decision, whatever form it takes, is preserved.
                 The stop token is not checked here; @ref await_resume checks
                 it on the way back out.
@@ -406,11 +406,12 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
 
                 @return Whatever the wrapped awaitable's `await_suspend`
                 returns. When that is a `std::coroutine_handle<>`, the
-                handle is routed through `detail::symmetric_transfer`: on
-                MSVC it is resumed on the current stack and this function
-                returns `void`, so the awaiting coroutine suspends
-                unconditionally; on every other compiler it is returned
-                unchanged for symmetric transfer.
+                handle is routed through `detail::symmetric_transfer`.
+                On MSVC that helper resumes the handle on the current
+                stack, and this function returns `void`, so the awaiting
+                coroutine suspends unconditionally. On every other
+                compiler the handle is returned unchanged for symmetric
+                transfer.
             */
             template<class Promise>
             auto await_suspend(
@@ -486,7 +487,7 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
     /** Return the result, rethrow exception, or propagate stop.
 
         When stopped, throws stop_requested_exception so that a
-        parent quitter also stops.  A parent task<T> will see this
+        parent quitter also stops.  A parent task<T> sees this
         as an unhandled exception — by design.
 
         @return The result value for non-void `T`, moved out of the
@@ -511,10 +512,10 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
 
     /** Start execution with the caller's context.
 
-        Stores `cont` as the continuation to resume on completion and `env`
-        as the execution environment propagated to nested `co_await`
-        expressions, then transfers control into the quitter's coroutine
-        body via the returned handle.
+        Stores `cont` as the continuation to resume on completion.
+        Stores `env` as the execution environment propagated to nested
+        `co_await` expressions. Then transfers control into the quitter's
+        coroutine body via the returned handle.
 
         @param cont The awaiting coroutine to resume when the quitter
         completes.
