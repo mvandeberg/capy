@@ -30,20 +30,20 @@ namespace capy {
 
     @par Syntactic Requirements
 
-    @li `X` must be publicly derived from `execution_context`
-    @li `X::executor_type` must be a type satisfying @ref Executor
-    @li `x.get_executor()` must return `X::executor_type` and be `noexcept`
+    @li `X` must be publicly derived from `execution_context`.
+    @li `X::executor_type` must be a type satisfying @ref Executor.
+    @li `x.get_executor()` must return `X::executor_type` and be `noexcept`.
 
     @par Semantic Requirements
 
     The execution context owns the execution environment:
 
     @li Work submitted via any executor from this context runs on
-        resources owned by the context
+        resources owned by the context.
     @li The context remains valid while any executor referencing it
-        exists and may be used
+        exists and may be used.
     @li Destroying the context destroys all unexecuted work submitted
-        via associated executors
+        via associated executors.
 
     @par Conforming Signatures
 
