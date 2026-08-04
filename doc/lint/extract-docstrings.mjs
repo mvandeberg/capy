@@ -48,20 +48,59 @@ function walk(dir) {
 // is stripped but whose trailing description text is kept as prose.
 const NAMED_TAGS = /^@(param|tparam)\s+(?:\[[a-z,]+\]\s*)?(\S+)\s*/;
 const BARE_TAGS = /^@(returns?|throws?|pre|post|note|warning|brief|see|par)\b\s*/;
+// `@li` is stripped like the bare tags, but its item is ALSO re-emitted as its
+// own paragraph — see cleanBlock(). Doxygen has no other list-item tag in this
+// codebase (`grep -c '@arg' include` -> 0), so `li` is the whole set.
+const LIST_ITEM = /^@li\b\s*/;
 const INLINE_REFS = /@(ref|p|c)\s+(\S+)/g;
 
+// A Doxygen `@li` item is a sentence, and the extractor used to hand Vale a run
+// of them as consecutive lines with the `@li` keyword still in the text. Two
+// defects followed, both fixture-confirmed:
+//
+//   * Vale's sentence segmenter needs `. ` to break and will not break on
+//     `\n@li` (`@` is not a capital), so a run of PERIOD-LESS items collapsed
+//     into one pseudo-sentence. Five ten-word items produced exactly one
+//     Capy.SentenceLength alert whose Match field was literally 'li'; the same
+//     five items with terminal periods produced none. C2 was therefore measuring
+//     missing Doxygen punctuation, not sentence length.
+//   * The surviving `li` keyword spent a phantom word of the 25-word budget, so
+//     a list item's real limit was 24. A hand-counted 25-word item alerted.
+//
+// Each item is now emitted as its own paragraph (blank-line delimited, which is
+// what makes it a separate block to asciidoctor and so a separate sentence
+// scope) with the keyword removed and continuation lines folded in.
 function cleanBlock(raw) {
   // Drop @code ... @endcode samples entirely — not prose.
   const noCode = raw.replace(/@code\b[\s\S]*?@endcode\b/g, '');
   const lines = noCode.split('\n').map((l) => l.trim());
   const prose = [];
+  let item = null; // text of the `@li` item currently being accumulated
+  const flush = () => { if (item !== null) { prose.push(item, ''); item = null; } };
+  const separate = () => { if (prose.length && prose[prose.length - 1] !== '') prose.push(''); };
   for (let line of lines) {
-    if (line === '') { prose.push(''); continue; }
+    if (line === '') {
+      // The item's own trailing blank line stands in for this one.
+      if (item !== null) flush(); else prose.push('');
+      continue;
+    }
+    const li = LIST_ITEM.exec(line);
+    if (li) {
+      if (item !== null) flush(); else separate();
+      item = line.slice(li[0].length).replace(INLINE_REFS, '$2');
+      continue;
+    }
+    // A non-blank, non-tag line under an open item is its continuation.
+    if (item !== null) {
+      if (!line.startsWith('@')) { item += ` ${line.replace(INLINE_REFS, '$2')}`; continue; }
+      flush();
+    }
     line = line.replace(NAMED_TAGS, '');
     line = line.replace(BARE_TAGS, '');
     line = line.replace(INLINE_REFS, '$2');
     prose.push(line);
   }
+  flush();
   return prose.join('\n').trim();
 }
 
