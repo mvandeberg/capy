@@ -543,11 +543,11 @@ public:
     sibling observes, and is propagated in the outer io_result.
     Exceptions always beat error codes.
 
-    @li All child awaitables run concurrently on the caller's executor
-    @li Payloads are returned as a vector in input order
-    @li First error_code wins and makes a stop request that siblings observe
-    @li Exception always beats error_code
-    @li Completes only after all children have finished
+    @li All child awaitables run concurrently on the caller's executor.
+    @li Payloads are returned as a vector in input order.
+    @li First error_code wins and makes a stop request that siblings observe.
+    @li Exception always beats error_code.
+    @li Completes only after all children have finished.
 
     @par Await-effects
 
