@@ -37,10 +37,10 @@ namespace detail {
 
 /** Match types usable as `run_async` completion handlers.
 
-    Excludes the types meaningful to the other `run_async` parameters,
-    so a stop token, memory resource pointer, or allocator argument
-    selects its dedicated overload by conversion instead of deducing
-    as an exact-match handler.
+    Excludes the types meaningful to the other `run_async` parameters.
+    A stop token, memory resource pointer, or allocator argument
+    therefore selects its dedicated overload by conversion. It does not
+    deduce as an exact-match handler.
 */
 template<class H>
 concept RunAsyncHandler =
@@ -342,24 +342,25 @@ make_trampoline(Ex, Handlers, Alloc)
 
     @warning **Always construct the task as the direct argument of the
     two-call expression `run_async(ex)(task)`.** The wrapper's constructor
-    installs the frame allocator in thread-local storage, and the task's
-    `operator new` reads that thread-local state; splitting the two calls
-    apart in any of the following ways allocates the task's coroutine
-    frame under the wrong allocator, silently, with no compile error:
+    installs the frame allocator in thread-local storage. The task's
+    `operator new` reads that thread-local state. Splitting the two calls
+    apart allocates the task's coroutine frame under the wrong allocator,
+    silently, with no compile error. Any of the following splits them:
     @li *Stored wrapper.* Naming the wrapper (`auto w = run_async(ex);`)
         is caught at compile time by the rvalue ref-qualifier described
-        earlier, but naming the *task* instead
-        (`auto t = my_task(); run_async(ex)(std::move(t));`) is not:
-        `t`'s frame is allocated before `run_async(ex)` ever runs.
-    @li *Preconstructed task.* Passing an already-constructed task object,
-        a moved-from local, or a task returned from an earlier statement
-        has the same effect as the stored-wrapper case: the frame exists
-        before the allocator is installed.
+        earlier. Naming the *task* instead
+        (`auto t = my_task(); run_async(ex)(std::move(t));`) is not
+        caught: `t`'s frame is allocated before `run_async(ex)` ever runs.
+    @li *Preconstructed task.* Passing an already-constructed task object
+        has the same effect as the stored-wrapper case. So does passing a
+        moved-from local, or a task returned from an earlier statement.
+        The frame exists before the allocator is installed.
     @li *Wrapper function.* Forwarding the task through a helper that
-        itself performs the two-call pattern (`submit(ex, my_task())`,
-        where `submit` calls `run_async(ex)(std::forward<Task>(t))`
-        internally) constructs the task as an argument to `submit` -
-        before `submit`'s body, and therefore `run_async`, ever executes.
+        itself performs the two-call pattern constructs the task as an
+        argument to the helper. It is therefore constructed before the
+        helper's body runs, and so before `run_async` runs. An example is
+        `submit(ex, my_task())`, where `submit` calls
+        `run_async(ex)(std::forward<Task>(t))` internally.
 
     See the Frame Allocators guide
     (`doc/modules/ROOT/pages/4.coroutines/4g.allocators.adoc`) for the full
@@ -391,10 +392,10 @@ class [[nodiscard]] run_async_wrapper
 public:
     /** Construct the wrapper and install the frame allocator.
 
-        Builds the trampoline, saves the current thread-local frame
-        allocator, and installs the trampoline's resource as the new
-        thread-local allocator so that the task frame (evaluated as the
-        argument to @ref operator()) is allocated from it.
+        Builds the trampoline and saves the current thread-local frame
+        allocator. Then installs the trampoline's resource as the new
+        thread-local allocator. The task frame, evaluated as the argument
+        to @ref operator(), is therefore allocated from that resource.
 
         @param ex The executor on which the task runs.
         @param st The stop token for cooperative cancellation.
@@ -428,8 +429,8 @@ public:
     /** Restore the previously installed frame allocator.
 
         Resets the thread-local frame allocator to the value saved at
-        construction, so a stale pointer to the trampoline's resource does
-        not outlive the execution context that owns it.
+        construction. A stale pointer to the trampoline's resource
+        therefore does not outlive the execution context that owns it.
     */
     ~run_async_wrapper()
     {
@@ -480,7 +481,7 @@ public:
         @tparam Task The IoRunnable type.
 
         @param t The task to execute. Ownership is transferred to the
-                 run_async_trampoline which will destroy it after completion.
+                 run_async_trampoline which destroys it after completion.
     */
     template<IoRunnable Task>
     void operator()(Task t) &&
@@ -511,7 +512,7 @@ public:
 
 // Executor only (uses default recycling allocator)
 
-/** Bind an executor to produce a launcher; invoke the launcher with a task to start it.
+/** Bind an executor to produce a launcher. Invoke the launcher with a task to start it.
 
     Use this to start execution of a `task<T>` that was created lazily.
     The returned wrapper must be immediately invoked with the task;
@@ -519,9 +520,9 @@ public:
 
     Uses the default recycling frame allocator for coroutine frames.
     With no handlers, the result is discarded. An unhandled exception
-    thrown by the task calls `std::terminate`; pass an error handler to
-    receive it as an `exception_ptr`, or `co_await` the work inside a
-    coroutine if you want to catch it.
+    thrown by the task calls `std::terminate`. To catch it instead, pass
+    an error handler that receives it as an `exception_ptr`, or `co_await`
+    the work inside a coroutine.
 
     @par Thread Safety
     The wrapper and handlers may be called from any thread where the
@@ -551,7 +552,7 @@ run_async(Ex ex)
         mr);
 }
 
-/** Bind an executor and a result handler to produce a launcher; invoke the launcher with a task to start it.
+/** Bind an executor and a result handler to produce a launcher. Invoke the launcher with a task to start it.
 
     The handler `h1` is called with the task's result on success. If `h1`
     is also invocable with `std::exception_ptr`, it handles exceptions too.
@@ -596,7 +597,7 @@ run_async(Ex ex, H1 h1)
         mr);
 }
 
-/** Bind an executor and separate result and error handlers to produce a launcher; invoke the launcher with a task to start it.
+/** Bind an executor and separate result and error handlers to produce a launcher. Invoke the launcher with a task to start it.
 
     The handler `h1` is called with the task's result on success.
     The handler `h2` is called with the exception_ptr on failure.
@@ -642,7 +643,7 @@ run_async(Ex ex, H1 h1, H2 h2)
 
 // Ex + stop_token
 
-/** Bind an executor and a stop token to produce a launcher; invoke the launcher with a task to start it.
+/** Bind an executor and a stop token to produce a launcher. Invoke the launcher with a task to start it.
 
     The stop token is propagated to the task, enabling cooperative
     cancellation. With no handlers, the result is discarded and an
@@ -679,7 +680,7 @@ run_async(Ex ex, std::stop_token st)
         mr);
 }
 
-/** Bind an executor, a stop token, and a result handler to produce a launcher; invoke the launcher with a task to start it.
+/** Bind an executor, a stop token, and a result handler to produce a launcher. Invoke the launcher with a task to start it.
 
     The stop token is propagated to the task for cooperative cancellation.
     The handler `h1` is called with the result on success, and optionally
@@ -707,7 +708,7 @@ run_async(Ex ex, std::stop_token st, H1 h1)
         mr);
 }
 
-/** Bind an executor, a stop token, and separate result and error handlers to produce a launcher; invoke the launcher with a task to start it.
+/** Bind an executor, a stop token, and separate result and error handlers to produce a launcher. Invoke the launcher with a task to start it.
 
     The stop token is propagated to the task for cooperative cancellation.
     The handler `h1` is called on success, `h2` on failure.
@@ -737,7 +738,7 @@ run_async(Ex ex, std::stop_token st, H1 h1, H2 h2)
 
 // Ex + memory_resource*
 
-/** Bind an executor and a memory resource to produce a launcher; invoke the launcher with a task to start it.
+/** Bind an executor and a memory resource to produce a launcher. Invoke the launcher with a task to start it.
 
     The memory resource is used for coroutine frame allocation. The caller
     is responsible for ensuring the memory resource outlives all tasks.
@@ -761,7 +762,7 @@ run_async(Ex ex, std::pmr::memory_resource* mr)
         mr);
 }
 
-/** Bind an executor, a memory resource, and a result handler to produce a launcher; invoke the launcher with a task to start it.
+/** Bind an executor, a memory resource, and a result handler to produce a launcher. Invoke the launcher with a task to start it.
 
     @param ex The executor to execute the task on.
     @param mr The memory resource for frame allocation.
@@ -783,7 +784,7 @@ run_async(Ex ex, std::pmr::memory_resource* mr, H1 h1)
         mr);
 }
 
-/** Bind an executor, a memory resource, and separate result and error handlers to produce a launcher; invoke the launcher with a task to start it.
+/** Bind an executor, a memory resource, and separate result and error handlers to produce a launcher. Invoke the launcher with a task to start it.
 
     @param ex The executor to execute the task on.
     @param mr The memory resource for frame allocation.
@@ -808,7 +809,7 @@ run_async(Ex ex, std::pmr::memory_resource* mr, H1 h1, H2 h2)
 
 // Ex + stop_token + memory_resource*
 
-/** Bind an executor, a stop token, and a memory resource to produce a launcher; invoke the launcher with a task to start it.
+/** Bind an executor, a stop token, and a memory resource to produce a launcher. Invoke the launcher with a task to start it.
 
     @param ex The executor to execute the task on.
     @param st The stop token for cooperative cancellation.
@@ -830,7 +831,7 @@ run_async(Ex ex, std::stop_token st, std::pmr::memory_resource* mr)
         mr);
 }
 
-/** Bind an executor, a stop token, a memory resource, and a result handler to produce a launcher; invoke the launcher with a task to start it.
+/** Bind an executor, a stop token, a memory resource, and a result handler to produce a launcher. Invoke the launcher with a task to start it.
 
     @param ex The executor to execute the task on.
     @param st The stop token for cooperative cancellation.
@@ -853,7 +854,7 @@ run_async(Ex ex, std::stop_token st, std::pmr::memory_resource* mr, H1 h1)
         mr);
 }
 
-/** Bind an executor, a stop token, a memory resource, and separate result and error handlers to produce a launcher; invoke the launcher with a task to start it.
+/** Bind an executor, a stop token, a memory resource, and separate result and error handlers to produce a launcher. Invoke the launcher with a task to start it.
 
     @param ex The executor to execute the task on.
     @param st The stop token for cooperative cancellation.
@@ -879,7 +880,7 @@ run_async(Ex ex, std::stop_token st, std::pmr::memory_resource* mr, H1 h1, H2 h2
 
 // Ex + standard Allocator (value type)
 
-/** Bind an executor and an allocator to produce a launcher; invoke the launcher with a task to start it.
+/** Bind an executor and an allocator to produce a launcher. Invoke the launcher with a task to start it.
 
     The allocator is wrapped in a frame_memory_resource and stored in the
     run_async_trampoline, ensuring it outlives all coroutine frames.
@@ -903,7 +904,7 @@ run_async(Ex ex, Alloc alloc)
         std::move(alloc));
 }
 
-/** Bind an executor, an allocator, and a result handler to produce a launcher; invoke the launcher with a task to start it.
+/** Bind an executor, an allocator, and a result handler to produce a launcher. Invoke the launcher with a task to start it.
 
     @param ex The executor to execute the task on.
     @param alloc The allocator for frame allocation (copied and stored).
@@ -925,7 +926,7 @@ run_async(Ex ex, Alloc alloc, H1 h1)
         std::move(alloc));
 }
 
-/** Bind an executor, an allocator, and separate result and error handlers to produce a launcher; invoke the launcher with a task to start it.
+/** Bind an executor, an allocator, and separate result and error handlers to produce a launcher. Invoke the launcher with a task to start it.
 
     @param ex The executor to execute the task on.
     @param alloc The allocator for frame allocation (copied and stored).
@@ -950,7 +951,7 @@ run_async(Ex ex, Alloc alloc, H1 h1, H2 h2)
 
 // Ex + stop_token + standard Allocator
 
-/** Bind an executor, a stop token, and an allocator to produce a launcher; invoke the launcher with a task to start it.
+/** Bind an executor, a stop token, and an allocator to produce a launcher. Invoke the launcher with a task to start it.
 
     @param ex The executor to execute the task on.
     @param st The stop token for cooperative cancellation.
@@ -972,7 +973,7 @@ run_async(Ex ex, std::stop_token st, Alloc alloc)
         std::move(alloc));
 }
 
-/** Bind an executor, a stop token, an allocator, and a result handler to produce a launcher; invoke the launcher with a task to start it.
+/** Bind an executor, a stop token, an allocator, and a result handler to produce a launcher. Invoke the launcher with a task to start it.
 
     @param ex The executor to execute the task on.
     @param st The stop token for cooperative cancellation.
@@ -995,7 +996,7 @@ run_async(Ex ex, std::stop_token st, Alloc alloc, H1 h1)
         std::move(alloc));
 }
 
-/** Bind an executor, a stop token, an allocator, and separate result and error handlers to produce a launcher; invoke the launcher with a task to start it.
+/** Bind an executor, a stop token, an allocator, and separate result and error handlers to produce a launcher. Invoke the launcher with a task to start it.
 
     @param ex The executor to execute the task on.
     @param st The stop token for cooperative cancellation.
