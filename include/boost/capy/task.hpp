@@ -75,12 +75,12 @@ struct task_return_base<void>
     coroutine, then transfers control directly into the task's coroutine
     body on the current thread; no executor operation is posted. The task
     records the caller's environment (executor, stop token, and frame
-    allocator) by pointer rather than copying it, and propagates it to
-    every `co_await` inside the body.
+    allocator) by pointer rather than copying it. It propagates that
+    environment to every `co_await` inside the body.
 
-    The body runs until it returns or exits via an exception, at which
-    point control transfers directly back to the awaiting coroutine,
-    again without an executor operation.
+    The body runs until it returns or exits via an exception. Control
+    then transfers directly back to the awaiting coroutine, again
+    without an executor operation.
 
     `task` never inspects the stop token; it only propagates it. A task
     body observes a stop request through the results of the operations it
@@ -296,9 +296,9 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
                 awaitable.
 
                 Reinstalls the thread-local frame allocator from the stored
-                environment before the body continues, because the
-                resumption may arrive on a different thread than the one
-                that suspended.
+                environment before the body continues. This is needed
+                because the resumption may arrive on a different thread
+                than the one that suspended.
 
                 @return The wrapped awaitable's await-result, forwarded
                 unchanged.
@@ -316,19 +316,20 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
                 This is the plain `await_suspend` the compiler calls for the
                 nested `co_await`. It forwards to the wrapped awaitable's
                 @ref IoAwaitable overload, supplying the promise's stored
-                environment as the second argument, and hands back that
-                call's result unchanged, so the wrapped awaitable's
+                environment as the second argument. It then hands back
+                that call's result unchanged, so the wrapped awaitable's
                 suspension decision, whatever form it takes, is preserved.
 
                 @param h The coroutine performing the `co_await`.
 
                 @return Whatever the wrapped awaitable's `await_suspend`
                 returns. When that is a `std::coroutine_handle<>`, the
-                handle is routed through `detail::symmetric_transfer`: on
-                MSVC it is resumed on the current stack and this function
-                returns `void`, so the awaiting coroutine suspends
-                unconditionally; on every other compiler it is returned
-                unchanged for symmetric transfer.
+                handle is routed through `detail::symmetric_transfer`.
+                On MSVC that helper resumes the handle on the current
+                stack, and this function returns `void`, so the awaiting
+                coroutine suspends unconditionally. On every other
+                compiler the handle is returned unchanged for symmetric
+                transfer.
             */
             template<class Promise>
             auto await_suspend(std::coroutine_handle<Promise> h) noexcept
@@ -418,9 +419,9 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
 
     /** Start the task with the awaiting coroutine's context.
 
-        Stores `cont` as the continuation to resume on completion and
-        `env` as the execution environment propagated to nested
-        `co_await` expressions, then transfers control into the task's
+        Stores `cont` as the continuation to resume on completion.
+        Stores `env` as the execution environment propagated to nested
+        `co_await` expressions. Then transfers control into the task's
         coroutine body via the returned handle.
 
         @param cont The awaiting coroutine to resume when the task
