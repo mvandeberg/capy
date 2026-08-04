@@ -136,7 +136,7 @@ public:
     /** Destroy the resource.
 
         No cached block is released here. Every pool is static, so an
-        instance holds no state of its own: the thread-local pool is
+        instance holds no state of its own. The thread-local pool is
         drained at thread exit, and the global pool at process exit.
     */
     ~recycling_memory_resource();
@@ -150,8 +150,8 @@ public:
         A request larger than the largest size class (2048 bytes)
         bypasses the pools and goes straight to `::operator new`.
 
-        The second parameter is the requested alignment, and it is ignored:
-        every block comes from `::operator new`, so blocks carry the
+        The second parameter is the requested alignment, and it is ignored.
+        Every block comes from `::operator new`, so blocks carry the
         implementation's default new alignment and no more.
 
         @param bytes The number of bytes to allocate.
