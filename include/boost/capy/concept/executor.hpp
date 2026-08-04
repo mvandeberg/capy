@@ -39,51 +39,50 @@ class execution_context;
 
     @par Syntactic Requirements
 
-    @li `E` must be nothrow copy and move constructible
-    @li `ce == ce2` must return a type convertible to `bool`, `noexcept`
+    @li `E` must be nothrow copy and move constructible.
+    @li `ce == ce2` must return a type convertible to `bool`, `noexcept`.
     @li `ce.context()` must return an lvalue reference to a type derived
-        from `execution_context`, `noexcept`
-    @li `ce.on_work_started()` must be valid and `noexcept`
-    @li `ce.on_work_finished()` must be valid and `noexcept`
-    @li `ce.dispatch(c)` must return `std::coroutine_handle<>`
-    @li `ce.post(c)` must be valid
+        from `execution_context`, `noexcept`.
+    @li `ce.on_work_started()` must be valid and `noexcept`.
+    @li `ce.on_work_finished()` must be valid and `noexcept`.
+    @li `ce.dispatch(c)` must return `std::coroutine_handle<>`.
+    @li `ce.post(c)` must be valid.
 
     @par Semantic Requirements
 
     The `context` operation returns the owning context:
 
     @li Returns a reference to the execution context that created
-        this executor
-    @li The context outlives all executors created from it
+        this executor.
+    @li The context outlives all executors created from it.
 
     The `on_work_started` and `on_work_finished` operations track work:
 
     @li Calls must be paired; each `on_work_started` must have a
-        matching `on_work_finished`
+        matching `on_work_finished`.
     @li The context uses this count to determine when shutdown
-        is complete
+        is complete.
     @li These are not intended for direct use by callers. They
         are public so that work guards can invoke them. This
         enables user-defined guards with additional tracking
         behaviors, without the library needing to grant friendship
-        to types it cannot anticipate
+        to types it cannot anticipate.
 
     The `dispatch` operation returns a handle for symmetric transfer:
 
-    Every coroutine resumption must go through either symmetric
-    transfer or the scheduler queue -- never through an inline
+    Every coroutine resumption must go through symmetric transfer
+    or the executor's queue. It must never go through an inline
     `resume()` or `dispatch()` that creates a frame below the
     resumed coroutine.
 
-    @li If the executor determines it is safe to resume inline
-        (e.g., already on the correct thread), returns `c.h` for
-        the caller to use in symmetric transfer
+    @li If the executor determines it is safe to resume inline,
+        returns `c.h` for the caller to use in symmetric transfer.
+        One such case is already running on the correct thread.
     @li Otherwise, posts the continuation for later execution and
-        returns `std::noop_coroutine()`
-    @li The caller is responsible for using the returned handle
-        appropriately: returning it from `await_suspend` for
-        symmetric transfer, or calling `.resume()` if at the
-        event loop pump level
+        returns `std::noop_coroutine()`.
+    @li The caller must use the returned handle appropriately.
+        Return it from `await_suspend` for symmetric transfer, or
+        call `.resume()` if at the event loop pump level.
 
     A conforming implementation might look like:
 
@@ -100,8 +99,8 @@ class execution_context;
 
     The `post` operation queues for later execution:
 
-    @li Never blocks the caller
-    @li The coroutine executes on the executor's associated context
+    @li Never blocks the caller.
+    @li The coroutine executes on the executor's associated context.
 
     @par Continuation Lifetime
 
