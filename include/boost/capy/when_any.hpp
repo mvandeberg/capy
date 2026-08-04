@@ -637,7 +637,7 @@ public:
     the win requests stop on the operation's own stop token, which every
     sibling observes through the stop token it was awaited with. A child
     that await-returns a non-zero `ec`, or that exits via an exception,
-    does not claim the win and does not request stop: the operation keeps
+    does not claim the win and does not request stop. The operation keeps
     waiting for a success. A stop request on the caller's stop token is
     also forwarded to every child.
 
@@ -660,12 +660,12 @@ public:
 
     If no child won and the failure selected for reporting is an
     exception rather than an `ec`, that exception is rethrown instead of
-    await-returning; the choice of child is unspecified.
+    await-returning. The choice of child is unspecified.
 
     @par Await-postcondition
     Every child has finished. If at least one child await-returned a zero
-    `ec`, the result holds index 1, unless producing the winner's payload
-    threw, in which case that exception is rethrown. Otherwise the result
+    `ec`, the result holds index 1. If producing the winner's payload
+    threw, that exception is rethrown instead. Otherwise the result
     holds index 0, or a failed child's exception is rethrown.
 
     @par Remarks
@@ -684,10 +684,10 @@ public:
 
     @par Exception Safety
     The winner's exception is rethrown if extracting or
-    move-constructing the winning payload throws (a winner was found
-    but its result could not be produced). If all children fail and
-    the reported failure is an exception, that child's exception is
-    rethrown (which child is unspecified).
+    move-constructing the winning payload throws. In that case a winner
+    was found, but its result could not be produced. If all children
+    fail and the reported failure is an exception, that child's
+    exception is rethrown (which child is unspecified).
 
     @par Example
     @code
@@ -773,7 +773,7 @@ template<IoAwaitableRange R>
     the win requests stop on the operation's own stop token, which every
     sibling observes through the stop token it was awaited with. A child
     that await-returns a non-zero `ec`, or that exits via an exception,
-    does not claim the win and does not request stop: the operation keeps
+    does not claim the win and does not request stop. The operation keeps
     waiting for a success. A stop request on the caller's stop token is
     also forwarded to every child.
 
@@ -791,7 +791,7 @@ template<IoAwaitableRange R>
 
     If no child won and the failure selected for reporting is an
     exception rather than an `ec`, that exception is rethrown instead of
-    await-returning; the choice of child is unspecified.
+    await-returning. The choice of child is unspecified.
 
     @par Await-postcondition
     Every child has finished. The result holds index 1 if at least one
@@ -890,7 +890,7 @@ template<IoAwaitableRange R>
     the win requests stop on the operation's own stop token, which every
     sibling observes through the stop token it was awaited with. A child
     that await-returns a non-zero `ec`, or that exits via an exception,
-    does not claim the win and does not request stop: the operation keeps
+    does not claim the win and does not request stop. The operation keeps
     waiting for a success. A stop request on the caller's stop token is
     also forwarded to every child.
 
@@ -912,12 +912,12 @@ template<IoAwaitableRange R>
 
     If no child won and the failure selected for reporting is an
     exception rather than an `ec`, that exception is rethrown instead of
-    await-returning; the choice of child is unspecified.
+    await-returning. The choice of child is unspecified.
 
     @par Await-postcondition
     Every child has finished. If at least one child await-returned a zero
-    `ec`, the result holds the index of the winning child, unless producing
-    the winner's payload threw, in which case that exception is rethrown.
+    `ec`, the result holds the index of the winning child. If producing
+    the winner's payload threw, that exception is rethrown instead.
     Otherwise the result holds index 0, or a failed child's exception is
     rethrown.
 
@@ -938,10 +938,10 @@ template<IoAwaitableRange R>
 
     @par Exception Safety
     The winner's exception is rethrown if extracting or constructing
-    the winning payload throws (a winner was found but its result
-    could not be produced). If all children fail and the reported
-    failure is an exception, that child's exception is rethrown
-    (which child is unspecified).
+    the winning payload throws. In that case a winner was found, but
+    its result could not be produced. If all children fail and the
+    reported failure is an exception, that child's exception is
+    rethrown (which child is unspecified).
 
     @note A failing child does not cancel its siblings; `when_any`
         waits for a success or for every child to finish. To make a
