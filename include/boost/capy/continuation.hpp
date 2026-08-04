@@ -33,8 +33,9 @@ namespace capy {
     @li `reserved` — a pointer-sized scratch slot. Ordinary
         users must not touch it. Authors of awaitable algorithms
         (e.g. `async_mutex`, `async_semaphore`) may commandeer
-        it for their own node-based data structure, but **only
-        before** the continuation is submitted to an executor.
+        it for their own node-based data structure. They may do
+        so **only before** the continuation is submitted to an
+        executor.
         On submission the executor **clobbers** `reserved` to
         link the continuation into its internal queue; the value
         carries **no meaning** afterward. Once submitted, the
@@ -52,11 +53,11 @@ namespace capy {
     destroyed, or enqueued in more than one queue concurrently.
 
     An author who needs a doubly-linked (or otherwise richer)
-    structure should hold a `continuation` as a member — or
-    derive from it, since it is an aggregate — and manage their
-    own links: `reserved` is only a single pre-submission scratch
-    slot, and it is no longer available once the continuation is
-    submitted.
+    structure should hold a `continuation` as a member. Deriving
+    from it also works, because `continuation` is an aggregate.
+    Such an author should manage their own links, because
+    `reserved` is only a single pre-submission scratch slot. It
+    is no longer available once the continuation is submitted.
 
     @par Copy and Move
 
