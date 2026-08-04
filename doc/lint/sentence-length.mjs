@@ -251,13 +251,30 @@ function maskBlock(text) {
 // immediately after the period merged those leads into the following sentence and
 // over-reported its length — two confirmed false positives.
 //
-// Abbreviations that legitimately end in a period are not boundaries. There is
-// deliberately NO general "single capital letter plus period is an initial" rule:
-// this corpus has no personal initials, but it does end sentences on template
-// parameter names ("... can vary from 0 to N. It provides ..."), and such a rule
-// merged those into the next sentence.
-const BOUNDARY = /[.!?][)"'’”]*[*_`#]*(?=\s|$)/g;
-const ABBREV = /\b(?:e\.g|i\.e|etc|vs|cf|al|resp|approx|Dr|Mr|Mrs|Ms|Fig|No|Ch|Sec|Eq)\.$/;
+// The two UNDER-reporting cases, both fixed here. Every other known miscount in
+// this script over-reports, which is the safe direction for a length limit; these
+// two let a real violation through, which a merge-blocking gate cannot afford.
+// Both were pre-existing (the pre-round code splits identically), and both were
+// found by adversarial fixtures rather than by the corpus.
+//
+//   * A mid-sentence ELLIPSIS. `...` ends with a period followed by a space, so a
+//     34-word sentence containing one was segmented 16 + 18 and missed at 25. The
+//     `(?<!\.\.)` guard means the third dot of `...` is not a boundary, and the
+//     first two are already excluded by the whitespace requirement — so an
+//     ellipsis produces no boundary at all. A sentence genuinely ENDING in `...`
+//     therefore merges into the next one, which over-reports. Safe direction.
+//   * A PARENTHESISED abbreviation, `(e.g.)`. The boundary match consumes the
+//     closing bracket, so the slice handed to ABBREV ended `.)` and the
+//     abbreviation test — anchored on `\.$` — could not fire. ABBREV now tolerates
+//     the same trailing bracket/quote/formatting run the boundary consumes.
+//
+// There is deliberately NO general "single capital letter plus period is an
+// initial" rule: this corpus has no personal initials, but it does end sentences
+// on template parameter names ("... can vary from 0 to N. It provides ..."), and
+// such a rule merged those into the next sentence.
+const TRAILING = '[)"\'’”]*[*_`#]*';
+const BOUNDARY = new RegExp(`(?<!\\.\\.)[.!?]${TRAILING}(?=\\s|$)`, 'g');
+const ABBREV = new RegExp(`\\b(?:e\\.g|i\\.e|etc|vs|cf|al|resp|approx|Dr|Mr|Mrs|Ms|Fig|No|Ch|Sec|Eq)\\.${TRAILING}$`);
 
 function sentenceRanges(masked) {
   const out = [];
@@ -276,18 +293,19 @@ function sentenceRanges(masked) {
 
 // Words as a READER counts them (maintainer ruling). The retired Vale rule's
 // token was `\b(\w+)\b`, which splits every hyphenated compound, possessive,
-// contraction, slashed pair and qualified identifier: `most-derived`,
-// `fine-grained`, `caller's`, `don't`, `I/O` and `this_coro::executor_tag` each
-// counted 2 or more where a reader counts 1. Inheriting that token over-counted
-// 26 of 239 findings past the limit — findings that are not violations and must
-// not be handed to a wording task. So `-`, `'`/`’`, `/` and `::` are word-internal
-// when they join two word characters.
+// contraction, slashed run, dotted form and qualified identifier: `most-derived`,
+// `fine-grained`, `caller's`, `don't`, `I/O`, `read/write/seek`, `e.g.`, `0.8.0`,
+// `buffer_array.hpp` and `this_coro::executor_tag` each counted 2 or more where a
+// reader counts 1. Inheriting that token over-counted dozens of findings past the
+// limit — findings that are not violations and must not be handed to a wording
+// task. So `-`, `'`/`’`, `/`, `.` and `::` are word-internal when they join two
+// word characters, and they chain, so a slashed LIST counts one word too.
 //
-// Known residual over-count, deliberately not fixed because it is outside the
-// ruling: a dotted abbreviation (`e.g.`, `0.8.0`, `buffer_array.hpp`) still counts
-// one per dotted part. `.` is not in the connector set. That over-counts, which is
-// the safe direction for a length limit.
-const WORD = /\w+(?:(?:[-'’/]|::)\w+)*/g;
+// This is word counting ONLY. It cannot affect where a sentence starts or ends:
+// segmentation runs first (see sentenceRanges) and this counter only ever sees an
+// already-delimited slice, so the `.` connector can never reach across a sentence
+// boundary. The boundary side of dotted forms is ABBREV's job.
+const WORD = /\w+(?:(?:[-'’/.]|::)\w+)*/g;
 const countWords = (s) => (s.match(WORD) || []).length;
 
 // --- hard versus advisory slice (maintainer ruling) -------------------------
@@ -310,7 +328,14 @@ const ADVISORY_DIRS = [
   'modules/ROOT/pages/9.design/',
   'modules/ROOT/pages/A.specification-methods/',
 ];
-const ruleFor = (rel) => (ADVISORY_DIRS.some((d) => rel.startsWith(d)) ? 'advisory-C2' : 'C2');
+// Matched as a whole path SEGMENT sequence, with the trailing slash, so a
+// look-alike directory (`9.designish/`) stays in the hard slice. The `/`-prefixed
+// form is also tested because an ad-hoc invocation with an absolute corpus path
+// outside doc/ makes `rel` a `../`-walk-up, which no prefix test would match —
+// that silently put every essay finding in the HARD slice. baseline.mjs always
+// passes the relative defaults, so this only ever affected manual runs.
+const ruleFor = (rel) => (ADVISORY_DIRS.some((d) => rel.startsWith(d) || rel.includes(`/${d}`))
+  ? 'advisory-C2' : 'C2');
 
 // --- run -------------------------------------------------------------------
 

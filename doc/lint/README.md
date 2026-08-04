@@ -18,6 +18,7 @@ site build. Node built-ins only, no dependencies of their own.
 | `extract-docstrings.mjs` | Extracts header docstrings into `.docstrings/*.adoc` so Vale can lint them. |
 | `sentence-length.mjs` | **The authority for C2** (no sentence over 25 words), over both corpora. JSON on stdout. |
 | ↳ | Emits `C2` (hard slice), `advisory-C2` (design essays) and `BACKTICK` (unbalanced code span). |
+| `selftest.mjs` | Asserts `sentence-length.mjs` still detects what it claims, against `fixtures/`. Exit 1 on regression. |
 | `mrdocs-warnings.mjs` | Runs the pinned MrDocs 0.8.0 directly and parses its reference-surface warnings. |
 | `run-a11y.mjs` | pa11y-ci contrast/a11y scan over the built site (`doc/build/site`). |
 | `baseline.mjs` | Runs every check and snapshots their findings to `baseline.json`. |
@@ -67,6 +68,21 @@ while checking nothing. Gate the script:
 findings are keyed `advisory-C2` (`DOC_STYLE_GUIDE.md` Part C2 makes the limit soft in essays), and
 that key deliberately does not begin with `C2` so a mis-written `^C2` cannot reach them. Verified:
 the gated slice contains 0 `advisory-C2` fingerprints.
+
+### Run `selftest.mjs` after touching `sentence-length.mjs`
+
+```
+node lint/selftest.mjs      # exit 0 = 14 assertions hold; exit 1 names what broke
+```
+
+It exercises the properties whose failure is **silent**, because nothing in the real corpus
+reaches them: the unbalanced-backtick guard (both halves — the diagnostic *and* the count
+correction), the two under-reporting cases (mid-sentence ellipsis, parenthesised abbreviation),
+the bold run-in lead, reader word counting, code blocks not being linted as prose, and the
+hard/advisory partition including a `9.designish/` look-alike that must stay hard. Two plausible
+refactors of the backtick rule were demonstrated to break it while every corpus-level number still
+looked reasonable; both fail this file. Fixtures live in `lint/fixtures/` and are not part of
+either linted corpus.
 
 ### `sentence_length` has no baseline entry yet
 

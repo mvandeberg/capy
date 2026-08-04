@@ -47,11 +47,22 @@ function walk(dir) {
 // Tags whose keyword (and, for param-like tags, the following identifier)
 // is stripped but whose trailing description text is kept as prose.
 const NAMED_TAGS = /^@(param|tparam)\s+(?:\[[a-z,]+\]\s*)?(\S+)\s*/;
-const BARE_TAGS = /^@(returns?|throws?|pre|post|note|warning|brief|see|par)\b\s*/;
+const BARE_TAGS = /^@(returns?|throws?|pre|post|note|warning|brief|see)\b\s*/;
 // `@li` is stripped like the bare tags, but its item is ALSO re-emitted as its
 // own paragraph — see cleanBlock(). Doxygen has no other list-item tag in this
 // codebase (`grep -c '@arg' include` -> 0), so `li` is the whole set.
 const LIST_ITEM = /^@li\b\s*/;
+// `@par Some Title` is a SECTION TITLE, not the opening words of the paragraph
+// under it, and it carries no terminal punctuation. Left as a bare line it was
+// joined into the paragraph's first sentence and inflated its word count — the
+// same class of defect as the bold run-in lead, but one no sentence-boundary
+// rule can fix, because there is no boundary character to find. Exactly 7 of 202
+// C2 findings started on such a line and two of them were not violations
+// (`ex/executor_ref.hpp` "Thread Safety" reported 26 for a real 24;
+// `io/any_read_stream.hpp` "Immediate Completion" reported 27 for a real 24).
+// So the title is emitted as its own paragraph. A bare `@par` with no title is
+// Doxygen's plain paragraph break and contributes nothing.
+const PAR_TITLE = /^@par\b\s*/;
 const INLINE_REFS = /@(ref|p|c)\s+(\S+)/g;
 
 // A Doxygen `@li` item is a sentence, and the extractor used to hand Vale a run
@@ -88,6 +99,14 @@ function cleanBlock(raw) {
     if (li) {
       if (item !== null) flush(); else separate();
       item = line.slice(li[0].length).replace(INLINE_REFS, '$2');
+      continue;
+    }
+    const par = PAR_TITLE.exec(line);
+    if (par) {
+      flush();
+      separate();
+      const title = line.slice(par[0].length).replace(INLINE_REFS, '$2').trim();
+      if (title) prose.push(title, '');
       continue;
     }
     // A non-blank, non-tag line under an open item is its continuation.

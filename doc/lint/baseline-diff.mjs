@@ -110,7 +110,15 @@ function ruleOf(check, fp) {
     case 'vale_adoc':
     case 'vale_docstrings':
       return fp.slice(fp.lastIndexOf(':') + 1) || '(unparsed)';
-    case 'doc_lint': {
+    case 'doc_lint':
+    // sentence_length shares doc_lint's fingerprint shape (rule at the HEAD), and
+    // its three keys are the split a maintainer needs to see BEFORE reseeding:
+    // `C2` is the hard slice that a `--gate 'sentence_length:^C2:'` spec will make
+    // merge-blocking, `advisory-C2` is the design essays that never block, and
+    // `BACKTICK` is a tooling diagnostic, not a prose finding. Without this case
+    // all three collapsed into `(all)` and the reseed report hid exactly the
+    // distinction that decides what becomes gate-protected.
+    case 'sentence_length': {
       const i = fp.indexOf(':');
       return i > 0 ? fp.slice(0, i) : '(unparsed)';
     }
