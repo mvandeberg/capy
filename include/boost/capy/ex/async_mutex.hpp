@@ -212,9 +212,9 @@ public:
         /** Destroy the awaiter, leaving the mutex unable to reach it.
 
             If the awaiter is suspended in the wait queue, destroys the
-            stop callback and unlinks the awaiter, so that neither
-            `unlock()` nor the stop callback can reach a destroyed awaiter
-            when the coroutine frame is torn down while suspended.
+            stop callback and unlinks the awaiter. Neither `unlock()` nor
+            the stop callback can then reach a destroyed awaiter when the
+            coroutine frame is torn down while suspended.
 
             @par Preconditions
             Called on the executor thread. The stop callback may fire from
@@ -292,7 +292,7 @@ public:
             has already been requested.
 
             @return `true` if the mutex was free and is now held by the
-            awaiting coroutine; `false` if the mutex is held elsewhere, in
+            awaiting coroutine. `false` if the mutex is held elsewhere, in
             which case the coroutine suspends.
         */
         bool await_ready() const noexcept
@@ -328,7 +328,7 @@ public:
 
             @return `h` if a stop request was already pending, which
             resumes the awaiting coroutine immediately without enqueuing
-            it; otherwise `std::noop_coroutine()`, which leaves the
+            it. Otherwise `std::noop_coroutine()`, which leaves the
             coroutine suspended and returns control to the resumer.
         */
         std::coroutine_handle<>
@@ -356,8 +356,9 @@ public:
             canceled awaiter from the wait queue.
 
             @return An empty `io_result<>` if the mutex is now held by the
-            awaiting coroutine, or one holding `error::canceled` if the
-            stop token won the race, in which case the mutex is not held.
+            awaiting coroutine. Otherwise one holding `error::canceled`,
+            which means the stop token won the race and the mutex is not
+            held.
         */
         io_result<> await_resume() noexcept
         {
@@ -488,7 +489,7 @@ public:
             not a pure query: on the fast path it takes the lock.
 
             @return `true` if the mutex was free and is now held by the
-            awaiting coroutine; `false` if the mutex is held elsewhere, in
+            awaiting coroutine. `false` if the mutex is held elsewhere, in
             which case the coroutine suspends.
         */
         bool await_ready() const noexcept
@@ -511,7 +512,7 @@ public:
 
             @return `h` if a stop request was already pending, which
             resumes the awaiting coroutine immediately without enqueuing
-            it; otherwise `std::noop_coroutine()`, which leaves the
+            it. Otherwise `std::noop_coroutine()`, which leaves the
             coroutine suspended and returns control to the resumer.
         */
         std::coroutine_handle<>
