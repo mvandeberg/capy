@@ -763,22 +763,22 @@ public:
         Behaves like the @ref IoRunnable overload of @ref armed, but
         instead of driving each iteration through @ref run_blocking, it
         hands the coroutine to `run_one`. This lets a caller run each
-        iteration on any execution context it chooses — in particular an
-        `io_context`, which operations built on `corosio::timeout` or
-        `corosio::delay` require, since those abort on a
-        non-`io_context` executor. `fuse` never learns about the context;
+        iteration on any execution context it chooses. Operations built
+        on `corosio::timeout` or `corosio::delay` in particular require
+        an `io_context`, because they abort on a non-`io_context`
+        executor. `fuse` never learns about the context;
         the caller owns the drive loop.
 
         @par Runner contract
         `run_one` is invoked once per round with the @ref IoRunnable
         produced by `fn`. It must run that task to completion
         synchronously and *return* any exception the task raised as a
-        `std::exception_ptr` (null on success). It must not rethrow:
+        `std::exception_ptr` (null on success). It must not rethrow.
         `armed` rethrows the returned pointer from its own synchronous
-        code so the exception phase observes injected failures, whereas
-        an exception escaping a `run_async` completion handler would call
-        `std::terminate`. Capture the exception in the error handler and
-        return it once the run loop is done.
+        code, so the exception phase observes injected failures. An
+        exception escaping a `run_async` completion handler would
+        instead call `std::terminate`. Capture the exception in the error
+        handler and return it once the run loop is done.
 
         @par Example
         @code

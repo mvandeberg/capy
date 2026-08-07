@@ -47,7 +47,7 @@ namespace test {
     injection at controlled points in both directions.
 
     When the fuse injects an error or throws on one end, the
-    other end is automatically closed: any suspended reader is
+    other end is automatically closed. Any suspended reader is
     resumed with `error::eof`, and subsequent operations on
     both ends return `error::eof`. Calling @ref close on one
     end signals eof to the peer's reads after draining any
@@ -241,9 +241,9 @@ public:
         @return An awaitable that await-returns `(error_code,std::size_t)`.
 
         @par Cancellation
-        Cancellation applies only to a read that would otherwise suspend:
-        if no data is available and the environment's stop token is
-        requested (before or during the wait), the read resumes with
+        Cancellation applies only to a read that would otherwise suspend.
+        If no data is available and the environment's stop token is
+        requested, before or during the wait, the read resumes with
         `error::canceled`. A read that can complete immediately from
         buffered data is unaffected by the stop token.
 
