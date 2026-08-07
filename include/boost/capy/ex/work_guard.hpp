@@ -28,7 +28,7 @@ namespace capy {
     `on_work_finished()` on destruction, ensuring proper work tracking.
 
     The guard is useful when you need to keep an execution context
-    running while waiting for external events or when work will be
+    running while waiting for external events or when work is
     posted later.
 
     @par RAII Semantics
@@ -192,7 +192,7 @@ public:
         @par Exception Safety
         No-throw guarantee.
 
-        @return `true` if this guard will call `on_work_finished()`
+        @return `true` if this guard calls `on_work_finished()`
             on destruction, `false` otherwise.
     */
     bool
