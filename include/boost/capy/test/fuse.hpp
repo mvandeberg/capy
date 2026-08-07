@@ -415,7 +415,7 @@ public:
     /** Signal a test failure and stop execution.
 
         Call this from the test function to indicate a failure
-        condition. Both @ref armed and @ref inert will return
+        condition. Both @ref armed and @ref inert return
         a failed @ref result immediately.
 
         @par Example
@@ -459,7 +459,7 @@ public:
 
         Call this from the test function to indicate a failure
         condition with an associated exception. Both @ref armed
-        and @ref inert will return a failed @ref result with
+        and @ref inert return a failed @ref result with
         the captured exception pointer.
 
         @par Example
@@ -910,7 +910,7 @@ public:
 
         @param fn The test function to invoke. It receives
         a reference to the fuse. Calls to @ref maybe_fail
-        will always succeed.
+        always succeed.
 
         @return A @ref result indicating success or failure.
         On failure, `result::loc` contains the source location
@@ -975,7 +975,7 @@ public:
 
         @param fn The coroutine test function to invoke. It receives
         a reference to the fuse. Calls to @ref maybe_fail
-        will always succeed.
+        always succeed.
 
         @return A @ref result indicating success or failure.
         On failure, `result::loc` contains the source location
