@@ -182,7 +182,7 @@ public:
     /** Return and consume the stored continuation handle.
 
         Resets the stored handle to `noop_coroutine()` so the
-        destructor will not double-destroy it.
+        destructor does not double-destroy it.
 
         @return The continuation for symmetric transfer.
     */
