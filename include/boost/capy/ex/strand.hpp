@@ -39,7 +39,7 @@ namespace capy {
     @par Implementation
     Each strand allocates a private serialization state. Strands
     constructed from the same execution context share a small pool
-    of mutexes (193 entries) selected by hash; mutex sharing causes
+    of mutexes (193 entries) selected by hash. Mutex sharing causes
     only brief contention on the push/pop critical section, never
     cross-strand state sharing. Construction cost: one
     `std::make_shared` per strand.
@@ -57,8 +57,8 @@ namespace capy {
     outlive every post() and dispatch() call; posting or dispatching
     concurrently with, or after, the context's destruction is undefined
     behavior. To guarantee this, submit work through @ref run_async or
-    @ref run — whose operations are work-tracked, so the context's
-    `join()` waits for them — and call `join()` on the context before
+    @ref run. Their operations are work-tracked, so the context's
+    `join()` waits for them. Call `join()` on the context before
     destroying it, rather than posting to a strand from an external
     thread the context does not track. Destroying the strand handle
     itself is always safe, including after the context has been
