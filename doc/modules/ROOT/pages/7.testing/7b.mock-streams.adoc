@@ -44,7 +44,7 @@ include::example$snippets/7b_mock_streams.cpp[tag=read_stream_chunked,indent=0]
 
 === EOF Behavior
 
-When all provided data has been consumed, `read_some` returns
+When all provided data is consumed, `read_some` returns
 cpp:cond::eof[cond::eof] with a byte count of zero. The stream does not
 suspend; the result is available immediately.
 

@@ -49,7 +49,7 @@ Many common types satisfy these concepts:
 include::example$snippets/5c_sequences.cpp[tag=concept_models,indent=0]
 ----
 
-Note that `std::string` and `std::string_view` are ranges of characters,
+`std::string` and `std::string_view` are ranges of characters,
 not of buffers, so they do not satisfy the concepts themselves. Wrap them
 with `make_buffer` to obtain a single-buffer sequence.
 

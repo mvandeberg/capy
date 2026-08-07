@@ -23,7 +23,7 @@ threads so that multi-threaded test output is readable.
 == run_blocking
 
 `run_blocking` bridges async coroutine code into a synchronous test body.
-It creates a single-threaded event loop on the calling thread, launches the
+It creates a single-threaded event loop on the calling thread, starts the
 coroutine through it, and blocks until the coroutine finishes or throws.
 No real executor or thread pool is involved.
 
@@ -262,7 +262,7 @@ Platform limits on the name length:
 include::example$snippets/7a_drivers.cpp[tag=thread_name,indent=0]
 ----
 
-Note that `set_current_thread_name` lives in namespace `boost::capy`, not
+`set_current_thread_name` lives in namespace `boost::capy`, not
 `boost::capy::test`, because the function is useful in any context, not only
 tests.
 
@@ -331,7 +331,7 @@ because they all hold a copy pointing to the same shared state.
 
 For tests that need mocks, replace `add` with a function that takes a
 cpp:test::read_stream[read_stream], cpp:test::write_stream[write_stream], or other mock.
-Construct those mocks with the same `fuse f`. The armed loop will then exercise every I/O
+Construct those mocks with the same `fuse f`. The armed loop then exercises every I/O
 failure path through both error-code and exception modes automatically.
 
 == Reference

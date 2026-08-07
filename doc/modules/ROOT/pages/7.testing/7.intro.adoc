@@ -24,7 +24,7 @@ only difference is the type of the stream or source you pass in.
 * xref:7.testing/7a.drivers.adoc[Driving Tests] -- cpp:test::run_blocking[run_blocking] drives a
   coroutine to completion on the calling thread without a real executor.
   cpp:test::fuse[fuse] runs the test body repeatedly, injecting an error at each
-  `maybe_fail()` site in turn until every failure path has been covered.
+  `maybe_fail()` site in turn until every failure path is covered.
   The `thread_name` header's cpp:set_current_thread_name[] function labels
   worker threads so that failures in multi-threaded tests are easier to
   attribute.
