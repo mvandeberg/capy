@@ -38,7 +38,7 @@ namespace capy {
         defined by the operation that produced the result. Many I/O
         operations report a meaningful partial result alongside `ec`
         (for example, the number of bytes transferred before the
-        condition, as with EOF); others leave it unspecified.
+        condition, as with EOF). Others leave it unspecified.
 
     @tparam Ts Ordered payload types following the leading
         `std::error_code`.

@@ -43,8 +43,8 @@ enum class cond
     /** End-of-stream condition.
 
         An `error_code` compares equal to `eof` when the stream
-        reached its natural end, such as when a peer sends TCP FIN
-        or a file reaches EOF.
+        reached its natural end. Examples are a peer sending TCP
+        FIN, or a file reaching EOF.
     */
     eof = 1,
 

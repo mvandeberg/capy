@@ -16,9 +16,9 @@
     Including this header provides access to the complete
     @ref boost::capy::test toolkit: mock streams, the fuse fail-point
     machinery, blocking task runners, buffer inspection helpers, and
-    thread naming. It is a convenience for test code and is not pulled
-    in by the main <boost/capy.hpp> umbrella, so normal consumers are
-    never forced to depend on the testing utilities.
+    thread naming. It is a convenience for test code, and the main
+    <boost/capy.hpp> umbrella does not pull it in. Normal consumers are
+    therefore never forced to depend on the testing utilities.
 */
 
 #include <boost/capy/test/buffer_to_string.hpp>
