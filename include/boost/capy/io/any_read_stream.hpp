@@ -154,7 +154,7 @@ public:
     /** Construct by taking ownership of a ReadStream.
 
         Allocates storage and moves the stream into this wrapper.
-        The wrapper owns the stream and will destroy it.
+        The wrapper owns the stream and destroys it.
 
         @param s The stream to take ownership of.
     */
@@ -197,7 +197,7 @@ public:
     /** Initiate an asynchronous read operation.
 
         Reads data into the provided buffer sequence. The operation
-        completes when at least one byte has been read, or an error
+        completes when at least one byte is read, or an error
         occurs.
 
         @param buffers The buffer sequence to read into. Passed by

@@ -172,7 +172,7 @@ public:
     /** Construct by taking ownership of a bidirectional stream.
 
         Allocates storage and moves the stream into this wrapper.
-        The wrapper owns the stream and will destroy it.
+        The wrapper owns the stream and destroys it.
 
         @param s The stream to take ownership of. Must satisfy both
             ReadStream and WriteStream concepts.
