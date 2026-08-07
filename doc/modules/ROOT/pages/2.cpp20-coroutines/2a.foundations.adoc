@@ -1,6 +1,6 @@
 = Part I: Foundations
 
-This section introduces the fundamental concepts you need before working with {cpp}20 coroutines. You will learn how normal functions work, what makes coroutines different, and why coroutines exist as a language feature.
+This section introduces the fundamental concepts you need before working with {cpp}20 coroutines. It explains how normal functions work, what makes coroutines different, and why coroutines exist as a language feature.
 
 == Prerequisites
 
@@ -113,4 +113,4 @@ Coroutines also enable:
 * *State machines* — Complex control flow expressed as linear code with suspension points
 * *Cooperative multitasking* — Multiple logical tasks interleaved on a single thread
 
-You have now learned what coroutines are and why they exist. In the next section, you will learn the {cpp}20 syntax for creating coroutines.
+You have now learned what coroutines are and why they exist. The next section covers the {cpp}20 syntax for creating coroutines.

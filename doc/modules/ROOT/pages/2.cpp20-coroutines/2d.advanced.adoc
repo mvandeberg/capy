@@ -9,7 +9,7 @@ This section covers advanced coroutine topics: symmetric transfer for efficient 
 
 == Symmetric Transfer
 
-When a coroutine completes or awaits another coroutine, control must transfer somewhere. The naive approach—simply calling `handle.resume()`—has a problem: each nested coroutine adds a frame to the call stack. With deep nesting, you risk stack overflow.
+When a coroutine completes or awaits another coroutine, control must transfer somewhere. The naive approach—calling `handle.resume()`—has a problem: each nested coroutine adds a frame to the call stack. With deep nesting, you risk stack overflow.
 
 *Symmetric transfer* solves this by returning a coroutine handle from `await_suspend`. Instead of resuming the target coroutine via a function call, the compiler generates a tail call that transfers control without growing the stack.
 

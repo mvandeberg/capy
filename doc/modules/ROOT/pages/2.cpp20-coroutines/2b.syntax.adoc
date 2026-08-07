@@ -54,9 +54,9 @@ Here is the minimal structure needed to create a coroutine:
 include::example$snippets/2b_syntax.cpp[tag=simple_coroutine,indent=0]
 ----
 
-The `promise_type` nested structure provides the minimum scaffolding the compiler needs. You will learn what each method does in xref:2.cpp20-coroutines/2c.machinery.adoc[Part III: Coroutine Machinery].
+The `promise_type` nested structure provides the minimum scaffolding the compiler needs. xref:2.cpp20-coroutines/2c.machinery.adoc[Part III: Coroutine Machinery] explains what each method does.
 
-For now, observe that the presence of `co_return` transforms what looks like a regular function into a coroutine. If you try to compile a function with coroutine keywords but without proper infrastructure, the compiler will produce errors.
+For now, observe that the presence of `co_return` transforms what looks like a regular function into a coroutine. If you try to compile a function with coroutine keywords but without proper infrastructure, the compiler produces errors.
 
 == Awaitables and Awaiters
 
@@ -112,4 +112,4 @@ These are useful building blocks for promise types and custom awaitables.
 include::example$snippets/2b_syntax.cpp[tag=standard_awaiters,indent=0]
 ----
 
-You have now learned the three coroutine keywords and how awaitables work. In the next section, you will learn about the promise type and coroutine handle—the machinery that makes coroutines function.
+You have now learned the three coroutine keywords and how awaitables work. The next section covers the promise type and coroutine handle—the machinery that makes coroutines function.

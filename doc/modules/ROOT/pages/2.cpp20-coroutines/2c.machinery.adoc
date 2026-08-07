@@ -1,6 +1,6 @@
 = Part III: Coroutine Machinery
 
-This section explains the promise type and coroutine handle—the core machinery that controls coroutine behavior. You will build a complete generator type by understanding how these pieces work together.
+This section explains the promise type and coroutine handle—the core machinery that controls coroutine behavior. You build a complete generator type by understanding how these pieces work together.
 
 == Prerequisites
 
@@ -19,7 +19,7 @@ The compiler expects to find a type named `promise_type` nested inside your coro
 The promise type must provide these methods:
 
 `get_return_object()`::
-Called to create the object that will be returned to the caller of the coroutine. This happens before the coroutine body begins executing.
+Called to create the object returned to the caller of the coroutine. This happens before the coroutine body begins executing.
 
 `initial_suspend()`::
 Called immediately after `get_return_object()`. Returns an awaiter that determines whether the coroutine should suspend before running any of its body. Return `std::suspend_never{}` to start executing immediately, or `std::suspend_always{}` to suspend before the first statement.
@@ -186,8 +186,8 @@ include::example$programs/2c_machinery_fibonacci.cpp[tag=full]
 0 1 1 2 3 5 8 13 21 34 
 ----
 
-The Fibonacci generator runs an infinite loop internally. It will produce values forever. But because it yields and suspends after each value, the caller controls when (and whether) to ask for more values. The generator only computes values on demand.
+The Fibonacci generator runs an infinite loop internally. It produces values forever. But because it yields and suspends after each value, the caller controls when (and whether) to ask for more values. The generator only computes values on demand.
 
 The variables `a` and `b` persist across yields because they live in the coroutine frame on the heap.
 
-You have now learned how promise types and coroutine handles work together to create useful abstractions like generators. In the next section, you will explore advanced topics: symmetric transfer, allocation, and exception handling.
+You have now learned how promise types and coroutine handles work together to create useful abstractions like generators. The next section covers advanced topics: symmetric transfer, allocation, and exception handling.
