@@ -272,6 +272,6 @@ Meanwhile, the {cpp} standards committee has produced `std::execution`—a sende
 
 Boost has always been where the practical meets the principled. Where real-world feedback shapes design. Where code ships before papers standardize. Capy continues this tradition.
 
-If you are reading this as a Boost contributor, know what you are part of. This library advances beyond Asio in the domains where they overlap. Not by abandoning what works, but by building on it. Not by chasing theoretical purity, but by solving the problems that have frustrated {cpp} developers for years: template explosion, compile-time costs, error message novels, ergonomic concurrency, and more.
+If you are reading this as a Boost contributor, know what you are part of. This library advances beyond Asio in the domains where they overlap. Not by abandoning what works, but by building on it. Not by chasing theoretical purity, but by solving the problems that have frustrated {cpp} developers for years. Those problems are template explosion, compile-time costs, error message novels, ergonomic concurrency, and more.
 
 The coroutine era has arrived. And Boost, as it has so many times before, is leading the way.
