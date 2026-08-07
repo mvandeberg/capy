@@ -27,7 +27,7 @@ A P2300 sender is a foreign awaitable: it has no two-argument `await_suspend`, s
 include::example$sender-bridge/sender_awaitable.hpp[tag=set_value,indent=0]
 ----
 
-`await_sender` inspects the sender's completion signatures. If the sender can complete with `set_error(std::error_code)`, the bridge yields `io_result<T>` so the error stays a value rather than an exception; otherwise it yields the value directly.
+`await_sender` inspects the sender's completion signatures. If the sender can complete with `set_error(std::error_code)`, the bridge yields `io_result<T>` so the error stays a value rather than an exception. Otherwise the bridge yields the value directly.
 
 == Source Code
 
