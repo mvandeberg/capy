@@ -171,7 +171,7 @@ Because an error can accompany partial data, the advance must run before the che
 
 === Implementer Freedom
 
-When a stream produces some bytes and then observes a stopping condition before the buffer is full, it reports both at once: `(ec, k)` with `k \< buffer_size(buffers)`. There is no deferred state, no discarded data, and no internal replay buffer. A stream that decrypts or decompresses into the caller's buffer and then hits a terminal marker simply returns the bytes and the condition together.
+When a stream produces some bytes and then observes a stopping condition before the buffer is full, it reports both at once: `(ec, k)` with `k \< buffer_size(buffers)`. There is no deferred state, no discarded data, and no internal replay buffer. A stream that decrypts or decompresses into the caller's buffer and then hits a terminal marker returns the bytes and the condition together.
 
 The one case that requires deferral is the exact-fill boundary, where the final bytes leave no free space. Since `(ec, buffer_size(buffers))` is not permitted, the stream reports `(!ec, buffer_size(buffers))` and carries the condition to the next call. This case is rare, and its bookkeeping is local to the stream.
 

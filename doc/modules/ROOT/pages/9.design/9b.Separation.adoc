@@ -60,7 +60,7 @@ Components at different levels belong in different packages. This is a structura
 
 == Cumulative Component Dependency
 
-Lakos quantified the cost of getting levels wrong with Cumulative Component Dependency (CCD): the sum over all components in a subsystem of the number of components needed in order to test each component incrementally (see Figure 4-22, p. 191 of Lakos'96).
+Lakos quantified the cost of getting levels wrong with Cumulative Component Dependency (CCD): the sum over all components in a subsystem of the number of components needed to test each component incrementally (see Figure 4-22, p. 191 of Lakos'96).
 
 CCD ranges from N for a perfectly horizontal (flat) design to N-squared for a vertical or cyclically dependent one. The metric is additive for independent subsystems. If two independent libraries each have CCD of 5, combining them without adding cross-dependencies gives CCD 10 - exactly the sum:
 

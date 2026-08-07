@@ -6,16 +6,16 @@ This document explains the naming conventions and call syntax of the two launche
 
 == Usage
 
-=== `run_async` -- Fire-and-Forget Launch
+=== `run_async` -- Fire-and-Forget
 
-cpp:run_async[] launches any _IoRunnable_ from non-coroutine code: `main()`, callback handlers, event loops. cpp:task[task<T>] is the most common conforming type, but any user-defined type satisfying the concept works. The function does not return a value to the caller. Handlers receive the task's result or exception after completion, as data; they should not throw. An exception that no handler consumes (none was supplied, or a handler let one escape) calls `std::terminate`; it is never silently discarded. To catch an error instead, `co_await` the work inside a coroutine.
+cpp:run_async[] starts any _IoRunnable_ from non-coroutine code: `main()`, callback handlers, event loops. cpp:task[task<T>] is the most common conforming type, but any user-defined type satisfying the concept works. The function does not return a value to the caller. Handlers receive the task's result or exception after completion, as data; they should not throw. An exception that no handler consumes (none was supplied, or a handler let one escape) calls `std::terminate`; it is never silently discarded. To catch an error instead, `co_await` the work inside a coroutine.
 
 [source,cpp]
 ----
 include::example$snippets/9l_run_api.cpp[tag=run_async_usage,indent=0]
 ----
 
-=== `run` -- Awaitable Launch Within a Coroutine
+=== `run` -- Awaitable Within a Coroutine
 
 cpp:run[] is the coroutine-side counterpart. It binds any _IoRunnable_ to a (possibly different) executor and returns the result to the caller via `co_await`. It also supports overloads that customize stop token or allocator while inheriting the caller's executor.
 
@@ -26,7 +26,7 @@ include::example$snippets/9l_run_api.cpp[tag=run_usage]
 
 === `run_async` on a Strand
 
-A common pattern for launching per-connection coroutines on a strand, ensuring serialized access to connection state:
+A common pattern for starting per-connection coroutines on a strand, ensuring serialized access to connection state:
 
 [source,cpp]
 ----
@@ -107,7 +107,7 @@ The cpp:run[] prefix was chosen for several reasons:
 
 - **Verb clarity.** cpp:run[] tells you what happens: something executes. cpp:run_async[] tells you it executes without waiting. cpp:run[] inside a coroutine tells you control transfers and returns. Prepositions like `on` and `with` say nothing about the action -- they are sentence fragments waiting for a verb.
 
-- **Discoverability.** The `run_*` family groups together in documentation, autocompletion, and alphabetical listings. Users searching for "how do I launch a task" find cpp:run_async[] and cpp:run[] as a coherent pair.
+- **Discoverability.** The `run_*` family groups together in documentation, autocompletion, and alphabetical listings. Users searching for "how do I start a task" find cpp:run_async[] and cpp:run[] as a coherent pair.
 
 - **Consistency.** The naming follows the established pattern from `io_context::run()`, `std::jthread`, and other {cpp} APIs where `run` means "begin executing work."
 
@@ -154,7 +154,7 @@ co_await capy::with(x).call(subtask());
 co_await run(x)(subtask());
 ----
 
-- **Builder illusion.** Dot-chaining suggests composability that does not exist. Users will naturally try:
+- **Builder illusion.** Dot-chaining suggests composability that does not exist. Users naturally try:
 +
 [source,cpp,role=pseudocode]
 ----
@@ -278,8 +278,8 @@ The allocator is ready before the frame is created. No query machinery can retro
 
 [cols="1,2"]
 |===
-| cpp:run_async[]`(ctx)(task)` | Fire-and-forget launch from non-coroutine code
-| `co_await` cpp:run[]`(ctx)(task)` | Awaitable launch within a coroutine
+| cpp:run_async[]`(ctx)(task)` | Fire-and-forget from non-coroutine code
+| `co_await` cpp:run[]`(ctx)(task)` | Awaitable within a coroutine
 |===
 
 The cpp:run[] name is greppable, unambiguous, and won't collide with local variables in a namespace-heavy Boost codebase. The `f(ctx)(task)` syntax exists because coroutine frame allocation requires the allocator to be set _before_ the task expression is evaluated, and {cpp}17 postfix sequencing guarantees exactly that ordering. The syntax is intentionally explicit about its two steps -- it tells the reader that something important happens between them.

@@ -42,7 +42,7 @@ cpp:IoRunnable[] refines cpp:IoAwaitable[] with operations needed to start a tas
 include::example$snippets/9n_why_not_cobalt_concepts.cpp[tag=io_runnable_concept]
 ----
 
-Context injection (cpp:IoRunnable::set_environment[set_environment], cpp:IoRunnable::set_continuation[set_continuation]) consists of `noexcept` requirements that cpp:IoRunnable[] places on `T::promise_type`; launch functions invoke them through the typed handle returned by cpp:IoRunnable::handle[handle()] before resuming the frame.
+Context injection (cpp:IoRunnable::set_environment[set_environment], cpp:IoRunnable::set_continuation[set_continuation]) consists of `noexcept` requirements that cpp:IoRunnable[] places on `T::promise_type`; launcher functions invoke them through the typed handle returned by cpp:IoRunnable::handle[handle()] before resuming the frame.
 
 Each concept has documented syntactic requirements, semantic requirements, conforming signatures, and examples. A user who wants to create a custom task type can read the concept definition and know exactly what to provide. The compiler enforces the syntactic requirements at constraint-check time.
 
@@ -150,7 +150,7 @@ Two things happen when a promise does not provide an associator:
 
 * If `get_cancellation_slot()` is absent, the cancellation wiring block is skipped. The child task operates without cancellation support.
 
-Both behaviors are intentional. Cobalt treats associators as optional capabilities -- a task without `get_cancellation_slot()` simply does not propagate cancellation to its children. This is a design choice that favors flexibility: tasks can participate in the system without implementing every associator. The trade-off is that omitting an associator produces no compile-time diagnostic, so the behavior difference must be understood by the author of the custom task.
+Both behaviors are intentional. Cobalt treats associators as optional capabilities -- a task without `get_cancellation_slot()` does not propagate cancellation to its children. This is a design choice that favors flexibility: tasks can participate in the system without implementing every associator. The trade-off is that omitting an associator produces no compile-time diagnostic, so the behavior difference must be understood by the author of the custom task.
 
 In Capy, the equivalent of "no cancellation" is passing `std::stop_token{}` (a never-stop token) explicitly. Both designs support uncancellable operations; they differ in whether that choice is expressed through presence of a parameter or absence of a member function.
 
