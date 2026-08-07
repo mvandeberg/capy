@@ -60,7 +60,7 @@ measured: `--gate 'vale_adoc:Capy\.SentenceLength$'` gives `gated: true, gatedNe
 while checking nothing. Gate the script:
 
 ```
---gate 'sentence_length:^C2:'      # measured: exit 1, gatedNew 135
+--gate 'sentence_length:^C2:'      # measured: exit 1, gatedNew 87
 ```
 
 `^C2:` binds the **hard** slice only — the `include/**` docstrings plus every `.adoc` page outside

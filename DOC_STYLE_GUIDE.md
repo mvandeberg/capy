@@ -113,6 +113,9 @@ as vocabulary is added — extend it rather than letting synonyms drift.)*
 Approved technical names (need no paraphrase): coroutine, task, promise, awaiter,
 awaitable, executor, execution context, strand, thread pool, allocator, frame, buffer,
 buffer sequence, stream, stop token, sender, receiver, scheduler, mutex, event, waker.
+Where a name here also appears in the Avoid column above, the table row governs: use
+it only in the sense the row names. **scheduler** is approved only in its P2300 sense
+(the `scheduler` concept); it is never a synonym for **executor**.
 
 ## Part D — Completeness & Pedagogy
 
@@ -209,7 +212,8 @@ tokens:
   - utilize
 ```
 
-`doc/.vale/styles/Capy/SentenceLength.yml` (enforces C2):
+`doc/.vale/styles/Capy/SentenceLength.yml` (retired to `suggestion`; does not enforce C2 —
+see F1):
 ```yaml
 extends: occurrence
 message: "Sentence over 25 words — split it (style guide C1/C2)."
@@ -219,7 +223,10 @@ token: \b(\w+)\b
 max: 25
 ```
 
-- **F1.** CI runs `vale doc/modules` and fails on `error`-level findings.
+- **F1.** CI runs `vale doc/modules` and fails on `error`-level findings, except **C2**: its
+  authority is `doc/lint/sentence-length.mjs` (`doc/lint/README.md`), hard on docstrings and
+  non-essay `.adoc` pages, advisory on `9.design/` and `A.specification-methods/`.
+  `Capy.SentenceLength` is `level: suggestion` and enforces nothing.
 - **F2.** The snippet-compile job is the accuracy gate; keep every example sourced from a
   compiled file (Part B2).
 - **F3.** Doc PR checklist: mode declared (A1)? no hand-typed signatures (B1)? example
