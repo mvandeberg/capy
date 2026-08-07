@@ -62,7 +62,7 @@ The worker thread calls `cv.wait()`, which atomically releases the mutex and sus
 
 === The Predicate
 
-The lambda `[]{ return ready; }` is the *predicate*. `wait()` will not return until this evaluates to true. This guards against *spurious wakeups*—rare events where a thread wakes without notification. Always use a predicate.
+The lambda `[]{ return ready; }` is the *predicate*. `wait()` does not return until this evaluates to true. This guards against *spurious wakeups*—rare events where a thread wakes without notification. Always use a predicate.
 
 === Notification Methods
 
@@ -114,4 +114,4 @@ include::example$snippets/3c_advanced.cpp[tag=thread_safe_cache,indent=0]
 
 Multiple threads can call `get()` simultaneously without blocking each other. Only `put()` requires exclusive access.
 
-You have now learned about atomics, condition variables, and shared locks. In the next section, you will explore communication patterns: futures, promises, async, and practical concurrent patterns.
+You have now learned about atomics, condition variables, and shared locks. The next section covers communication patterns: futures, promises, async, and practical concurrent patterns.

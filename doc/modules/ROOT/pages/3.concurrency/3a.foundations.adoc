@@ -1,6 +1,6 @@
 = Part I: Foundations
 
-This section introduces the fundamental concepts of concurrent programming. You will learn what concurrency is, why it matters, and how threads provide the foundation for parallel execution.
+This section introduces the fundamental concepts of concurrent programming. It explains what concurrency is, why it matters, and how threads provide the foundation for parallel execution.
 
 == Prerequisites
 
@@ -18,7 +18,7 @@ Consider downloading a large file. Without concurrency, your application freezes
 
 The benefits compound in computationally intensive work. Image processing, scientific simulations, video encoding—these tasks can be split into independent pieces. Process them simultaneously and your program finishes in a fraction of the time.
 
-But concurrency is not free. It introduces complexity. Multiple threads accessing the same data can corrupt it. Threads waiting on each other can freeze forever. These problems—*race conditions* and *deadlocks*—are the challenges you will learn to handle.
+But concurrency is not free. It introduces complexity. Multiple threads accessing the same data can corrupt it. Threads waiting on each other can freeze forever. These problems—*race conditions* and *deadlocks*—are the challenges you learn to handle.
 
 == Threads—Your Program's Parallel Lives
 
@@ -142,4 +142,4 @@ include::example$snippets/3a_foundations.cpp[tag=joinable,indent=0]
 
 A thread is joinable if it represents an actual thread of execution. After joining or detaching, or after default construction, a `std::thread` is not joinable.
 
-You have now learned the basics of threads: creation, execution, and lifecycle management. In the next section, you will learn about the dangers of shared data and how to protect it with synchronization primitives.
+You have now learned the basics of threads: creation, execution, and lifecycle management. The next section covers the dangers of shared data and how to protect it with synchronization primitives.

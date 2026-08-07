@@ -1,6 +1,6 @@
 = Part II: Synchronization
 
-This section introduces the dangers of shared data access and the synchronization primitives that protect against them. You will learn about race conditions, mutexes, lock guards, and deadlocks.
+This section introduces the dangers of shared data access and the synchronization primitives that protect against them. It covers race conditions, mutexes, lock guards, and deadlocks.
 
 == Prerequisites
 
@@ -18,7 +18,7 @@ Consider this code:
 include::example$programs/3b_synchronization_race.cpp[tag=full]
 ----
 
-Two threads, each incrementing 100,000 times. You would expect 200,000. But run this repeatedly and you will see different results—180,000, 195,327, maybe occasionally 200,000. Something is wrong.
+Two threads, each incrementing 100,000 times. You would expect 200,000. But run this repeatedly and you see different results—180,000, 195,327, maybe occasionally 200,000. Something is wrong.
 
 The `++counter` operation looks atomic—indivisible—but it is not. It actually consists of three steps:
 
@@ -111,4 +111,4 @@ include::example$snippets/3b_synchronization.cpp[tag=scoped_lock_multi]
 3. *Hold locks for minimal time* — Reduce the window for contention
 4. *Avoid nested locks when possible* — Simpler designs prevent deadlock by construction
 
-You have now learned about race conditions, mutexes, lock guards, and deadlocks. In the next section, you will explore advanced synchronization primitives: atomics, condition variables, and shared locks.
+You have now learned about race conditions, mutexes, lock guards, and deadlocks. The next section covers advanced synchronization primitives: atomics, condition variables, and shared locks.
