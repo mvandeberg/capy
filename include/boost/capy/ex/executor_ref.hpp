@@ -81,7 +81,7 @@ inline constexpr executor_vtable vtable_for = {
 
     @par Reference Semantics
     This class has reference semantics: it does not allocate or own
-    the wrapped executor. Copy operations simply copy the internal
+    the wrapped executor. Copy operations copy the internal
     pointers. The caller must ensure the referenced executor outlives
     all `executor_ref` instances that wrap it.
 
