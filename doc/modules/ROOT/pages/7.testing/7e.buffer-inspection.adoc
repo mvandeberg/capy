@@ -24,7 +24,7 @@ a buffer in chunks is exercised at every possible chunk boundary with a single
 `while` loop.
 
 `bufgrind` does not perform I/O and does not consult a fuse, so the snippets
-on this page drive it under `f.inert(...)`: a single pass is sufficient to
+on this page drive it under `f.inert(...)`. A single pass is sufficient to
 visit every split position, and there are no async failure sites to inject.
 
 [source,cpp]

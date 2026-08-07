@@ -83,7 +83,7 @@ include::example$snippets/7b_mock_streams.cpp[tag=read_stream_eof,indent=0]
 cpp:test::write_stream[] implements the cpp:WriteStream[] concept. The system under
 test calls `write_some()` and the test inspects what was written via
 `data()`. Test code may also call `expect()` to register the data it
-anticipates; any mismatch between written bytes and that prefix causes
+anticipates. Any mismatch between written bytes and that prefix causes
 `write_some()` to return cpp:error::test_failure[error::test_failure] directly. The fuse is a
 separate concern used only for error injection. Because `fuse` copies
 share state (see
@@ -182,9 +182,9 @@ any buffered data first; once the buffer is empty, subsequent
 call `write_some` after receiving EOF.
 
 When the fuse injects an error during `read_some` or `write_some`, the
-pair is automatically closed: the calling end returns the injected
-error, any suspended reader on the other end is resumed with
-`cond::eof`, and all subsequent operations on both ends return
+pair is automatically closed. The calling end returns the injected
+error, and any suspended reader on the other end is resumed with
+`cond::eof`. All subsequent operations on both ends return
 `cond::eof`.
 
 === Thread Safety
@@ -217,8 +217,8 @@ concurrent coroutines is undefined behavior.
 
 | `set_max_read_size(std::size_t n)`
 | Limit bytes returned per `read_some` call on this end, simulating
-  chunked network delivery (applies to this end only; the peer end has
-  its own independent limit).
+  chunked network delivery. The limit applies to this end only; the peer
+  end has its own independent limit.
 
 | `provide(std::string_view sv)`
 | Inject bytes into this stream for reading, bypassing the fuse.

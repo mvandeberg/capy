@@ -11,21 +11,21 @@
 
 Real I/O is a poor foundation for unit tests. Network operations are slow,
 non-deterministic, and do not fail on demand -- so error-handling paths go
-untested until production breaks them. Capy ships a self-contained toolkit
-that replaces the transport with in-memory mocks, drives coroutines to
+untested until production breaks them. Capy ships a self-contained toolkit.
+It replaces the transport with in-memory mocks, drives coroutines to
 completion on the calling thread, and injects failures at every
-`maybe_fail()` site so that every error branch is exercised automatically.
-Because each mock satisfies the same concept as its production counterpart,
-test code reads the same as production code -- the only difference is the
-type of the stream or source you pass in.
+`maybe_fail()` site. The toolkit therefore exercises every error branch
+automatically. Because each mock satisfies the same concept as its
+production counterpart, test code reads the same as production code. The
+only difference is the type of the stream or source you pass in.
 
 == What This Section Covers
 
 * xref:7.testing/7a.drivers.adoc[Driving Tests] -- cpp:test::run_blocking[run_blocking] drives a
-  coroutine to completion on the calling thread without a real executor;
+  coroutine to completion on the calling thread without a real executor.
   cpp:test::fuse[fuse] runs the test body repeatedly, injecting an error at each
-  `maybe_fail()` site in turn until every failure path has been covered;
-  and the `thread_name` header's cpp:set_current_thread_name[] function labels
+  `maybe_fail()` site in turn until every failure path has been covered.
+  The `thread_name` header's cpp:set_current_thread_name[] function labels
   worker threads so that failures in multi-threaded tests are easier to
   attribute.
 
@@ -45,9 +45,9 @@ type of the stream or source you pass in.
 A typical test constructs one or more mocks, arms a `fuse`, and hands the
 mocks to the code under test inside a `run_blocking` call. The `fuse`
 repeats the test body automatically -- once for each failure site and once
-in exception mode -- while `run_blocking` keeps the whole thing on the
-calling thread. Buffer utilities such as `bufgrind` and `buffer_to_string`
-wrap the mock data for assertions, letting you verify that every split of
+in exception mode. `run_blocking` keeps the whole thing on the calling
+thread. Buffer utilities such as `bufgrind` and `buffer_to_string`
+wrap the mock data for assertions. They let you verify that every split of
 an input buffer produces the same correct output.
 
 Continue to xref:7.testing/7a.drivers.adoc[Driving Tests] to begin.
