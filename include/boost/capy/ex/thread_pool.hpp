@@ -36,7 +36,7 @@ namespace capy {
     @code
     thread_pool pool(4);  // 4 worker threads
     auto ex = pool.get_executor();
-    run_async(ex)(some_task());  // launch work; tracked so join() waits for it
+    run_async(ex)(some_task());  // start work; tracked so join() waits for it
     pool.join();  // wait for outstanding work to complete
     // pool destructor stops the pool, discarding any pending work
     @endcode
