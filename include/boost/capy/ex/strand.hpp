@@ -105,8 +105,8 @@ public:
         Allocates a fresh strand implementation from the service
         associated with the executor's context.
 
-        @param ex The inner executor to wrap. Coroutines will
-            ultimately be dispatched through this executor.
+        @param ex The inner executor to wrap. Coroutines are
+            ultimately dispatched through this executor.
 
         @note This constructor is disabled if the argument is a
             strand type, to prevent strand-of-strand wrapping.

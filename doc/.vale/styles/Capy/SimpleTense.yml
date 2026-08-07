@@ -3,5 +3,5 @@ message: "Avoid needless future/perfect tense — prefer present simple (style g
 level: warning
 ignorecase: true
 tokens:
-  - 'will '
+  - 'will\s'
   - 'has been'
