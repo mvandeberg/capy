@@ -392,7 +392,7 @@ public:
     /** Set the memory resource used for coroutine frame allocation.
 
         The caller is responsible for ensuring the memory resource
-        remains valid for the lifetime of all coroutines launched
+        remains valid for the lifetime of all coroutines started
         using this context's executor.
 
         @par Thread Safety
@@ -507,7 +507,7 @@ protected:
         This function is idempotent; subsequent calls have no effect.
 
         @par Preconditions
-        @li `shutdown()` has been called.
+        @li `shutdown()` was called.
 
         @par Effects
         All services are deleted and removed from the container.
