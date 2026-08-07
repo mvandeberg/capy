@@ -10,7 +10,7 @@ This section explains the promise type and coroutine handle—the core machinery
 
 == The Promise Type
 
-Every coroutine has an associated *promise type*. This type acts as a controller for the coroutine, defining how it behaves at key points in its lifecycle. The promise type is not something you pass to the coroutine—it is a nested type inside the coroutine's return type that the compiler uses automatically.
+Every coroutine has an associated *promise type*. This type acts as a controller for the coroutine, defining how it behaves at key points in its lifecycle. The promise type is not something you pass to the coroutine. It is a nested type inside the coroutine's return type that the compiler uses automatically.
 
 The compiler expects to find a type named `promise_type` nested inside your coroutine's return type. If your coroutine returns `Generator<int>`, the compiler looks for `Generator<int>::promise_type`.
 
@@ -64,7 +64,7 @@ NOTE: The `co_await` keywords below are intentional. This mirrors the {cpp} stan
 Important observations:
 
 * The return object is created before `initial_suspend()` runs, so it is available even if the coroutine suspends immediately
-* `final_suspend()` determines whether the coroutine frame persists after completion—if it returns `suspend_always`, you must manually destroy the coroutine; if it returns `suspend_never`, the frame is destroyed automatically
+* `final_suspend()` determines whether the coroutine frame persists after completion. If it returns `suspend_always`, you must manually destroy the coroutine; if it returns `suspend_never`, the frame is destroyed automatically
 
 === Tracing Promise Behavior
 
@@ -92,7 +92,7 @@ Notice that the promise is constructed first, then `get_return_object()` creates
 
 [WARNING]
 ====
-If your coroutine can fall off the end of its body without executing `co_return`, and your promise type lacks a `return_void()` method, the behavior is undefined. Always ensure your promise type has `return_void()` if there is any code path that might reach the end of the coroutine body without an explicit `co_return`.
+A coroutine may fall off the end of its body without executing `co_return`. If its promise type lacks a `return_void()` method, the behavior is undefined. Your promise type must therefore have `return_void()` whenever any code path might reach the end of the coroutine body without an explicit `co_return`.
 ====
 
 == Coroutine Handle

@@ -38,7 +38,7 @@ This model has a fundamental constraint: *run-to-completion*. Once a function st
 
 == What Is a Coroutine?
 
-A *coroutine* is a function that can suspend its execution and resume later from exactly where it left off. Think of it as a bookmark in a book of instructions—instead of reading the entire book in one sitting, you can mark your place, do something else, and return to continue reading.
+A *coroutine* is a function that can suspend its execution and resume later from exactly where it left off. Think of it as a bookmark in a book of instructions. Instead of reading the entire book in one sitting, you can mark your place, do something else, and return to continue reading.
 
 When a coroutine suspends:
 
@@ -92,7 +92,7 @@ include::example$snippets/2a_foundations.cpp[tag=callback_request,indent=0]
 
 This code does not block. Each operation starts, registers a callback, and returns immediately. When the operation completes, the callback runs.
 
-But look what has happened to the code: three levels of nesting, logic scattered across multiple lambda functions, and local variables that cannot be shared between callbacks without careful lifetime management. A single logical operation becomes fragmented across multiple functions.
+But look what has happened to the code: three levels of nesting and logic scattered across multiple lambda functions. Local variables cannot be shared between callbacks without careful lifetime management. A single logical operation becomes fragmented across multiple functions.
 
 === The Coroutine Solution
 
