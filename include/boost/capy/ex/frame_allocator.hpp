@@ -89,8 +89,8 @@ get_current_frame_allocator() noexcept
 /** Set the current frame allocator for this thread.
 
     Installs @p mr as the frame allocator read by the
-    next coroutine's `promise_type::operator
-    new` on this thread. Only launcher functions and
+    next coroutine's `promise_type::operator new` on
+    this thread. Only launcher functions and
     @ref IoAwaitable machinery should call this; see
     @ref get_current_frame_allocator for the full protocol
     description.
