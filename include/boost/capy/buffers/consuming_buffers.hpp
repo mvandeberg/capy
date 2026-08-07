@@ -24,14 +24,14 @@ namespace capy {
 /** A cursor that drives consumption of a buffer sequence.
 
     `consuming_buffers` is the dedicated driver for `read_some`/`write_some`
-    loops: it presents the not-yet-consumed bytes of a buffer sequence via
+    loops. It presents the not-yet-consumed bytes of a buffer sequence via
     `data()`, and `consume(n)` advances past `n` transferred bytes **in
     place**.
 
     It is deliberately **not** itself a buffer sequence — it hands out the
     remaining bytes through `data()` (returning a `slice_of` view). It
-    **borrows** the underlying sequence (iterators + a consumed-byte offset);
-    the sequence must outlive the cursor, which is the natural case when the
+    **borrows** the underlying sequence (iterators + a consumed-byte offset).
+    The sequence must outlive the cursor. That is the natural case when the
     cursor is a local of a composed operation that took its buffers by value.
 
     @par Example
