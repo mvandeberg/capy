@@ -133,7 +133,7 @@ public:
         failure point; no-throw otherwise.
 
         @par Cancellation
-        If the environment's stop token has been requested, the read
+        If the environment's stop token is requested, the read
         completes immediately with `error::canceled` and transfers no
         data. This lets code under test exercise its cancellation paths.
         An empty buffer sequence is a no-op that completes successfully

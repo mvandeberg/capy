@@ -448,7 +448,7 @@ public:
         @return An awaitable that await-returns `(error_code,std::size_t)`.
 
         @par Cancellation
-        If the environment's stop token has been requested, the write
+        If the environment's stop token is requested, the write
         completes immediately with `error::canceled` and transfers no
         data. An empty buffer sequence is a no-op that completes
         successfully regardless of the stop token.
