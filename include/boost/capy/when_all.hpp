@@ -457,7 +457,7 @@ auto extract_results(when_all_state<Ts...>& state)
     }(std::index_sequence_for<Ts...>{});
 }
 
-/** Launches all homogeneous runners concurrently.
+/** Starts all homogeneous runners concurrently.
 
     Two-phase approach: create all runners first, then post all.
     This avoids lifetime issues if a task completes synchronously.
@@ -537,7 +537,7 @@ public:
 
 /** Execute a range of io_result-returning awaitables concurrently.
 
-    Launches all awaitables simultaneously and waits for all to complete.
+    Starts all awaitables simultaneously and waits for all to complete.
     On success, extracted payloads are collected in a vector preserving
     input order. The first error_code makes a stop request that every
     sibling observes, and is propagated in the outer io_result.
@@ -673,7 +673,7 @@ template<IoAwaitableRange R>
 
 /** Execute a range of void io_result-returning awaitables concurrently.
 
-    Launches all awaitables simultaneously and waits for all to complete.
+    Starts all awaitables simultaneously and waits for all to complete.
     Since all awaitables return io_result<>, no payload values are
     collected. The first error_code makes a stop request that every
     sibling observes, and is propagated. Exceptions always beat error
