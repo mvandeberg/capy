@@ -76,8 +76,8 @@ inline constexpr executor_vtable vtable_for = {
     This class provides type erasure for any executor type, enabling
     runtime polymorphism without virtual functions or allocation.
     It stores a pointer to the original executor and a pointer to a
-    static vtable, allowing executors of different types to be stored
-    uniformly while satisfying the full `Executor` concept.
+    static vtable. Executors of different types are therefore stored
+    uniformly, while satisfying the full `Executor` concept.
 
     @par Reference Semantics
     This class has reference semantics: it does not allocate or own

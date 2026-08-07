@@ -50,8 +50,8 @@ current_frame_allocator_ref() noexcept
     These accessors exist to implement the allocator
     propagation portion of the @ref IoAwaitable protocol.
     Launch functions (`run_async`, `run`) set the
-    thread-local value before invoking a child coroutine;
-    the child's `promise_type::operator new` reads it to
+    thread-local value before invoking a child coroutine.
+    The child's `promise_type::operator new` reads it to
     allocate the coroutine frame from the correct resource.
 
     The value is only valid during a narrow execution

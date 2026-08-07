@@ -64,7 +64,7 @@ public:
         @par Preconditions
         No thread outside this pool may post or dispatch work to it
         (or to a strand built on it) concurrently with, or after,
-        destruction; doing so is undefined behavior. Submit such work
+        destruction. Doing so is undefined behavior. Submit such work
         through @ref run_async or @ref run and call @ref join before
         the pool is destroyed, so it has completed first.
     */
