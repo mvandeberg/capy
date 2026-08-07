@@ -390,7 +390,7 @@ public:
 
     /** Clears the event.
 
-        Subsequent calls to wait() will suspend until
+        Subsequent calls to wait() suspend until
         set() is called again.
     */
     void clear() noexcept
