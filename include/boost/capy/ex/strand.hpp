@@ -61,7 +61,7 @@ namespace capy {
     `join()` waits for them. Call `join()` on the context before
     destroying it, rather than posting to a strand from an external
     thread the context does not track. Destroying the strand handle
-    itself is always safe, including after the context has been
+    itself is always safe, including after the context is
     destroyed.
 
     @par Thread Safety
@@ -128,7 +128,7 @@ public:
 
         Creates a strand that shares serialization state with
         the original. Coroutines dispatched through either strand
-        will be serialized with respect to each other.
+        are serialized with respect to each other.
 
         @param other The strand to copy.
     */
