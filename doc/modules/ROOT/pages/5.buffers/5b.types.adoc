@@ -13,8 +13,8 @@ A `const_buffer` or `mutable_buffer` is a *handle*: a non-owning `(pointer, size
 
 This splits lifetime responsibility cleanly:
 
-* *You own the bytes.* The memory a buffer refers to—a stack array, a `std::string`, a slab from your allocator—is yours to keep alive. It must remain valid for the entire duration of any operation you hand the buffer to, including across the suspension points of a `co_await`-ed I/O operation.
-* *The library owns the handles.* Capy creates and manages buffer handles and handle-sequences on your behalf—the buffers a dynamic buffer exposes through `prepare`/`data`, the sub-range a cpp:buffer_slice[] produces, the descriptors a type-erased stream passes to the OS. Each such handle is valid only for the window its API documents, typically until the next call that mutates the owner.
+* *You own the bytes.* The memory a buffer refers to—a stack array, a `std::string`, a slab from your allocator—is yours to keep alive. It must remain valid for the entire duration of any operation you hand the buffer to. That includes the suspension points of a `co_await`-ed I/O operation.
+* *The library owns the handles.* Capy creates and manages buffer handles and handle-sequences on your behalf. Those handles are the buffers a dynamic buffer exposes through `prepare`/`data` and the sub-range a cpp:buffer_slice[] produces. They are also the descriptors a type-erased stream passes to the OS. Each such handle is valid only for the window its API documents, typically until the next call that mutates the owner.
 
 The library never copies or takes ownership of your bytes through a buffer; it only moves handles. This split explains every buffer-lifetime rule in this chapter.
 

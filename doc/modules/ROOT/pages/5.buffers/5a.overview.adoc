@@ -9,7 +9,7 @@ This section explains why Capy uses concept-driven buffer sequences instead of `
 
 == The I/O Use Case
 
-Buffers exist to interface with operating system I/O. When you read from a socket, write to a file, or transfer data through any I/O channel, you work with contiguous memory regions—addresses and byte counts.
+Buffers exist to interface with operating system I/O. When you read from a socket, write to a file, or transfer data through any I/O channel, you work with contiguous memory regions. Those regions are addresses and byte counts.
 
 The fundamental unit is a `(pointer, size)` pair. The OS reads bytes from or writes bytes to linear addresses.
 
@@ -35,7 +35,7 @@ Consider assembling an HTTP message. The headers are in one buffer; the body is 
 
 This is wasteful. The data already exists—why copy it?
 
-Scatter/gather I/O solves this. Operating systems provide vectored I/O calls (`writev` on POSIX, scatter/gather with IOCP on Windows) that accept multiple buffers and transfer them as a single logical operation.
+Scatter/gather I/O solves this. Operating systems provide vectored I/O calls (`writev` on POSIX, scatter/gather with IOCP on Windows). These calls accept multiple buffers and transfer them as a single logical operation.
 
 == The Span Reflex for Multiple Buffers
 

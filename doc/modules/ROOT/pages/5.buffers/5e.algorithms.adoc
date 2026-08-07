@@ -110,7 +110,7 @@ This is useful for implementing protocols with size limits.
 include::example$snippets/5e_algorithms.cpp[tag=buffer_copy_cross,indent=0]
 ----
 
-The algorithm fills target buffers sequentially, reading from source buffers as needed, handling cases where a single source buffer spans multiple target buffers or vice versa.
+The algorithm fills target buffers sequentially, reading from source buffers as needed. It handles cases where a single source buffer spans multiple target buffers, or vice versa.
 
 == Real I/O Patterns
 
