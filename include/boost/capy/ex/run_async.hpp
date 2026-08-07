@@ -469,9 +469,9 @@ public:
     */
     run_async_wrapper& operator=(run_async_wrapper&& other) = delete;
 
-    /** Launch the task for execution.
+    /** Start the task for execution.
 
-        This operator accepts a task and launches it on the executor.
+        This operator accepts a task and starts it on the executor.
         The rvalue ref-qualifier ensures the wrapper is consumed, enforcing
         correct LIFO destruction order.
 
