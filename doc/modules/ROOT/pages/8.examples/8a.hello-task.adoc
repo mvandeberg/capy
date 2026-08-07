@@ -6,7 +6,7 @@ The minimal Capy program: a task that prints a message.
 
 * Creating a cpp:task[task<>] coroutine
 * Using cpp:thread_pool[] as an execution context
-* Launching tasks with `run_async`
+* Starting tasks with `run_async`
 
 == Prerequisites
 
@@ -39,7 +39,7 @@ include::example$hello-task/hello_task.cpp[tag=say_hello]
 
 `task<>` is equivalent to `task<void>`—a coroutine that completes without returning a value. The `co_return` keyword marks this as a coroutine.
 
-Tasks are lazy: calling `say_hello()` creates a task object but does not execute the body. The `"Hello"` message is not printed until the task is launched.
+Tasks are lazy: calling `say_hello()` creates a task object but does not execute the body. The `"Hello"` message is not printed until the task is started.
 
 === The Thread Pool
 
@@ -75,7 +75,7 @@ Hello from Capy!
 == Exercises
 
 1. Modify `say_hello` to accept a `std::string_view` parameter and print it
-2. Create multiple tasks and launch them all
+2. Create multiple tasks and start them all
 3. Add a handler to `run_async` that prints when the task completes
 
 == Next Steps

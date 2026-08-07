@@ -38,7 +38,7 @@ include::example$sender-bridge/sender_bridge.cpp[tag=full]
 
 == Output
 
-The sender runs on the `run_loop` thread, but the coroutine resumes on the cpp:thread_pool[] executor it was launched with—the invariant holds across the bridge:
+The sender runs on the `run_loop` thread, but the coroutine resumes on the cpp:thread_pool[] executor it was started with—the invariant holds across the bridge:
 
 ----
 main thread: 139667952822976

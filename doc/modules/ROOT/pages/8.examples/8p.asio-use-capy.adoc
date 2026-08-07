@@ -20,7 +20,7 @@ This example is built when a `Boost::asio` target is available. The full source 
 
 == The Completion Token
 
-Asio async operations accept a _completion token_ that decides what the call returns. `use_capy` is a token whose `async_result` returns an cpp:IoAwaitable[]. When co-awaited, its `await_suspend` starts the Asio operation and arranges the completion handler to post the resumption through the caller's executor. The coroutine therefore resumes on the executor it was launched with, never on whatever thread Asio completed on. From `example/asio/api/use_capy.hpp`:
+Asio async operations accept a _completion token_ that decides what the call returns. `use_capy` is a token whose `async_result` returns an cpp:IoAwaitable[]. When co-awaited, its `await_suspend` starts the Asio operation and arranges the completion handler to post the resumption through the caller's executor. The coroutine therefore resumes on the executor it was started with, never on whatever thread Asio completed on. From `example/asio/api/use_capy.hpp`:
 
 [source,cpp]
 ----

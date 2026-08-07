@@ -45,7 +45,7 @@ The range `[0, 10000)` is divided into 4 equal chunks, one per task. Each task c
 include::example$programs/8m_parallel_tasks_variadic.cpp[tag=when_all_variadic,indent=0]
 ----
 
-`when_all` launches all four tasks concurrently on the thread pool. Each task may run on a different thread. The result is cpp:io_result[io_result]`<long long, long long, long long, long long>`, a single `ec` plus the four partial sums in input order.
+`when_all` starts all four tasks concurrently on the thread pool. Each task may run on a different thread. The result is cpp:io_result[io_result]`<long long, long long, long long, long long>`, a single `ec` plus the four partial sums in input order.
 
 === Observing Thread IDs
 
@@ -54,7 +54,7 @@ include::example$programs/8m_parallel_tasks_variadic.cpp[tag=when_all_variadic,i
 include::example$programs/8m_parallel_tasks_variadic.cpp[tag=thread_id,indent=0]
 ----
 
-Each task prints its thread ID. On a multi-core system you will see different thread IDs, confirming true parallel execution. The `ostringstream` ensures each line is printed atomically.
+Each task prints its thread ID. On a multi-core system you see different thread IDs, confirming true parallel execution. The `ostringstream` ensures each line is printed atomically.
 
 === Verifying Results
 
