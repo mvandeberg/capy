@@ -44,7 +44,7 @@ namespace capy {
     @note `join()` waits only for work that holds outstanding-work
     counting, which `run_async` (and `make_work_guard`) provide. A bare
     `executor_type::post()` does not register outstanding work, so
-    `join()` will not wait for it.
+    `join()` does not wait for it.
 */
 class BOOST_CAPY_DECL
     thread_pool
@@ -211,7 +211,7 @@ public:
     /** Notify that work has finished.
 
         Decrements the outstanding work count. When the count
-        reaches zero after @ref thread_pool::join has been called,
+        reaches zero after @ref thread_pool::join is called,
         the pool's worker threads are signaled to stop.
 
         @pre A preceding call to @ref on_work_started was made.
@@ -243,7 +243,7 @@ public:
 
     /** Post a continuation to the thread pool.
 
-        The continuation will be resumed on one of the pool's
+        The continuation is resumed on one of the pool's
         worker threads. The continuation must remain at a stable
         address until it is dequeued and resumed.
 
