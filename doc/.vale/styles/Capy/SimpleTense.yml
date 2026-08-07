@@ -1,3 +1,19 @@
+# Deliberately scoped to the two literal tokens DOC_STYLE_GUIDE.md Part C4 names
+# ("Avoid needless 'will' and 'has been'") — NOT extended to every perfect-tense
+# form. Measured on the docstring corpus (`doc/lint/.docstrings/`, cwd=doc,
+# `vale --config=.vale.ini --output=JSON`) at commit 1b4c0e02: 17 occurrences of
+# forms this rule cannot see today —
+#   have been              x12  (write.hpp, write_at_least.hpp x3,
+#                                 read_at_least.hpp x2, ex/this_coro.hpp x4,
+#                                 ex/thread_pool.hpp)
+#   has already been        x3  (ex/async_mutex.hpp, when_any.hpp x2)
+#   has not been             x1  (write_at_least.hpp)
+#   has now<newline>been     x1  (ex/async_waker.hpp — the same line-wrap defect
+#                                 `will\s` above was fixed for, left unfixed here)
+# Extending `tokens` to catch these would go beyond the guide's stated scope and
+# would surface ~17 new prose findings at once. Maintainer ruling: leave the rule
+# scoped to "will"/"has been" until Part C4 itself is widened; a future editor
+# who wants broader coverage should change the guide first, then this file.
 extends: existence
 message: "Avoid needless future/perfect tense — prefer present simple (style guide C4): '%s'."
 level: warning
