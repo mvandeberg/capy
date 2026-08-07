@@ -271,7 +271,7 @@ struct blocking_handler_wrapper
 /** Wrapper returned by run_blocking that accepts a task.
 
     Holds the handlers and optional stop token. When invoked
-    with a task, creates a @ref blocking_context, launches
+    with a task, creates a @ref blocking_context, starts
     the task via `run_async`, and pumps the event loop until
     the task completes.
 
@@ -345,10 +345,10 @@ public:
     */
     run_blocking_wrapper& operator=(run_blocking_wrapper&& other) = delete;
 
-    /** Launch the task and block until completion.
+    /** Start the task and block until completion.
 
         Creates a blocking_context with a single-threaded
-        event loop, launches the task via `run_async`, then
+        event loop, starts the task via `run_async`, then
         pumps the loop until the task completes or throws.
 
         @tparam Task The IoRunnable type.
