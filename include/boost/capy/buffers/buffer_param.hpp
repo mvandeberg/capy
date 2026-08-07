@@ -66,7 +66,7 @@ namespace capy {
     more efficient to process buffers in batches rather than
     one at a time. This class maintains a window of up to a
     fixed, implementation-defined number of buffer descriptors
-    (currently 16), automatically refilling from the underlying
+    (currently 16). It refills the window from the underlying
     sequence as buffers are consumed.
 
     @par Example

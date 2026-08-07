@@ -235,9 +235,9 @@ concept const_contiguous_range =
 /** Return a buffer from a mutable contiguous range.
 
     Accepts any sized, contiguous range of trivially-copyable,
-    non-const elements, including `std::vector`, `std::array`,
-    `std::string`, `std::span`, `boost::span`, and built-in arrays,
-    whether passed as an lvalue or a temporary. The returned buffer
+    non-const elements, whether passed as an lvalue or a temporary.
+    That includes `std::vector`, `std::array`, `std::string`,
+    `std::span`, `boost::span`, and built-in arrays. The returned buffer
     refers to the range's storage, which must outlive the buffer.
     Its size, in bytes, is `size() * sizeof(element)`.
 

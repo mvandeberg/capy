@@ -37,8 +37,8 @@ using slice_type = std::conditional_t<
 
 /** Return a byte sub-range of a buffer sequence, as a value.
 
-    The result is itself a buffer sequence (`slice_type<BS>`): pass it
-    directly to any operation expecting a buffer sequence — there is no
+    The result is itself a buffer sequence (`slice_type<BS>`), so pass it
+    directly to any operation expecting a buffer sequence. There is no
     `.data()` and no separate concept to bind. For a single buffer the
     result is an adjusted buffer; for any other sequence it is a borrowed
     `slice_of<BS>` view.
