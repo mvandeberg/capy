@@ -542,7 +542,7 @@ make_when_any_io_homogeneous_runner(
     }
 }
 
-/** Launches all io_result-aware homogeneous runners concurrently. */
+/** Starts all io_result-aware homogeneous runners concurrently. */
 template<IoAwaitableRange Range>
 class when_any_io_homogeneous_launcher
 {
