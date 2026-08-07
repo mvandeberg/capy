@@ -11,7 +11,7 @@ This section explains how coroutine frames are allocated and how to customize al
 
 Coroutine frame allocation has a unique constraint: memory must be allocated *before* the coroutine body begins executing. The standard {cpp} mechanism—promise type's `operator new`—is called before the promise is constructed.
 
-This creates a challenge: how can a coroutine use a custom allocator when the allocator might be passed as a parameter, which is stored *in* the frame?
+This creates a challenge. How can a coroutine use a custom allocator when the allocator might be passed as a parameter, which is stored *in* the frame?
 
 == Thread-Local Propagation
 
@@ -40,7 +40,7 @@ After the window closes (at the first suspension), the TLS allocator may be rest
 
 == TLS Preservation
 
-Between a coroutine's `await_resume` (which sets TLS to the correct allocator) and the next child coroutine invocation (whose `operator new` reads TLS), arbitrary user code runs. If that code resumes a coroutine from a different chain on the same thread -- by calling `.resume()` directly, pumping a completion queue, or running nested dispatch -- the other coroutine's `await_resume` overwrites TLS with its own allocator. The original coroutine's next child would then allocate from the wrong resource.
+Between a coroutine's `await_resume` (which sets TLS to the correct allocator) and the next child coroutine invocation (whose `operator new` reads TLS), arbitrary user code runs. That code can call `.resume()` directly, pump a completion queue, or run nested dispatch. If it resumes a coroutine from a different chain on the same thread, the other coroutine's `await_resume` overwrites TLS with its own allocator. The original coroutine's next child would then allocate from the wrong resource.
 
 To prevent this, any code that calls `.resume()` on a coroutine handle must use cpp:safe_resume[] from `<boost/capy/ex/frame_allocator.hpp>`:
 
@@ -132,7 +132,7 @@ Run the same task eight times through it, one run at a time:
 include::example$snippets/4g_allocators.cpp[tag=recycling_observe,indent=0]
 ----
 
-The first run finds an empty pool and takes its coroutine frames from the heap. Each `pool.join()` returns those frames to the resource, so the next cpp:run_async[] call reuses them: once the pool is warm, the upstream count stops climbing while the task keeps running -- the seven warm runs allocate nothing new. cpp:recycling_memory_resource[] does the same thing with size-class freelists and a lock-free thread-local cache, which is why cpp:thread_pool[] and the other execution contexts install it by default.
+The first run finds an empty pool and takes its coroutine frames from the heap. Each `pool.join()` returns those frames to the resource, so the next cpp:run_async[] call reuses them. Once the pool is warm, the upstream count stops climbing while the task keeps running -- the seven warm runs allocate nothing new. cpp:recycling_memory_resource[] does the same thing with size-class freelists and a lock-free thread-local cache. That is why cpp:thread_pool[] and the other execution contexts install that resource by default.
 
 == Frame Allocator Mixin
 
@@ -233,7 +233,7 @@ GCC and Clang use fundamentally different strategies for coroutine frame layout:
 
 The practical consequence is that GCC coroutine frames are often 5-10x larger than Clang's for the same source code. In one benchmark, the same coroutine produced a 24-byte frame on Clang and a 16,032-byte frame on GCC.
 
-For production coroutine workloads, Clang currently produces substantially better code. If you must use GCC, pay extra attention to variable scoping (above) and consider supplying a custom `memory_resource` with larger block sizes, since frames above 2048 bytes bypass the default recycling allocator's pooling.
+For production coroutine workloads, Clang currently produces substantially better code. If you must use GCC, pay extra attention to variable scoping (above) and consider supplying a custom `memory_resource` with larger block sizes. Frames above 2048 bytes bypass the default recycling allocator's pooling.
 
 === Profile Before Optimizing
 
