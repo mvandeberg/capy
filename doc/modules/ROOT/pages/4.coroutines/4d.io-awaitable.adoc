@@ -60,11 +60,11 @@ An awaitable satisfies cpp:IoAwaitable[] if `a.await_suspend(h, env)` is a valid
 include::example$snippets/4d_io_awaitable.cpp[tag=io_awaitable_concept]
 ----
 
-The concept constrains only the two-argument `await_suspend` that receives the `io_env`. It does not require `await_ready` or `await_resume`, nor does it constrain the return type of `await_suspend`. A complete awaitable still provides `await_ready` and `await_resume` so it can be `co_await`-ed; the concept simply does not test for them.
+The concept constrains only the two-argument `await_suspend` that receives the `io_env`. It does not require `await_ready` or `await_resume`, nor does it constrain the return type of `await_suspend`. A complete awaitable still provides `await_ready` and `await_resume` so it can be `co_await`-ed; the concept does not test for them.
 
 == IoRunnable Concept
 
-For tasks that can be launched from non-coroutine contexts, the cpp:IoRunnable[] concept refines `IoAwaitable` and requires a `promise_type` plus the following:
+For tasks that can be started from non-coroutine contexts, the cpp:IoRunnable[] concept refines `IoAwaitable` and requires a `promise_type` plus the following:
 
 * `handle()`: Access the typed coroutine handle
 * `release()`: Transfer ownership of the frame
@@ -73,9 +73,9 @@ For tasks that can be launched from non-coroutine contexts, the cpp:IoRunnable[]
 * `set_continuation()`: Set the continuation handle (on the promise)
 * `set_environment()`: Inject the `io_env` (on the promise)
 
-These methods exist because launch functions like `run_async` cannot `co_await` the task directly. The trampoline must be allocated before the task type is known, so it type-erases the task through function pointers. The trampoline therefore needs a common API to manage lifetime and extract results.
+These methods exist because launcher functions like `run_async` cannot `co_await` the task directly. The trampoline must be allocated before the task type is known, so it type-erases the task through function pointers. The trampoline therefore needs a common API to manage lifetime and extract results.
 
-The context injection methods `set_continuation` and `set_environment` are part of the `IoRunnable` concept: it requires them on the `promise_type`. Launch functions access them through the typed handle provided by `handle()`.
+The context injection methods `set_continuation` and `set_environment` are part of the `IoRunnable` concept: it requires them on the `promise_type`. Launcher functions access them through the typed handle provided by `handle()`.
 
 Capy's cpp:task[task<T>] satisfies this concept.
 
@@ -121,7 +121,7 @@ include::example$snippets/4d_io_awaitable.cpp[tag=my_awaitable]
 
 The key points:
 
-1. Store the `io_env` as a pointer (`io_env const*`), never a copy. Launch functions guarantee the `io_env` outlives the awaitable's operation.
+1. Store the `io_env` as a pointer (`io_env const*`), never a copy. Launcher functions guarantee the `io_env` outlives the awaitable's operation.
 2. To resume the caller, wrap its handle in a `continuation` and pass that to the executor's `post` (or `dispatch`). These take a `continuation&`, not a raw `coroutine_handle`. Store the `continuation` in the awaitable so it keeps a stable address until the executor dequeues and resumes it. The executor links continuations intrusively, so a temporary would dangle.
 3. Respect the stop token for cancellation
 
@@ -217,4 +217,4 @@ Two complete, buildable bridges live in the examples:
 | The IoRunnable concept for launchable tasks
 |===
 
-You have now learned how the IoAwaitable protocol enables context propagation through coroutine chains. In the next section, you will learn about stop tokens and cooperative cancellation.
+You have now learned how the IoAwaitable protocol enables context propagation through coroutine chains. The next section covers stop tokens and cooperative cancellation.

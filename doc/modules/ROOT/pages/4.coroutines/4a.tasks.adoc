@@ -145,4 +145,4 @@ Or included via the umbrella header:
 include::example$snippets/4a_tasks.cpp[tag=include_umbrella]
 ----
 
-You have now learned how to declare, return values from, and await `task<T>` coroutines. In the next section, you will learn how to launch tasks for execution using `run_async` and cpp:run[].
+You have now learned how to declare, return values from, and await `task<T>` coroutines. The next section explains how to start tasks for execution using `run_async` and cpp:run[].

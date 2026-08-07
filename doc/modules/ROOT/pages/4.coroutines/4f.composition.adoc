@@ -25,7 +25,7 @@ include::example$snippets/4f_composition.cpp[tag=concurrent,indent=0]
 
 == when_all: Wait for All Tasks
 
-`when_all` launches multiple cpp:io_task[] children concurrently and waits for all of them to complete. It returns cpp:task[task]`<io_result<R1, R2, ..., Rn>>`, a single `ec` plus the flattened payloads:
+`when_all` starts multiple cpp:io_task[] children concurrently and waits for all of them to complete. It returns cpp:task[task]`<io_result<R1, R2, ..., Rn>>`, a single `ec` plus the flattened payloads:
 
 [source,cpp]
 ----
@@ -83,7 +83,7 @@ include::example$snippets/4f_composition.cpp[tag=stop_propagation,indent=0]
 
 == when_any: First-to-Succeed Wins
 
-`when_any` launches multiple `io_task` children concurrently and returns when the first one *succeeds* (`!ec`):
+`when_any` starts multiple `io_task` children concurrently and returns when the first one *succeeds* (`!ec`):
 
 [source,cpp]
 ----
@@ -192,4 +192,4 @@ This design ensures proper context propagation to all children.
 | Single-waiter notification point for deadlines and other external events
 |===
 
-You have now learned how to compose tasks concurrently with `when_all` and `when_any`. In the next section, you will learn about frame allocators for customizing coroutine memory allocation.
+You have now learned how to compose tasks concurrently with `when_all` and `when_any`. The next section covers frame allocators for customizing coroutine memory allocation.

@@ -119,7 +119,7 @@ To "reset," create an entirely new `stop_source`:
 include::example$snippets/4e_cancellation.cpp[tag=reset_workaround,indent=0]
 ----
 
-This is manual and error-prone. Any code still holding the old token will not receive new signals.
+This is manual and error-prone. Any code still holding the old token does not receive new signals.
 
 === Design Implication
 
@@ -298,4 +298,4 @@ Key types:
 * `std::stop_token` — Observes stop state
 * `std::stop_callback<F>` — Registers callbacks for stop notification
 
-You have now learned how stop tokens provide cooperative cancellation for coroutines. In the next section, you will learn about concurrent composition with cpp:when_all[] and `when_any`.
+You have now learned how stop tokens provide cooperative cancellation for coroutines. The next section covers concurrent composition with cpp:when_all[] and `when_any`.

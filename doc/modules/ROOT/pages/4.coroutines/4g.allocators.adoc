@@ -191,7 +191,7 @@ For most applications, the default recycling allocator provides good performance
 
 === Consider Memory Resources for Batched Work
 
-When launching many short-lived tasks together, a monotonic buffer resource can be efficient:
+When starting many short-lived tasks together, a monotonic buffer resource can be efficient:
 
 [source,cpp]
 ----
