@@ -29,8 +29,8 @@ namespace capy {
 
     @par Lifetime
 
-    Launch functions (@ref run_async, @ref run) own the `io_env` and
-    guarantee it outlives all tasks and awaitables in the launched
+    Launcher functions (@ref run_async, @ref run) own the `io_env` and
+    guarantee it outlives all tasks and awaitables in the started
     chain. Awaitables receive `io_env const*` in `await_suspend`
     and should store it directly, never copy the pointed-to object.
 
