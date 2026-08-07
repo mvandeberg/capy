@@ -101,7 +101,7 @@ struct frame_allocator_tag {};
 
     @par Preconditions
     An `io_env` must have been installed for this coroutine before the tag
-    is awaited. Launching the coroutine via @ref run or `run_async` installs
+    is awaited. Starting the coroutine via @ref run or `run_async` installs
     one; awaiting the tag without an installed environment is undefined
     behavior (an assertion fires in debug builds).
 
@@ -136,7 +136,7 @@ inline constexpr environment_tag environment{};
     environment is undefined behavior (an assertion fires in debug builds).
 
     @par Behavior
-    @li Returns the installed environment's `executor` field. If the launched
+    @li Returns the installed environment's `executor` field. If the started
         chain installed an `io_env` whose `executor` was left default, the
         result is a default-constructed `executor_ref` (where `operator bool()`
         returns `false`).
@@ -170,7 +170,7 @@ inline constexpr executor_tag executor{};
     environment is undefined behavior (an assertion fires in debug builds).
 
     @par Behavior
-    @li Returns the installed environment's `stop_token` field. If the launched
+    @li Returns the installed environment's `stop_token` field. If the started
         chain installed an `io_env` whose `stop_token` was left default, the
         result is a default-constructed `std::stop_token` (where
         `stop_possible()` returns `false`).
