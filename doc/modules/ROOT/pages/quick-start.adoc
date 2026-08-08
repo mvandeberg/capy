@@ -41,8 +41,8 @@ The answer is 42
 
 == What Just Happened?
 
-1. `answer()` creates a suspended coroutine that will return 42
-2. `greet()` creates a suspended coroutine that will await `answer()`
+1. `answer()` creates a suspended coroutine that returns 42
+2. `greet()` creates a suspended coroutine that awaits `answer()`
 3. cpp:run_async[]`(executor)(greet())` starts `greet()` on the pool's executor
 4. `greet()` runs until it hits `co_await answer()`
 5. `answer()` runs and returns 42

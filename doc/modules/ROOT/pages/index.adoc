@@ -13,9 +13,9 @@ The protocol is the smaller, more general library living inside Capy. Without a 
 
 [IMPORTANT]
 ====
-*The core invariant: a coroutine always resumes on the executor it was launched with.*
+*The core invariant: a coroutine always resumes on the executor it was started with.*
 
-Launch a coroutine on a strand, and every resumption—after every `co_await`—happens on that strand. Shared state touched between suspension points is free of data races without a mutex. A _plain_ awaitable can resume a coroutine on any thread and would break this guarantee. Capy therefore rejects it at compile time, and provides an explicit way to bridge such awaitables when you need one.
+Start a coroutine on a strand, and every resumption—after every `co_await`—happens on that strand. Shared state touched between suspension points is free of data races without a mutex. A _plain_ awaitable can resume a coroutine on any thread and would break this guarantee. Capy therefore rejects it at compile time, and provides an explicit way to bridge such awaitables when you need one.
 
 See xref:4.coroutines/4c.executors.adoc#the-same-executor-invariant[the same-executor invariant] for the rationale and xref:4.coroutines/4d.io-awaitable.adoc#bridging-a-foreign-awaitable[bridging a foreign awaitable] for the escape hatch.
 ====
@@ -114,7 +114,7 @@ include::example$programs/index_page_echo.cpp[tag=full]
 
 The `echo` function accepts an `any_stream&`—a type-erased wrapper that works with any concrete stream implementation. The function reads data into a buffer, then writes it back. Both operations use `co_await` to suspend until the I/O completes.
 
-The `task<>` return type (equivalent to `task<void>`) creates a lazy coroutine that does not start executing until awaited or launched with cpp:run_async[].
+The `task<>` return type (equivalent to `task<void>`) creates a lazy coroutine that does not start executing until awaited or started with cpp:run_async[].
 
 == Next Steps
 
