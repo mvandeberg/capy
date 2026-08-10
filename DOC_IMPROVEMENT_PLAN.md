@@ -349,7 +349,8 @@ documents**.
 > Wording is last on purpose — never polish prose on a page or docstring that Phase 1–3 might
 > delete or rewrite.
 
-- [x] **Phase 4 exit — promote gates:** C2, C4, C9 and C10 are blocking over **both** surfaces.
+- [x] **Phase 4 exit — promote gates** *— CI is red on that one step until the post-merge
+  reseed*: C2, C4, C9 and C10 are blocking over **both** surfaces.
   The blocking step in `.github/workflows/docs.yml` now carries six `--gate` specs; the
   three added at this exit are `sentence_length:^C2:`,
   `vale_adoc:(Capy\.SimpleTense|Capy\.NoFluff|Capy\.Terminology)$` and the `vale_docstrings`
@@ -396,12 +397,22 @@ documents**.
   head-anchored spec cannot reach them. Verified: the gated slice contains 0 `advisory-C2`
   fingerprints.
 
-- [ ] **Owed after merge — dispatch the reseed so the C2 gate goes green.** `workflow_dispatch` is
-  only offered for a workflow present on the **default branch**, so the order is: merge → dispatch
-  **Documentation** → review the candidate → commit it. Procedure and the one pre-authorised
-  exception (the reseed report *will* exit 1 naming those two `when_any.hpp` fingerprints, and only
-  those two) are in `doc/lint/README.md`. **Never reseed locally** — a local run adds 357
-  fingerprints a CI run would not.
+- [ ] **Owed after merge — dispatch the reseed.** `workflow_dispatch` is only offered for a
+  workflow present on the **default branch**, so the order is: merge → dispatch **Documentation** →
+  review the candidate → commit it. Procedure and the one pre-authorised exception (the reseed
+  report *will* exit 1 naming those two `when_any.hpp` fingerprints, and only those two) are in
+  `doc/lint/README.md`. **Never reseed locally** — a local run adds 357 fingerprints a CI run
+  would not.
+
+  **Turning the C2 gate green is the smaller half of what this buys.** The same reseed retires
+  roughly **3,700 dead grandfather clauses** — baseline entries for findings that no longer exist,
+  measured locally at `620fdf2c` as 2348 `vale_adoc` + 1189 `vale_docstrings` + 195
+  `mrdocs_warnings` (recorded counts 2441 / 1477 / 214 against actual 97 / 296 / 19; a CI-authored
+  candidate will differ by some of the known 357-fingerprint local-vs-CI drift). A dead
+  grandfather clause means the gate will not object if the finding comes back. **So until this
+  lands, every Phase-4 wording fix and Phase-3's 195 MrDocs fixes are revertible without failing
+  CI** — the promoted gates catch newly *introduced* findings, not the re-introduction of a
+  grandfathered one. That, not the red step, is the reason to reseed promptly.
 
 ---
 

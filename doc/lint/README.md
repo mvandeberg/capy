@@ -137,8 +137,11 @@ can be reintroduced later and the gate will still pass, because the snapshot say
 known issue. Reseed when a batch of fixes has landed and you want the gate to start protecting
 them.
 
-**Never reseed to make a red gate go green.** If the gate is red, something new was
-introduced. Fix that instead.
+**Never reseed to make a red gate go green** — *with exactly one pre-authorised exception, the
+C2 case described under "`sentence_length` has no baseline entry", above.* Outside that case, a
+red gate means something new was introduced: fix that instead. The exception exists because the
+C2 gate is red for findings that were never new and were never defects, and grandfathering them
+is the ruled resolution rather than a way around a real regression.
 
 ### Why not just run `baseline.mjs` locally
 
@@ -190,10 +193,20 @@ file.**
 >   - sentence_length :: C2:lint/.docstrings/when_any.hpp.adoc:#2:sentence over 25 words
 > ```
 >
+> Because that step ends in `exit "$status"` (`.github/workflows/docs.yml:406`), **the
+> "report what the candidate would change" step shows as FAILED in the Actions UI.** That is
+> expected here and is not an infra problem. **The candidate is still retrievable:** the upload
+> step is guarded `if: always()` (`docs.yml:408-414`), so the
+> `doc-lint-baseline-candidate` artifact is attached to the run even though the report step went
+> red. Download it as usual.
+>
 > Those **two fingerprints, and nothing else**, are the justification. There is no
-> `--allow-gated` flag and deliberately so: accepting them is a maintainer decision that must
-> be made by hand and recorded in the reseed commit message. **Anything else in that list is a
-> real regression — go fix the documentation instead.**
+> `--allow-gated` flag today; accepting them is a maintainer decision made by hand and recorded
+> in the reseed commit message. **Anything else in that list is a real regression — go fix the
+> documentation instead.**
+>
+> **Delete this blockquote once the reseed is committed.** It documents a one-shot transition;
+> left in place afterwards it becomes a standing exception to a rule that should have none.
 
 Then check four things, in this order:
 

@@ -152,8 +152,9 @@ page names cited in `DOC_REVIEW_FEEDBACK.md` Section 3, unverified against that 
   (commits `104f6f82..620fdf2c`), and that single residual is
   `9.design/9k.Executor.adoc:125`'s "In order to", inside a **verbatim `[quote]` block
   of P0913R1** — someone else's words, grandfathered by a `baseline.json` fingerprint
-  verified to describe that same sentence. The eleven pages the finding originally
-  named are clean.
+  verified to describe that same sentence. Of the eleven pages the finding originally
+  named, ten carry no filler at all; the eleventh is `9k.Executor.adoc`, and its only
+  remaining hit is that quoted passage.
   Rows kept, with the reason restated: **#3** — the **adoc leg is still open**;
   `4b.launching.adoc`'s `[WARNING]` block still lists only the rvalue-qualified-wrapper
   case, the one caught at compile time, and neither it nor `4g.allocators.adoc` carries
