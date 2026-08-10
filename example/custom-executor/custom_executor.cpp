@@ -143,7 +143,7 @@ capy::io_task<int> compute(int x)
 
 capy::task<> run_tasks()
 {
-    std::cout << "Launching 3 tasks with when_all...\n";
+    std::cout << "Starting 3 tasks with when_all...\n";
 
     auto [ec, r1, r2, r3] = co_await capy::when_all(
         compute(3), compute(7), compute(11));
