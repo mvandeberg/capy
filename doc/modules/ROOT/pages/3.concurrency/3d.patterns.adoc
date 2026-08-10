@@ -38,7 +38,7 @@ include::example$programs/3d_patterns_async.cpp[tag=full]
 
 `std::async` starts the function (potentially in a new thread), returning a future. No explicit thread creation, no promise management, no join call.
 
-=== Launch Policies
+=== `std::launch` Policies
 
 By default, the system decides whether to run the function in a new thread or defer it until you call `get()`. You can specify:
 
