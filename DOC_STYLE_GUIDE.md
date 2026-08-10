@@ -169,6 +169,33 @@ Not every rule is machine-checkable. Each rule sits in one of three tiers:
 The accuracy gates (B2, B3, D2 correctness) are enforced by the snippet-compile job, not by
 Vale — that job is what makes examples unable to drift.
 
+### F.0.1 A check is not adopted until a planted violation has failed it
+
+**The rule: before promoting a rule to a gate — or believing a gate you just wired — plant a
+violation of that exact rule and watch the check fail. A green run is not evidence.** Twelve times
+during the documentation-improvement work a check looked healthy while checking less than it
+appeared to, and every one of them read as a pass. Three, all recoverable from this repository's
+history:
+
+- **A rule that could not match any input.** `Capy/PartHeadings.yml` (A7) was written
+  `scope: heading` with the pattern `^==+\s+Part\s+\d+`. Vale's heading scope hands the rule the
+  heading *text*, with the `==` markers already stripped, so the anchor guaranteed zero matches.
+  It reported clean over a corpus full of `== Part 3:` headings until `b54fe6c8` fixed it.
+- **A gate spec that matched no fingerprint.**
+  `--gate 'vale_adoc:^(Capy\.SimpleTense|Capy\.NoFluff|Capy\.Terminology)$'` reports
+  `gated: true, gatedNew: 0` at exit 0, because the check name lives at the *tail* of a Vale
+  fingerprint and the leading `^` anchors to the file name. The un-anchored form fails on the same
+  input. Found twice, the second time by bite-testing rather than by reading.
+- **A gated check that collapsed to zero without being marked skipped.** A crashing check emitted
+  no findings and reported `count: 0, skipped: false`; the comparator then computed *zero new
+  violations* from an empty current set and passed. Zero looks exactly like success. Both the
+  reseed comparator and the blocking comparator needed explicit fail-closed rules.
+
+The shared shape is that all three failures are **silent and reassuring**: the machinery reports
+success, and the only way to distinguish "nothing is wrong" from "nothing is being checked" is to
+introduce something wrong and confirm it is caught. `doc/lint/selftest.mjs` exists for the same
+reason, and `doc/lint/README.md` records the fingerprint shapes a gate spec has to match.
+
 `doc/.vale.ini`:
 ```ini
 StylesPath = .vale/styles

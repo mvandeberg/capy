@@ -122,6 +122,15 @@ that cleans it (a `continue-on-error: false` change + baseline reset):
 | Phase 2 (Accuracy)  | MrDocs-no-warnings (B3 already gated via the compile job); E4 stays Review tier — theme-controlled, not Capy-fixable, same as E2 |
 | Phase 4 (Wording)   | C2, C4, C9, C10 (over both `.adoc` and docstrings) |
 
+Two corrections this schedule earned in practice, recorded here so a later phase does not
+re-learn them. **"A baseline reset" is not what a gate promotion needs** — see the Phase-4 exit
+below; the operative criterion is *the promoted rule's gated slice is empty*, and only the CI
+`workflow_dispatch` job may author a baseline. **And C2 is not a Vale gate**: `Capy.SentenceLength`
+is `level: suggestion` and enforces nothing, so C2's authority is `doc/lint/sentence-length.mjs`
+and its gate spec is head-anchored (`sentence_length:^C2:`) while the Vale specs are tail-anchored
+(`…Capy\.NoFluff)$`). The two shapes are not interchangeable and a `^`-anchored Vale spec silently
+gates nothing — `doc/lint/README.md` holds the fingerprint contract.
+
 ### Task 3: Audit `cpp:`-macro / reference-link coverage (finding #7)
 
 **Files:** produce `doc-xref-gaps.md`.
@@ -318,18 +327,81 @@ and the snippet is compiled in CI.
 **Files:** each surviving page, in worklist order, **and the docstrings of the symbols it
 documents**.
 
-- [ ] **Step 1:** Run `vale` on the page **and** its symbols' docstrings; fix every finding:
+- [x] **Step 1:** Run `vale` on the page **and** its symbols' docstrings; fix every finding:
   split long sentences (C1/C2), remove unnecessary negatives (C5), cut fluff/clichés (C6/C9),
-  apply terminology (C10).
+  apply terminology (C10). *Done for the four rules this phase promotes, both surfaces — final
+  state below. Two scope rulings narrowed "every finding": the `Google.*` house-style pack is
+  demoted below warning level with the reasons in `doc/.vale.ini` (Capy writes Title Case
+  headings; Google style mandates sentence case), and the residual `Vale.Spelling` findings are
+  bare C++ identifiers wanting backticks — real Style-Guide **B1** defects, not C-rule defects,
+  tracked in `doc-worklist.md` instead.*
 - [ ] **Step 2:** Build clean; re-run `vale` → clean at warning level for that page and its
-  docstrings.
-- [ ] **Step 3:** Commit per page: `docs: STE wording pass on <page>`.
+  docstrings. *Left unticked deliberately: "`vale` clean at warning level" was never achievable
+  on this branch — 2825 error-level alerts at `4bea4edf`, 722 after the phase — and chasing it
+  would have meant adopting Google's house style. The operative per-task criterion actually used
+  was **the blocking gate is green AND the four C-rule slices are empty for the touched files**,
+  with the doc build clean at zero broken xrefs (688 pages). That was met by every task.*
+- [x] **Step 3:** Commit per page: `docs: STE wording pass on <page>`. *Commits are per
+  page-group rather than strictly per page, disclosed by each task: prose that chains across
+  pages (the "In the next section you will learn …" closers, a section summary and the pages it
+  summarises) has to move together or intermediate commits contradict themselves.*
 
 > Wording is last on purpose — never polish prose on a page or docstring that Phase 1–3 might
 > delete or rewrite.
 
-- [ ] **Phase 4 exit — promote gates:** flip C2, C4, C9, C10 to blocking (over both `.adoc`
-  and docstrings); reset `doc/lint/baseline.json` to empty (backlog cleared); confirm CI green.
+- [x] **Phase 4 exit — promote gates:** C2, C4, C9 and C10 are blocking over **both** surfaces.
+  The blocking step in `.github/workflows/docs.yml` now carries six `--gate` specs; the
+  three added at this exit are `sentence_length:^C2:`,
+  `vale_adoc:(Capy\.SimpleTense|Capy\.NoFluff|Capy\.Terminology)$` and the `vale_docstrings`
+  equivalent, so `vale_docstrings` becomes a gated check too. Each was bite-tested with a planted
+  violation before being believed.
+
+  **Two of the three original clauses were wrong and were superseded by maintainer rulings.**
+
+  * *"reset `doc/lint/baseline.json` to empty (backlog cleared)"* — **infeasible, and abandoned.**
+    16 permanently-grandfathered MrDocs findings, 70 Review-tier a11y theme findings that are
+    shared-Antora-theme contrast and not Capy-fixable, and the whole non-gated backlog all live in
+    that file; emptying it would also violate the standing rule that only the CI
+    `workflow_dispatch` job may author a baseline. **The substitute criterion, ruled and met, is
+    per-rule gated slices empty.** Measured at `620fdf2c`: C4 `Capy.SimpleTense` gated-new 0, C9
+    `Capy.NoFluff` 0, C10 `Capy.Terminology` 0, on both surfaces.
+  * *"confirm CI green"* — **not achievable for C2 until a post-merge reseed.** `sentence_length`
+    has no entry in the committed baseline, so nothing in its slice is grandfathered and
+    `--gate 'sentence_length:^C2:'` **exits 1** on exactly two findings, both in
+    `include/boost/capy/ex/when_any.hpp` (a 27-word and a 31-word sentence). They are **accepted
+    refusals, not defects**: a rewrite that split them made a false claim against the code and was
+    reverted verbatim. The maintainer declined an in-source refusal marker and chose **visible debt
+    over new machinery**, so the Documentation job stays red on that one step until the owed
+    action below. The C4/C9/C10 gate needs no reseed and is green today.
+
+  **Final measured state, both surfaces, at `620fdf2c`:**
+
+  | Rule | `.adoc` | docstrings |
+  |---|---|---|
+  | C2 hard (`sentence_length`) | **0** | **2** (accepted refusals) |
+  | C2 advisory (essay carve-out) | **67** | — |
+  | C4 `Capy.SimpleTense` | **2** | **0** |
+  | C9 `Capy.NoFluff` | **1** | **0** |
+  | C10 `Capy.Terminology` | **0** | **0** |
+
+  The 3 residual `.adoc` findings are all inside **two verbatim third-party quoted passages**
+  (`9n.WhyNotCobaltConcepts.adoc:347` carries two `will` tokens on one line and Vale raises one
+  alert per token; `9k.Executor.adoc:125` is a P0913R1 `[quote]` block), grandfathered by
+  fingerprints verified to describe those same sentences.
+
+  **The 67 advisory C2 findings are a deliberate carve-out, not a backlog.** Part C2 of the style
+  guide says the 25-word limit is "hard in API docs; soft in essays", so `sentence-length.mjs`
+  keys findings under `modules/ROOT/pages/9.design/` and `.../A.specification-methods/` as
+  `advisory-C2` — a key that deliberately does not begin with `C2`, so even a mis-written
+  head-anchored spec cannot reach them. Verified: the gated slice contains 0 `advisory-C2`
+  fingerprints.
+
+- [ ] **Owed after merge — dispatch the reseed so the C2 gate goes green.** `workflow_dispatch` is
+  only offered for a workflow present on the **default branch**, so the order is: merge → dispatch
+  **Documentation** → review the candidate → commit it. Procedure and the one pre-authorised
+  exception (the reseed report *will* exit 1 naming those two `when_any.hpp` fingerprints, and only
+  those two) are in `doc/lint/README.md`. **Never reseed locally** — a local run adds 357
+  fingerprints a CI run would not.
 
 ---
 
