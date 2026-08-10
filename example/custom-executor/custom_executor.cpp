@@ -158,7 +158,7 @@ int main()
 {
     run_loop loop;
 
-    // Launch using run_async, just like with thread_pool
+    // Start using run_async, just like with thread_pool
     // tag::drive[]
     capy::run_async(loop.get_executor())(run_tasks());
     // end::drive[]

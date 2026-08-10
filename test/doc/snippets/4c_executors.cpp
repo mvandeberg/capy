@@ -227,7 +227,7 @@ struct executors_test
         thread_pool pool(4);
         auto ex = pool.get_executor();
 
-        // Launch independent tasks directly on the pool
+        // Start independent tasks directly on the pool
         std::vector<task<int>> tasks;
         for (int i = 0; i < 100; ++i)
             run_async(ex)(independent_task(i));
