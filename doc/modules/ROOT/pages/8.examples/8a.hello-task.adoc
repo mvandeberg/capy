@@ -2,7 +2,7 @@
 
 The minimal Capy program: a task that prints a message.
 
-== What You Will Learn
+== What This Example Shows
 
 * Creating a cpp:task[task<>] coroutine
 * Using cpp:thread_pool[] as an execution context

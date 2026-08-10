@@ -2,7 +2,7 @@
 
 Running multiple operations concurrently with cpp:when_all[].
 
-== What You Will Learn
+== What This Example Shows
 
 * Using `when_all` to run tasks in parallel
 * Structured bindings for results

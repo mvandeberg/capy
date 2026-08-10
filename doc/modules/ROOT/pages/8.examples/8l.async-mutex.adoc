@@ -2,7 +2,7 @@
 
 Fair FIFO coroutine locking with cpp:async_mutex[].
 
-== What You Will Learn
+== What This Example Shows
 
 * Using `async_mutex` for mutual exclusion between coroutines
 * RAII lock guards with `scoped_lock`

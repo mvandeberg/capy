@@ -2,7 +2,7 @@
 
 Awaiting a `std::execution` (P2300) sender from inside a Capy coroutine.
 
-== What You Will Learn
+== What This Example Shows
 
 * How to `co_await` a foreign awaitable that does not implement the xref:4.coroutines/4d.io-awaitable.adoc[IoAwaitable protocol]
 * How a bridge restores the xref:4.coroutines/4c.executors.adoc#the-same-executor-invariant[same-executor invariant] by posting the resumption through the caller's executor

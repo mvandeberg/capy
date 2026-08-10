@@ -2,7 +2,7 @@
 
 Distributing CPU-bound work across a thread pool and collecting results.
 
-== What You Will Learn
+== What This Example Shows
 
 * Running tasks in parallel on a cpp:thread_pool[]
 * Collecting results with cpp:when_all[] structured bindings

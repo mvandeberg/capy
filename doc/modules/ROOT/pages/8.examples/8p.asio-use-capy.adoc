@@ -2,7 +2,7 @@
 
 Using Boost.Asio async operations directly inside a Capy coroutine through a `use_capy` completion token.
 
-== What You Will Learn
+== What This Example Shows
 
 * How a completion token adapts _any_ Asio async operation into an xref:4.coroutines/4d.io-awaitable.adoc[IoAwaitable]
 * How the token bridges `std::stop_token` to Asio's cancellation slot

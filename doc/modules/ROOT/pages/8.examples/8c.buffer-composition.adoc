@@ -2,7 +2,7 @@
 
 Composing buffer sequences without allocation for scatter/gather I/O.
 
-== What You Will Learn
+== What This Example Shows
 
 * Creating buffers from different sources
 * Using `std::array<const_buffer, N>` and `std::array<mutable_buffer, N>` for scatter/gather I/O

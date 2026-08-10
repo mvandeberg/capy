@@ -3,7 +3,7 @@
 Racing a slow operation against a deadline, and cancelling work directly
 with a stop token.
 
-== What You Will Learn
+== What This Example Shows
 
 * Where timed operations belong in the layering
 * Using `async_waker` as the escape hatch for external timing

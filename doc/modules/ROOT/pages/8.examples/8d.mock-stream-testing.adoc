@@ -2,7 +2,7 @@
 
 Unit testing protocol code with mock streams and error injection.
 
-== What You Will Learn
+== What This Example Shows
 
 * Using cpp:test::read_stream[test::read_stream] and cpp:test::write_stream[test::write_stream]
 * Error injection with cpp:test::fuse[fuse]

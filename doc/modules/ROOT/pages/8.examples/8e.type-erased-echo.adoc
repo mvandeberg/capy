@@ -2,7 +2,7 @@
 
 Echo server demonstrating the compilation firewall pattern.
 
-== What You Will Learn
+== What This Example Shows
 
 * Using cpp:any_stream[] for transport-independent code
 * Physical isolation through separate compilation

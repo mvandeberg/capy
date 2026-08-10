@@ -2,7 +2,7 @@
 
 Implementing the Executor concept with a single-threaded run loop.
 
-== What You Will Learn
+== What This Example Shows
 
 * Satisfying the cpp:Executor[] concept
 * Implementing cpp:execution_context[], cpp:Executor::dispatch[dispatch], and cpp:Executor::post[post]

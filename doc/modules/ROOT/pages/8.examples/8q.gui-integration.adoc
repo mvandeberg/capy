@@ -3,7 +3,7 @@
 
 Running a Capy coroutine on a GUI framework's event loop, and resuming on the GUI thread to update widgets.
 
-== What You Will Learn
+== What This Example Shows
 
 * Wrapping a GUI toolkit's "run this on the main thread" primitive as an executor
 * Moving slow work off the GUI thread with cpp:run[], and coming back

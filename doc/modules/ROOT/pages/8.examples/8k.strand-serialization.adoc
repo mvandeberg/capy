@@ -2,7 +2,7 @@
 
 Protecting shared state with a strand instead of a mutex.
 
-== What You Will Learn
+== What This Example Shows
 
 * Using a cpp:strand[] to serialize coroutine access to shared state
 * Lock-free shared state management
