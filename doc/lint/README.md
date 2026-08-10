@@ -49,6 +49,15 @@ text above a finding does not rename it. It sits mid-key on purpose: the gate sp
 `vale_adoc:Capy\.PartHeadings$` is anchored on the tail, and anything appended after the check
 name would make that gate match nothing while still exiting 0.
 
+**A Vale gate spec must never carry a leading `^`.** The regex is tested against the whole
+fingerprint, and for the Vale checks the check name is at the **tail**, so `^Capy\.NoFluff$`
+matches nothing and the comparator then reports `gated: true, gatedNew: 0` — a gate that
+announces it is gating while checking nothing, at exit 0. Measured twice on this branch. The
+head-anchored shape is correct only for the two rule-at-the-head checks (`doc_lint`,
+`sentence_length`), which is why the live spec mixes `^(A1|A6|B2|D2):` and `^C2:` with
+`Capy\.PartHeadings$` and `(Capy\.SimpleTense|Capy\.NoFluff|Capy\.Terminology)$`. When you add
+a gate, plant a violation of that exact rule and watch the step fail before you believe it.
+
 **Never hand-edit `baseline.json`.**
 
 ### C2: gate the script, not the Vale rule
@@ -60,7 +69,8 @@ measured: `--gate 'vale_adoc:Capy\.SentenceLength$'` gives `gated: true, gatedNe
 while checking nothing. Gate the script:
 
 ```
---gate 'sentence_length:^C2:'      # measured: exit 1, gatedNew 87
+--gate 'sentence_length:^C2:'      # live in docs.yml since Phase-4 exit
+                                   # measured at 620fdf2c: exit 1, gatedNew 2
 ```
 
 `^C2:` binds the **hard** slice only — the `include/**` docstrings plus every `.adoc` page outside
@@ -84,16 +94,36 @@ refactors of the backtick rule were demonstrated to break it while every corpus-
 looked reasonable; both fail this file. Fixtures live in `lint/fixtures/` and are not part of
 either linted corpus.
 
-### `sentence_length` has no baseline entry yet
+### `sentence_length` has no baseline entry — so the C2 gate is RED, on purpose
 
-`sentence_length` was added after the committed `baseline.json` was taken, so every one of its
-findings currently reports as **new** in the non-blocking report. That is expected and it cannot
-block a merge: the check is deliberately absent from the `--gate` spec in
-`.github/workflows/docs.yml`. Two consequences to know about until the maintainer reseeds:
+**Read this before you try to make the Documentation job green.** `sentence_length` was added
+after the committed `baseline.json` was taken, so **nothing in its slice is grandfathered** and
+every one of its findings reports as new. Phase-4 exit gated it anyway
+(`--gate 'sentence_length:^C2:'`), which means the blocking step **exits 1** on the whole hard
+slice. Measured at 620fdf2c, that slice is exactly **two** findings, both in
+`include/boost/capy/ex/when_any.hpp` (`lint/.docstrings/when_any.hpp.adoc`) — a 27-word and a
+31-word sentence of the shape *"If at least one child await-returned a zero `ec`, the result
+holds …, unless producing the winner's payload threw, in which case that exception is
+rethrown."* **Zero `.adoc` fingerprints remain under `^C2:`.**
 
-* the report's `totalNew` is dominated by the C2 backlog, and
-* a **crash** of `sentence-length.mjs` is reported as `SKIPPED` on stderr but does not fail the
-  gate, because only a skip of a *gated* check does. Gating it is Phase-4-exit's job.
+Those two are **accepted refusals, not defects.** A Phase-4 rewrite that split them made a false
+claim against the code and was reverted verbatim; the maintainer's content review carries that
+exact text. The maintainer declined an in-source refusal marker and chose **visible debt over new
+machinery**, so:
+
+* **Do not** add a suppression mechanism, and **do not** widen or head-trim the gate spec.
+* **Do not** reseed `baseline.json` locally — a local run grandfathers ~357 local-vs-CI drift
+  fingerprints (see below).
+* The fix is the **post-merge `workflow_dispatch` reseed** documented in the next section. Until
+  it lands, the Documentation job is red on one step with two known findings.
+
+By contrast the **C4/C9/C10** gates — `Capy.SimpleTense` / `Capy.NoFluff` / `Capy.Terminology`
+over *both* surfaces — are **green today and need no reseed**. Their three residual `.adoc`
+findings sit inside two verbatim third-party quoted passages and are already in
+`baseline.json`, with fingerprints verified to describe those same sentences.
+
+One further consequence of gating this check: a **crash** of `sentence-length.mjs` is now fatal.
+It is reported as `SKIPPED` on stderr, and a skip of a *gated* check fails the gate.
 
 ---
 
@@ -147,7 +177,25 @@ absorb real regressions into the grandfathered backlog.
 Open the finished run and read its **Summary** page, under "Candidate
 doc/lint/baseline.json". The report ends in a `RESULT:` line; **if it does not say
 `candidate retires … none gated`, the reseed step has failed and you must not commit the
-file.** Then check four things, in this order:
+file.**
+
+> **The one pre-authorised exception, for the first reseed after the doc-improvement branch
+> merges.** The point of that reseed is to grandfather the two accepted `when_any.hpp` C2
+> refusals described above — and a gated addition is exactly what the report treats as fatal.
+> So the report **will** exit 1 with `RESULT: candidate must not be committed until its gated
+> additions are justified`, and it **will** list precisely:
+>
+> ```
+>   - sentence_length :: C2:lint/.docstrings/when_any.hpp.adoc:#1:sentence over 25 words
+>   - sentence_length :: C2:lint/.docstrings/when_any.hpp.adoc:#2:sentence over 25 words
+> ```
+>
+> Those **two fingerprints, and nothing else**, are the justification. There is no
+> `--allow-gated` flag and deliberately so: accepting them is a maintainer decision that must
+> be made by hand and recorded in the reseed commit message. **Anything else in that list is a
+> real regression — go fix the documentation instead.**
+
+Then check four things, in this order:
 
 1. **A `SKIPPED` cell in the per-check table.** Stop if you see one. A skipped check means a
    tool could not run (most often Ruby `asciidoctor` missing, which breaks the `vale_adoc`
@@ -222,8 +270,14 @@ cd doc
 node lint/baseline-diff.mjs lint/baseline.json /path/to/candidate.json \
   --gate 'doc_lint:^(A1|A6|B2|D2):' \
   --gate 'vale_adoc:Capy\.PartHeadings$' \
-  --gate 'mrdocs_warnings:.*'
+  --gate 'mrdocs_warnings:.*' \
+  --gate 'sentence_length:^C2:' \
+  --gate 'vale_adoc:(Capy\.SimpleTense|Capy\.NoFluff|Capy\.Terminology)$' \
+  --gate 'vale_docstrings:(Capy\.SimpleTense|Capy\.NoFluff|Capy\.Terminology)$'
 ```
+
+Six specs as of Phase-4 exit. The CI step extracts them, so this hand-run copy is the one that
+can rot — check it against the blocking step before trusting a `none gated` result.
 
 Exit 0 means the candidate is explainable (it may still add *ungated* findings — read the
 report). Exit 1 means it must not be committed as-is, for one of three reasons, all named in
