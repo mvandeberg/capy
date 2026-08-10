@@ -13,7 +13,7 @@
 ** xref:3.concurrency/3d.patterns.adoc[Part IV: Communication & Patterns]
 * xref:4.coroutines/4.intro.adoc[Coroutines in Capy]
 ** xref:4.coroutines/4a.tasks.adoc[The task Type]
-** xref:4.coroutines/4b.launching.adoc[Launching Coroutines]
+** xref:4.coroutines/4b.launching.adoc[Starting Coroutines]
 ** xref:4.coroutines/4c.executors.adoc[Executors and Execution Contexts]
 ** xref:4.coroutines/4d.io-awaitable.adoc[The IoAwaitable Protocol]
 ** xref:4.coroutines/4e.cancellation.adoc[Stop Tokens and Cancellation]

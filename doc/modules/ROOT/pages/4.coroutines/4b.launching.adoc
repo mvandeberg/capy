@@ -1,4 +1,4 @@
-= Launching Coroutines
+= Starting Coroutines
 
 This section explains how to start coroutines for execution. It covers `run_async` for entry from non-coroutine code and cpp:run[] for executor hopping within coroutine code.
 

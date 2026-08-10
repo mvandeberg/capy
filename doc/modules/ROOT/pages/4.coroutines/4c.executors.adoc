@@ -4,7 +4,7 @@ This section explains executors and execution contexts—the mechanisms that con
 
 == Prerequisites
 
-* Completed xref:4.coroutines/4b.launching.adoc[Launching Coroutines]
+* Completed xref:4.coroutines/4b.launching.adoc[Starting Coroutines]
 * Understanding of `run_async` and cpp:run[]
 
 [#the-same-executor-invariant]
@@ -31,7 +31,7 @@ Because the invariant holds, the safe behavior is automatic and the unsafe behav
 
 Affinity propagates forward. Starting a task with cpp:run_async[]`(ex)` binds it to `ex`. A child `co_await`-ed from that task inherits the same executor automatically, and so on down the chain. When a child completes, control returns to its caller _through the caller's executor_. When both share the same executor—the common case—that return is a direct symmetric transfer with no queuing. Only a deliberate executor change requires a dispatch.
 
-That deliberate change is what `run` provides. It runs a subtree on a different executor and restores the caller's executor when the subtree completes (see xref:4.coroutines/4b.launching.adoc[Launching Coroutines]). This is also why I/O objects with executor-bound invariants—a socket tied to one `io_context`, a Windows IOCP handle, executor-specific timer state—remain safe. A coroutine holding them never resumes on the wrong executor mid-body.
+That deliberate change is what `run` provides. It runs a subtree on a different executor and restores the caller's executor when the subtree completes (see xref:4.coroutines/4b.launching.adoc[Starting Coroutines]). This is also why I/O objects with executor-bound invariants—a socket tied to one `io_context`, a Windows IOCP handle, executor-specific timer state—remain safe. A coroutine holding them never resumes on the wrong executor mid-body.
 
 == The Executor Concept
 
