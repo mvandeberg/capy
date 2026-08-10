@@ -268,7 +268,7 @@ Capy builds on Asio's foundation—the buffer sequences, the executor model, the
 
 The result is something new. Stream concepts designed for coroutines alone. Type-erasure at the level where it matters most. A simple execution model discovered through use-case-first design. Clean separation between execution and platform. A taxonomy of awaitables that invites extension rather than mandating a single concrete type.
 
-Meanwhile, the {cpp} standards committee has produced `std::execution`—a sender/receiver model of considerable theoretical elegance. It is general. It is powerful. It is also complex, and its relationship to the I/O problems that most {cpp} developers face daily remains unclear. The community watches, waits, and wonders when the abstractions will connect to the work they need to accomplish.
+Meanwhile, the {cpp} standards committee has produced `std::execution`—a sender/receiver model of considerable theoretical elegance. It is general. It is powerful. It is also complex, and its relationship to the I/O problems that most {cpp} developers face daily remains unclear. The community watches, waits, and wonders when the abstractions connect to the work they need to accomplish.
 
 Boost has always been where the practical meets the principled. Where real-world feedback shapes design. Where code ships before papers standardize. Capy continues this tradition.
 
