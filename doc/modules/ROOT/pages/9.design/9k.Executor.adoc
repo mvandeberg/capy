@@ -173,7 +173,7 @@ In Corosio, cpp:Executor::on_work_finished[on_work_finished] triggers `stop()` w
 include::example$snippets/9k_executor.cpp[tag=on_work_finished,indent=0]
 ----
 
-Every cpp:run_async[] call increments the count. When that task completes, the count decrements. When no tasks remain, `run()` returns. Without work tracking in the executor, the event loop would need a separate signaling mechanism or would spin indefinitely.
+Every cpp:run_async[] call increments the count. When the task it starts completes, the count decrements. When no tasks remain, `run()` returns. Without work tracking in the executor, the event loop would need a separate signaling mechanism or would spin indefinitely.
 
 === Public Visibility
 
