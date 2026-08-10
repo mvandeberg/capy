@@ -47,11 +47,12 @@ namespace test {
     injection at controlled points in both directions.
 
     When the fuse injects an error or throws on one end, the
-    other end is automatically closed. Any suspended reader is
-    resumed with `error::eof`, and subsequent operations on
-    both ends return `error::eof`. Calling @ref close on one
-    end signals eof to the peer's reads after draining any
-    buffered data, while the peer may still write.
+    pair is automatically closed. Any suspended reader on
+    either end is resumed with `error::eof`, and subsequent
+    operations on both ends return `error::eof`. Calling
+    @ref close on one end signals eof to the peer's reads
+    after draining any buffered data, while the peer may
+    still write.
 
     @par Thread Safety
     Single-threaded only. Both ends of the pair must be
@@ -231,7 +232,7 @@ public:
         the calling coroutine suspends until the peer calls
         @ref write_some. Before every read, the attached
         @ref fuse is consulted to possibly inject an error.
-        If the fuse fires, the peer is automatically closed.
+        If the fuse fires, the pair is automatically closed.
         If the stream is closed, returns `error::eof`.
         The returned `std::size_t` is the number of bytes
         transferred.
@@ -437,7 +438,7 @@ public:
         peer's incoming buffer. If the peer is suspended in
         @ref read_some, it is resumed. Before every write,
         the attached @ref fuse is consulted to possibly inject
-        an error. If the fuse fires, the peer is automatically
+        an error. If the fuse fires, the pair is automatically
         closed. If the stream is closed, returns `error::eof`.
         The returned `std::size_t` is the number of bytes
         transferred.
@@ -601,7 +602,7 @@ public:
     is available, it suspends until the peer writes. Before
     every read or write, the @ref fuse is consulted to
     possibly inject an error for testing fault scenarios.
-    When the fuse fires, the peer is automatically closed.
+    When the fuse fires, the pair is automatically closed.
 
     @param f The fuse used to inject errors during operations.
 

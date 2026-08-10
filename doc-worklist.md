@@ -30,7 +30,8 @@ develop`) against `DOC_REVIEW_FEEDBACK.md` Section 2. One row per finding that i
 
 Discovered while working Phase 4, out of its scope, and tracked here so they are not lost.
 These have no `DOC_REVIEW_FEEDBACK.md` finding number. Every count re-measured at `620fdf2c`
-(`cwd=doc`, `PATH` including `node_modules/.bin`, Vale 3.15.1).
+(`cwd=doc`, `PATH` including `node_modules/.bin`, Vale 3.15.1). **P4-D6 was closed by the
+Phase-4 final fix wave and removed — see the dated note at the end of this file.**
 
 | id | surface | what | count | why deferred |
 |---|---|---|---|---|
@@ -39,7 +40,6 @@ These have no `DOC_REVIEW_FEEDBACK.md` finding number. Every count re-measured a
 | P4-D3 | adoc + build | **Nothing in CI couples the `== Output` blocks to a real run.** The example programs are not registered as ctest tests (`ctest -N` lists none) and no lint regenerates or compares those blocks, so a captured-output block can silently stop matching its program. | **14** pages carry an `== Output` block (all under `8.examples/`) | Structural and pre-existing; it became load-bearing when a Phase-4 fix had to regenerate one such block by hand-running the program. Recommended fix: register the examples as ctest tests and add a lint check that regenerates each block from a real run, turning the convention into a gate. |
 | P4-D4 | both | Literal backticks leak into rendered HTML from spans whose closing delimiter is followed by a word character, e.g. `` `main`'s `` and — a different, worse shape — `` `co_await`s `` at `9k.Executor.adoc:253`, which mis-pairs the span and pulls following prose into code font. | **9** source spans on **6** `.adoc` pages (`2b.syntax:93`, `2d.advanced:31` ×3, `4g.allocators:56`, `5b.types:29` ×2, `7b.mock-streams:166`, `9k.Executor:253`) → **10** literal backticks rendered. Site-wide there are **22** literal backticks in rendered article bodies across **12** pages; the other 6 are generated **reference** pages, where some are legitimate (inside a rendered `@code` block, e.g. `read.html`) and at least one is a real docstring-side leak of the same class (`test/fuse.hpp:768`'s ``non-`io_context` ``, plus `quitter.hpp:333` and `ex/run_async.hpp:354`). | Each needs a prose edit (AsciiDoc has no way to make a constrained monospace span abut a word character), so it is per-instance rewording on **both** surfaces, not a config change. |
 | P4-D5 | tooling | `Google.OxfordComma`'s **left anchor is a bare `,\s`**, which cannot distinguish a list comma from a sentence-initial adverbial comma. Any edit that changes where a sentence ends can therefore trip it — one did during Phase 4, and was reverted. | — | Not gated (`vale_adoc` gates only `Capy\.PartHeadings$` plus the three C-rules), so it can raise `newCount` but never fail CI. **A three-item guard would break the rule** — comma-plus-two-items is exactly the missing-Oxford-comma shape it exists to catch ("Apples, pears or bananas"). Fixing the left anchor is a real change to a Google-package rule and needs its own bite-tested fixture. Interim playbook note: re-run `Google.OxfordComma` after every sentence split. |
-| P4-D6 | docstring | **4 `include/boost/capy/test/stream.hpp` docstrings are wrong.** `:49-52`, `:233-234`, `:440-441` and `:604` say a fuse error closes "the other end" / "the peer"; in fact `state::closed` is a **single flag on the shared state** (`:105`), `state::close()` sets it and resumes suspended readers (`:131-135`), and `close_guard::~close_guard` calls it (`:150`) — so **both** ends close. `7b.mock-streams.adoc:185`'s "the pair is automatically closed" is the correct wording, and the in-code comment at `:141-143` already says "closes both ends". | **4** | **Already scheduled for the final fix wave** by maintainer ruling B (2026-08-07); recorded here so it is not lost if that wave misses it. The page is right and the header is wrong, which is the inverse of how the finding was originally reported. |
 
 ## Deferred findings (Corosio — Phase 5)
 
@@ -177,3 +177,12 @@ page names cited in `DOC_REVIEW_FEEDBACK.md` Section 3, unverified against that 
   (`example/mock-stream-testing/mock_stream_testing.cpp:126`, "fuse will inject errors")
   was fixed inside Phase 4 because it renders into `8d.mock-stream-testing`; re-derived
   here with the documented exclusion filter over all 106 files — 6 C10 + 2 C4 = 8.
+- **2026-08-10 (Phase-4 final fix wave):** Rows closed and removed, same precedent as the
+  Phase-1/Phase-3/Phase-4-close entries above.
+  **P4-D6** — CLOSED. The four `include/boost/capy/test/stream.hpp` docstrings now say the
+  **pair** is closed, not "the peer" / "the other end": `:49-50` ("the pair is automatically
+  closed. Any suspended reader on either end is resumed with `error::eof`"), `:235`, `:441`
+  and `:602`. Comment-only, proven mechanically (`gcc -fpreprocessed -dD -E -P` +
+  whitespace-strip sha256 identical to the pre-fix file, and the check bite-tested by
+  appending a declaration, which flips the hash). The page (`7b.mock-streams.adoc:185`) and
+  the in-code comment (`:141-143`) were already right, so nothing there changed.
