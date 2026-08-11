@@ -107,7 +107,7 @@ after the committed `baseline.json` was taken, so **nothing in its slice is gran
 every one of its findings reports as new. Phase-4 exit gated it anyway
 (`--gate 'sentence_length:^C2:'`), which means the blocking step **exits 1** on the whole hard
 slice. Measured at 620fdf2c, that slice is exactly **two** findings, both in
-`include/boost/capy/ex/when_any.hpp` (`lint/.docstrings/when_any.hpp.adoc`) — a 27-word and a
+`include/boost/capy/when_any.hpp` (`lint/.docstrings/when_any.hpp.adoc`) — a 27-word and a
 31-word sentence of the shape *"If at least one child await-returned a zero `ec`, the result
 holds …, unless producing the winner's payload threw, in which case that exception is
 rethrown."* **Zero `.adoc` fingerprints remain under `^C2:`.**

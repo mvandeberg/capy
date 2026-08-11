@@ -369,7 +369,7 @@ documents**.
   * *"confirm CI green"* — **not achievable for C2 until a post-merge reseed.** `sentence_length`
     has no entry in the committed baseline, so nothing in its slice is grandfathered and
     `--gate 'sentence_length:^C2:'` **exits 1** on exactly two findings, both in
-    `include/boost/capy/ex/when_any.hpp` (a 27-word and a 31-word sentence). They are **accepted
+    `include/boost/capy/when_any.hpp` (a 27-word and a 31-word sentence). They are **accepted
     refusals, not defects**: a rewrite that split them made a false claim against the code and was
     reverted verbatim. The maintainer declined an in-source refusal marker and chose **visible debt
     over new machinery**, so the Documentation job stays red on that one step until the owed

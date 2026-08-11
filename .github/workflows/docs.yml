@@ -262,7 +262,7 @@ jobs:
       # `sentence_length` has NO entry in the committed baseline.json (the check was
       # added after that snapshot was taken), so nothing in its slice is grandfathered
       # and `--gate 'sentence_length:^C2:'` exits 1 on the whole hard slice. That slice
-      # is exactly TWO findings, both in include/boost/capy/ex/when_any.hpp
+      # is exactly TWO findings, both in include/boost/capy/when_any.hpp
       # (lint/.docstrings/when_any.hpp.adoc), a 27-word and a 31-word sentence of the
       # form "If at least one child await-returned a zero `ec`, the result holds …,
       # unless producing the winner's payload threw, in which case that exception is
