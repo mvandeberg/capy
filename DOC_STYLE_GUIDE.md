@@ -251,10 +251,16 @@ history:
   input. Found twice, the second time by bite-testing rather than by reading.
 - **A gated check that collapsed to zero without being marked skipped.** A crashing check emitted
   no findings and reported `count: 0, skipped: false`; the comparator then computed *zero new
-  violations* from an empty current set and passed. Zero looks exactly like success. The reseed
-  comparator gained an explicit fail-closed rule for it (`doc/lint/baseline-diff.mjs`: a gated
-  check with zero findings against a non-empty baseline is fatal unless `--allow-emptied` names
-  it). **The blocking comparator still has no such rule** — the last open instance of this shape.
+  violations* from an empty current set and passed. Zero looks exactly like success. Both
+  comparators now carry an explicit fail-closed rule for it — a gated check with zero findings
+  against a non-empty baseline is fatal unless `--allow-emptied` names it, in
+  `doc/lint/baseline-diff.mjs` (reseed candidates) and in
+  `doc/lint/check-no-new-violations.mjs` (the blocking gate). The reachable case that motivated
+  the second one, and the reason it is whole-check rather than per-gate-regex, is recorded at the
+  rule itself: `cd doc && vale --output=JSON lint/.nonexistent-corpus` prints `{}` and exits 0.
+  `doc/lint/baseline.mjs` additionally checks `extract-docstrings.mjs`'s exit status, because the
+  docstring corpus is generated and the generator never clears its output directory, so a crashed
+  extractor used to leave a stale corpus that linted clean.
 
 The shared shape is that all three failures are **silent and reassuring**: the machinery reports
 success, and the only way to distinguish "nothing is wrong" from "nothing is being checked" is to

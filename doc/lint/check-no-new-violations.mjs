@@ -23,6 +23,11 @@
 // (a11y, mrdocs, vale_docstrings) are reported but do not block. Without
 // --gate the comparator stays omnibus (the non-blocking report step).
 //
+// A gated check that reports ZERO findings against a non-empty baseline also
+// fails the gate — a check that silently did not run is indistinguishable from
+// one that ran clean, and `skipped` does not catch it. See the rule at the
+// bottom of the per-check loop for the reachable case and the reasoning.
+//
 // Phase-1 exit gate spec (A1/A6/A7/B2/D2):
 //   --gate 'doc_lint:^(A1|A6|B2|D2):' --gate 'vale_adoc:Capy\.PartHeadings$'
 //   (A1/A6/B2/D2 come from doc_lint; A7 is the Vale rule Capy.PartHeadings.)
@@ -36,7 +41,13 @@
 //   which Capy cannot fix, the same rationale that demoted E2. The a11y scan
 //   still runs and is reported non-blocking.
 //
-// Usage: node doc/lint/check-no-new-violations.mjs [--strict] [--gate spec ...] [--skip-a11y]
+// --allow-emptied <check>  suppresses the "gated check reports zero findings
+// against a non-empty baseline" failure described below, for one check. Use it
+// only when a gated backlog has genuinely closed; it records the decision in
+// the run log. Not used by the committed CI invocation.
+//
+// Usage: node doc/lint/check-no-new-violations.mjs [--strict] [--gate spec ...]
+//        [--allow-emptied check ...] [--skip-a11y]
 //
 import fs from 'node:fs';
 import os from 'node:os';
@@ -52,10 +63,22 @@ const strict = argv.includes('--strict');
 // baseline.mjs. NB: --gate values must NOT reach baseline.mjs, whose first
 // non-flag arg is taken as the output path.
 const gateByCheck = new Map(); // check -> [RegExp]
+const allowEmptied = new Set(); // checks whose zero is an accepted milestone
 const extraArgs = [];
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i];
   if (a === '--strict') continue;
+  let allow = null;
+  if (a === '--allow-emptied') allow = argv[++i];
+  else if (a.startsWith('--allow-emptied=')) allow = a.slice('--allow-emptied='.length);
+  if (allow != null) {
+    if (!allow) {
+      console.error('--allow-emptied expects a check name');
+      process.exit(2);
+    }
+    allowEmptied.add(allow);
+    continue;
+  }
   let spec = null;
   if (a === '--gate') spec = argv[++i];
   else if (a.startsWith('--gate=')) spec = a.slice('--gate='.length);
@@ -95,7 +118,9 @@ let totalNew = 0;        // omnibus: new findings across ALL checks (report sema
 let anySkipped = false;  // any check skipped at all
 let gatedNew = 0;        // new findings in gated checks matching a gate regex
 let gatedSkipped = false; // a GATED check was skipped (can't verify => gate fails)
+let gatedEmptied = false; // a GATED check reported ZERO findings against a non-empty baseline
 const gatedFindings = []; // the specific gated new fingerprints (named in the log)
+const emptiedGated = [];  // the checks that tripped the emptiness rule
 const report = {};
 for (const [check, currentCheck] of Object.entries(current.checks)) {
   const gateRes = gateByCheck.get(check) || null;
@@ -116,7 +141,8 @@ for (const [check, currentCheck] of Object.entries(current.checks)) {
     continue;
   }
   const baseSet = new Set(baseline.checks[check]?.fingerprints || []);
-  const newOnes = (currentCheck.fingerprints || []).filter((fp) => !baseSet.has(fp));
+  const currentSet = currentCheck.fingerprints || [];
+  const newOnes = currentSet.filter((fp) => !baseSet.has(fp));
   totalNew += newOnes.length;
   const entry = { baselineCount: baseline.checks[check]?.count ?? 0, currentCount: currentCheck.count, newCount: newOnes.length, newFindings: newOnes };
   if (gateRes) {
@@ -126,6 +152,45 @@ for (const [check, currentCheck] of Object.entries(current.checks)) {
     entry.gatedNewFindings = gatedOnes;
     gatedNew += gatedOnes.length;
     for (const fp of gatedOnes) gatedFindings.push(`${check} :: ${fp}`);
+
+    // A GATED check that reports ZERO findings where the committed baseline has
+    // some is treated as a check that did not run, until proven otherwise. This
+    // is the fail-open the `skipped` flag does NOT catch, and it is reachable:
+    //
+    //   $ cd doc && vale --output=JSON lint/.nonexistent-corpus
+    //   {}
+    //   $ echo $?
+    //   0
+    //
+    // baseline.mjs marks a Vale check skipped only on exit 2 or a non-object
+    // parse, so exit 0 plus `{}` yields `{count: 0, skipped: false}` — and this
+    // comparator then computes "zero new" from an empty current set and reports
+    // `gated: true, gatedNew: 0`, i.e. a gate that says it is gating while
+    // measuring nothing. Any renamed corpus path, crashed extractor, or
+    // `.vale.ini` edit that stops matching the corpus lands here.
+    //
+    // The rule is the same one baseline-diff.mjs applies to a reseed candidate,
+    // for the same reasons: emptiness rather than a removal-fraction threshold
+    // (a check that did not run produces exactly zero, never 40% fewer), and
+    // scoped to GATED checks, whose zero is the one that decides a merge.
+    //
+    // Deliberately WHOLE-CHECK, not per-gate-regex. The gated SLICE of
+    // vale_docstrings is legitimately empty today — zero Capy.SimpleTense /
+    // NoFluff / Terminology on the docstring corpus is exactly what Phase 4
+    // delivered — so a per-slice rule would fail the committed invocation on
+    // the phase's own success state. A whole-check zero cannot be produced by
+    // wording work: the residual Vale.Spelling/Google backlog on both corpora
+    // is not going to zero, so only a broken run gets there.
+    //
+    // The one legitimate whole-check zero, a gated backlog genuinely closing,
+    // is a milestone worth an explicit --allow-emptied <check>.
+    if (currentSet.length === 0 && baseSet.size > 0 && !allowEmptied.has(check)) {
+      entry.gatedEmptied = true;
+      gatedEmptied = true;
+      emptiedGated.push(check);
+    } else if (currentSet.length === 0 && baseSet.size > 0) {
+      entry.gatedEmptiedAllowed = true;
+    }
   }
   report[check] = entry;
 }
@@ -141,11 +206,19 @@ if (gated && blockingNew > 0) {
   console.error(`GATE: ${blockingNew} new gated violation(s):`);
   for (const f of gatedFindings) console.error(`  - ${f}`);
 }
+for (const check of emptiedGated) {
+  console.error(`GATE: gated check '${check}' reports 0 findings but the committed baseline has ` +
+    `${baseline.checks[check]?.fingerprints?.length ?? 0} — a check that did not run looks exactly ` +
+    `like this. Verify it really ran; if the backlog is genuinely closed, re-run with ` +
+    `--allow-emptied ${check}.`);
+}
 
 console.log(JSON.stringify({
   totalNew, anySkipped, strict,
   gated, gatedNew: gated ? gatedNew : undefined, gatedSkipped: gated ? gatedSkipped : undefined,
+  gatedEmptied: gated ? gatedEmptied : undefined,
+  emptiedGated: gated ? emptiedGated : undefined,
   gatedFindings: gated ? gatedFindings : undefined,
   checks: report,
 }, null, 2));
-process.exit(strict && (blockingNew > 0 || blockingSkip) ? 1 : 0);
+process.exit(strict && (blockingNew > 0 || blockingSkip || (gated && gatedEmptied)) ? 1 : 0);

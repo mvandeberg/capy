@@ -190,12 +190,29 @@ function a11yFingerprints() {
 const results = {};
 results.vale_adoc = valeFingerprints('modules');
 
-run('node', [path.join(SCRIPT_DIR, 'extract-docstrings.mjs')]);
-results.vale_docstrings = valeFingerprints('lint/.docstrings');
+// The docstring corpus is GENERATED, so the generator's exit status is part of
+// the measurement. It used to be discarded: extract-docstrings.mjs never clears
+// OUT_DIR, so a crash left whatever the last successful run wrote — a stale
+// corpus that Vale lints happily and reports `skipped: false` over. Worse, if
+// the crash happened before anything was ever written (fresh clone, renamed
+// path), Vale over an absent directory exits 0 with `{}`, which valeFingerprints
+// reads as `count: 0, skipped: false` — a vacuous clean for the C4/C9/C10
+// docstring gates and for sentence_length's docstring half. Both dependent
+// checks are therefore marked SKIPPED, which the comparator treats as a gate
+// failure, instead of being believed.
+const extract = run('node', [path.join(SCRIPT_DIR, 'extract-docstrings.mjs')]);
+const extractBad = crashed(extract, 'extract-docstrings.mjs');
+if (extractBad) {
+  const reason = `docstring corpus not regenerated: ${extractBad.reason}`;
+  results.vale_docstrings = { count: 0, skipped: true, reason, fingerprints: [] };
+  results.sentence_length = { count: 0, skipped: true, reason, fingerprints: [] };
+} else {
+  results.vale_docstrings = valeFingerprints('lint/.docstrings');
 
-// After extract-docstrings.mjs above: sentence-length.mjs lints BOTH corpora and
-// exits non-zero rather than reporting a clean zero for one it could not read.
-results.sentence_length = sentenceLengthFingerprints();
+  // After extract-docstrings.mjs above: sentence-length.mjs lints BOTH corpora and
+  // exits non-zero rather than reporting a clean zero for one it could not read.
+  results.sentence_length = sentenceLengthFingerprints();
+}
 
 results.doc_lint = docLintFingerprints();
 results.mrdocs_warnings = mrdocsFingerprints();
