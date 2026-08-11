@@ -5,9 +5,9 @@
 // Part F) can lint it, not only the Antora `.adoc` pages (Style Guide Part F,
 // Task 2 Step 4b). Node built-ins only, no dependencies.
 //
-// For each header with at least one `/** ... */` block, writes a mirrored
-// file under OUT_DIR (default doc/lint/.docstrings/, gitignored — generated
-// output, not source) containing just the comment prose: `@code`/`@endcode`
+// For each header with at least one doc comment, writes a mirrored file under
+// OUT_DIR (default doc/lint/.docstrings/, gitignored — generated output, not
+// source) containing just the comment prose: `@code`/`@endcode`
 // samples are dropped (not prose, and full of identifiers/punctuation that
 // would drown real findings); `@param`/`@tparam`/`@return`/etc. tags have
 // their tag keyword (and, for `@param`/`@tparam`, the parameter name) removed
@@ -22,6 +22,25 @@
 // of 444 Colons alerts on this surface, a false-positive class that grows with
 // every parameter documented. A parameter name is an identifier, not prose;
 // the description is the prose, and the description is what stays linted.
+//
+// BOTH Doxygen doc-comment forms are extracted: `/** ... */` blocks and runs of
+// consecutive `///` lines. A run of `///` lines is ONE doc comment attached to
+// the declaration that follows it, which is how Doxygen and MrDocs read it, and
+// MrDocs really does publish that prose — `io_result.hpp:49`'s
+// `/// The error code from the operation.` renders on both
+// `reference/boost/capy/io_result.html` and `reference/boost/capy/io_result/ec.html`.
+// Until 2026-08 only the `/** */` form was extracted, so 86 published doc lines
+// across 25 headers were invisible to every Vale rule and to the C2 checker,
+// including the four the Phase-4 exit promoted to merge-blocking gates. It was
+// latent rather than live (the `///` prose held no violation of any gated rule),
+// which is exactly why nothing surfaced it: a bite test's first planted violation
+// went into a `///` comment and no gate saw it.
+//
+// Blocks are emitted in source order, so an extracted file reads in the order a
+// reader meets the prose. Fingerprint stability does not depend on that order:
+// baseline.mjs keys a Vale finding `file:#N:Check`, where N is a per-(file,Check)
+// occurrence counter, so one added alert mints exactly one new key wherever in
+// the file it sits.
 //
 // Usage: node doc/lint/extract-docstrings.mjs [outDir]
 //
@@ -123,10 +142,50 @@ function cleanBlock(raw) {
   return prose.join('\n').trim();
 }
 
+// Every `/* ... */` range in the file, so a `///` line sitting INSIDE one is not
+// mistaken for a doc comment of its own. There is no such line in the tree today
+// (`grep -rn '^[[:space:]]*\*.*///'` finds none), but the cost of being wrong is a
+// commented-out doc comment silently entering the linted corpus.
+function blockCommentRanges(text) {
+  const ranges = [];
+  for (const m of text.matchAll(/\/\*[\s\S]*?\*\//g)) ranges.push([m.index, m.index + m[0].length]);
+  return ranges;
+}
+
+// Doc comments in source order. `/** ... */` blocks come from a direct match; a
+// run of consecutive `///` lines is collected into one block, ended by the first
+// line that is not a `///` line (blank, code, or anything else) — the same rule
+// Doxygen applies. `///<` (trailing member doc) and `////`-style separator rules
+// are matched by neither pattern; the tree contains none of either.
+function docComments(text) {
+  const found = [];
+  for (const m of text.matchAll(/\/\*\*([\s\S]*?)\*\//g)) found.push({ at: m.index, raw: m[1] });
+
+  const inBlock = blockCommentRanges(text);
+  const covered = (off) => inBlock.some(([a, b]) => off >= a && off < b);
+  const lineRe = /^[ \t]*\/\/\/(?!\/)(.*)$/;
+  let off = 0;
+  let run = null; // { at, lines: [] }
+  const flushRun = () => { if (run) { found.push({ at: run.at, raw: run.lines.join('\n') }); run = null; } };
+  for (const line of text.split('\n')) {
+    const m = lineRe.exec(line);
+    if (m && !covered(off)) {
+      if (!run) run = { at: off, lines: [] };
+      run.lines.push(m[1].replace(/^[ \t]/, ''));
+    } else {
+      flushRun();
+    }
+    off += line.length + 1;
+  }
+  flushRun();
+
+  return found.sort((a, b) => a.at - b.at).map((d) => d.raw);
+}
+
 let written = 0;
 for (const file of walk(INCLUDE_ROOT)) {
   const text = fs.readFileSync(file, 'utf8');
-  const blocks = [...text.matchAll(/\/\*\*([\s\S]*?)\*\//g)].map((m) => cleanBlock(m[1])).filter(Boolean);
+  const blocks = docComments(text).map(cleanBlock).filter(Boolean);
   if (blocks.length === 0) continue;
 
   const rel = path.relative(INCLUDE_ROOT, file);

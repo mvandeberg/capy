@@ -29,6 +29,8 @@
 //
 // Usage: node doc/lint/selftest.mjs
 //
+import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -116,6 +118,40 @@ check('only the hard key is reachable from a ^C2: gate spec',
   keys.filter((k) => GATE.test(`${k}:some/file.adoc:#1:message`)).join(',') === 'C2',
   `reachable keys: '${keys.filter((k) => GATE.test(`${k}:f:#1:m`)).join(',')}'`);
 
+// 8. extract-docstrings.mjs covers BOTH Doxygen comment forms. `///` runs were
+//    invisible to every gate until 2026-08 — 86 published doc lines across 25
+//    headers, and the gap surfaced only because a bite test happened to plant its
+//    first probe in a `///` comment. A tightened regex or a reverted branch would
+//    retire the coverage silently: the corpus just gets smaller, every count drops,
+//    and nothing reads as broken. The expectations below are DERIVED from the real
+//    header tree rather than written down, so they cannot go stale.
+const INCLUDE_ROOT = path.resolve(DOC_DIR, '..', 'include/boost/capy');
+const TMP_OUT = fs.mkdtempSync(path.join(os.tmpdir(), 'capy-selftest-docstrings-'));
+try {
+  const walkHpp = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+    const p = path.join(dir, e.name);
+    return e.isDirectory() ? walkHpp(p) : (e.name.endsWith('.hpp') ? [p] : []);
+  });
+  // Headers whose ONLY doc comments are `///` runs: they have no output file at all
+  // unless the `///` branch works, which makes them the sharpest available probe.
+  const slashOnly = walkHpp(INCLUDE_ROOT).filter((f) => {
+    const t = fs.readFileSync(f, 'utf8');
+    return /^[ \t]*\/\/\/(?!\/)/m.test(t) && !t.includes('/**');
+  }).map((f) => `${path.relative(INCLUDE_ROOT, f)}.adoc`);
+
+  const x = spawnSync('node', [path.join(SCRIPT_DIR, 'extract-docstrings.mjs'), TMP_OUT],
+    { encoding: 'utf8', cwd: DOC_DIR, maxBuffer: 16 * 1024 * 1024 });
+  check('extract-docstrings.mjs exits 0', x.status === 0, `exited ${x.status}: ${(x.stderr || '').trim().slice(-200)}`);
+  check('extract-docstrings.mjs finds some `///`-only headers to prove the branch on',
+    slashOnly.length > 0, 'no header in the tree has `///` docs and no `/** */` block');
+  const missing = slashOnly.filter((rel) => !fs.existsSync(path.join(TMP_OUT, rel)));
+  check('`///` doc comments are extracted', missing.length === 0,
+    `${missing.length} of ${slashOnly.length} `
+    + `\`///\`-only header(s) produced no output: ${missing.slice(0, 3).join(', ')}`);
+} finally {
+  fs.rmSync(TMP_OUT, { recursive: true, force: true });
+}
+
 if (failures.length) {
   console.error(`selftest: ${failures.length} assertion(s) FAILED`);
   for (const f of failures) console.error(`  - ${f}`);
@@ -123,6 +159,6 @@ if (failures.length) {
 }
 console.log(JSON.stringify({
   ok: true,
-  assertions: 14,
+  assertions: 17,
   fixtureSummary: out.summary,
 }, null, 2));

@@ -186,3 +186,15 @@ page names cited in `DOC_REVIEW_FEEDBACK.md` Section 3, unverified against that 
   whitespace-strip sha256 identical to the pre-fix file, and the check bite-tested by
   appending a declaration, which flips the hash). The page (`7b.mock-streams.adoc:185`) and
   the in-code comment (`:141-143`) were already right, so nothing there changed.
+  **`doc/lint/extract-docstrings.mjs` now covers `///` doc comments** (86 published doc
+  lines across 25 headers that MrDocs does render — `io_result.hpp:49` appears on both
+  `reference/boost/capy/io_result.html` and `io_result/ec.html` — and that no gate could
+  see). Docstring corpus 69 → 73 files, Vale 296 → 321. **The 25 newly visible findings
+  are NOT fixed here** (they are wording work, outside a fix wave) and none is in a gated
+  rule: 22 `Vale.Spelling` (tracked by P4-D1 below, re-derived in this pass), 2
+  `Google.OxfordComma` on `task.hpp`/`quitter.hpp`'s identical "The wrapped awaitable,
+  decayed and stored by value." — the P4-D5 left-anchor defect, comma plus a two-item
+  coordination — and 1 `Google.OptionalPlurals` on `detail/io_result_combinators.hpp`'s
+  `value(s)`, a rule that had no occurrence on either surface before. **C2 hard stays 2,
+  C2 advisory stays 67, and Capy.SimpleTense / NoFluff / Terminology stay 0 on the
+  docstring surface**, so the four gates Phase 4 promoted are unaffected.
