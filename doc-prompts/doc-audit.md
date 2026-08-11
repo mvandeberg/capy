@@ -101,8 +101,8 @@ fixed to `reference` by definition (style guide Part A) — set `inferred_mode=r
   with `inferred_mode`, or `inferred_mode` is `mixed`. **A `null` `declared_mode` is never a
   mismatch** — an undeclared `:page-mode:` is the deterministic lint script's gate (A1; see
   README "Division of labor"), not this tool's judgment call. (Confirmed against the corpus:
-  zero of 65 current pages declare `:page-mode:` — treating `null` as a mismatch would flag
-  every page and drown the real findings.)
+  only 1 of 65 current pages declares `:page-mode:` (`8q.gui-integration.adoc`) — treating
+  `null` as a mismatch would flag every other page and drown the real findings.)
 - `topic`: string, **one sentence** — the concept the page teaches
 - `approx_word_count`: integer
 
@@ -144,10 +144,12 @@ terminology checks (rewriting a citation to match house terminology misquotes th
 
 **Presentation scope (`Pr`/E1/B1):** flag a hand-typed **signature** (a restated parameter
 list or return type) or a restated concept definition, not every backtick-quoted type name in
-casual prose. (Confirmed against the corpus: zero of 65 pages use the `cpp:` macro at all —
-flagging every bare mention would flood every page and is exactly the over-reporting the
-noise floor exists to prevent. The gap is real but is an adoption backlog, not a per-page
-defect list.)
+casual prose. (Confirmed against the corpus: `cpp:` is established house convention — 51 of
+65 pages use it, 555 uses across 93 distinct targets. This is no longer an adoption backlog,
+so the noise floor tightens: a bare backtick-quoted reference to a type or member that has a
+resolvable `cpp:` target is in scope for a finding, same as a hand-typed signature. Casual
+prose that names a concept with no corresponding reference target remains out of scope —
+still don't flag every backtick-quoted word.)
 
 **Validation:** reject if any finding lacks a `span`; if a `span` is not verbatim in the
 file; if > 4 findings per axis; if the axes are not exactly `St,Ac,Wo,Co,Pr`.
@@ -157,9 +159,14 @@ file; if > 4 findings per axis; if the axes are not exactly `St,Ac,Wo,Co,Pr`.
 Fixed Diátaxis mode = `reference`. The five axes remap to the docstring contract (align with
 the `boost-docs` skill's Doxygen conventions):
 
-- **St** — section-ordering/structural completeness: brief (implicit first sentence) present;
-  sections follow the order brief → description → `@param` → `@return` → `@par` blocks →
-  `@throws` → `@note` → `@see`; no stray `\`-commands mixed with `@`-commands.
+- **St** — structural completeness: brief (implicit first sentence) present; no stray
+  `\`-commands mixed with `@`-commands; no paragraph stranded inside or after a `@par` block.
+  **No section-ordering rule** — retired: the corpus splits 65/26 in favor of `@par` *before*
+  the first `@param`/`@tparam`/`@return` (house convention is the "violating" form, 71/29),
+  and MrDocs 0.8.0 normalizes section order in the rendered output regardless of source order
+  (e.g. `task.hpp`'s `await_resume` writes `@return` before `@par Exception Safety`, but the
+  rendered page shows Exception Safety before Return Value) — so there is no stable target to
+  score source order against.
 - **Ac** — docstring↔code accuracy: every actual parameter has a matching `@param`, same
   name, same order; `@return` present iff the function returns non-`void`; `@throws` matches
   what the code can actually throw (a `noexcept` function carries no `@throws`); a
@@ -174,6 +181,16 @@ the `boost-docs` skill's Doxygen conventions):
 - **Pr** — **MrDocs render check**: valid Doxygen command syntax (no unclosed `@code`, no
   `@param` naming a parameter that does not exist); the brief describes behavior, not
   identity, and does not restate the declaration (style guide B4).
+
+**Known gap — `Ac` has no lettered rule.** Unlike `St`, `Co`, and `Pr` above, reference-mode
+`Ac` doesn't map onto any lettered clause in the style guide: Part A/B are written for
+exposition-mode structure and briefs, not a per-axis accuracy contract for docstrings. Past
+audits have cited `B4` (written for class-brief identity-vs-behavior, not factual accuracy)
+to justify a plain factual-error finding under `Ac` — that's a stretch, not a real citation.
+Until the style guide settles this (a possible Part B accuracy rule, or an explicit blessing
+of the axis id as its own citation — out of scope here, see Task 1b), citing the bare axis id
+(`Ac`) as a reference-mode finding's `rule` is acceptable. Do not discard an otherwise-valid
+`Ac` finding for lacking a lettered citation the style guide does not currently provide.
 
 A docstring finding's `span` is a verbatim quote from the header (same 200-char rule and the
 same C1/C2 exception as exposition mode). Reference-mode findings feed `doc-fix`/`doc-sync`
