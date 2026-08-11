@@ -138,6 +138,19 @@ Process items in parallel, then combine results using the range overload:
 include::example$snippets/4f_composition.cpp[tag=fan_out,indent=0]
 ----
 
+[NOTE]
+====
+`process_item` takes its item by value. The tasks it returns are collected in a
+vector and awaited later. A reference parameter would be read long after the
+loop that bound it.
+
+In the snippet above nothing dangles: `items` outlives the `when_all`. The
+hazard is what a caller could do -- passing a temporary would leave the stored
+task holding a reference to it. Awaiting a task immediately, as `read_all` on
+xref:5.buffers/5c.sequences.adoc[Buffer Sequences] does, is the case where a
+reference parameter is safe.
+====
+
 === Racing a Deadline
 
 `when_any` is the tool for expressing a deadline race directly. Two waker waits, one completed by the operation itself, the other by whatever plays the clock, race as ordinary `when_any` children:

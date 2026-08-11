@@ -39,14 +39,34 @@ This ordering matters because the task's coroutine frame is allocated during ste
 
 [WARNING]
 ====
-Do not store the result of cpp:run_async[]`(executor)` and call it later. The
-wrapper's call operator is rvalue-qualified, so this fails to compile:
+Construct the task as the direct argument of the two-call expression. Three
+patterns split the two calls apart, and only the first is caught by the
+compiler.
+
+*Stored wrapper.* Storing the result of cpp:run_async[]`(executor)` and calling
+it later does not compile, because the wrapper's call operator is
+rvalue-qualified:
 
 [source,cpp,role=pseudocode]
 ----
 auto wrapper = run_async(pool.get_executor());  // Don't do this
 wrapper(compute());  // Error: operator() requires an rvalue
 ----
+
+*Preconstructed task.* Storing the *task* in a local and passing it in
+afterwards compiles and runs. Its frame is allocated by the time the wrapper
+exists, so it never sees the wrapper's allocator. A moved-from local, or a task
+returned by an earlier statement, behaves the same way.
+
+*Wrapper function.* A helper that accepts a task and performs the two-call
+pattern internally has the same effect. Its caller constructs the task as an
+argument to the helper, which is before the helper's body runs.
+
+The two silent patterns produce no diagnostic at all: the task runs, on a
+coroutine frame that came from the wrong allocator.
+cpp:run_async_wrapper[] documents each pattern, and
+xref:4.coroutines/4g.allocators.adoc[Frame Allocators] carries the
+{cpp}17-evaluation-order rationale.
 
 Always use the two-call pattern in a single expression.
 ====

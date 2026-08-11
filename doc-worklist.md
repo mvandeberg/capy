@@ -21,8 +21,6 @@ develop`) against `DOC_REVIEW_FEEDBACK.md` Section 2. One row per finding that i
 
 | finding# | library | surface | pages/headers | phase | owner |
 |---|---|---|---|---|---|
-| 3 | capy | adoc | **PARTIAL — docstring leg CLOSED 2026-08-03 (see dated note), adoc leg OPEN (not closed).** `doc/modules/ROOT/pages/4.coroutines/4b.launching.adoc:40-52`'s `[WARNING]` block lists only the rvalue-qualified-wrapper case (`auto wrapper = run_async(...); wrapper(compute());`) — the one case caught at compile time, i.e. the benign one. `doc/modules/ROOT/pages/4.coroutines/4g.allocators.adoc` lists none of the other cases (grepping that page for "preconstructed", "wrapper function", and "dangerous" separately finds none of the three; the only related hit is line 24, "This is why `run_async` uses two-call syntax:"). The preconstructed-task case, the wrapper-function case, and the Frame Allocators rationale link are all present in `include/boost/capy/ex/run_async.hpp:343-366`'s `run_async_wrapper` docstring but never reached either exposition page — a tutorial reader gets no warning about either silent-failure case. | 4 | unassigned |
-| 8 | both | adoc | **PARTIAL — latent dangling-reference hazard closed, safe-in-context leg undocumented on the page (not closed). Reclassified from phase = 2 to phase 4 by controller ruling (residual is Phase-4 wording work).** Commit `289cf6bc` closed a latent dangling-by-reference hazard in `test/doc/snippets/4f_composition.cpp`: `process_item` took `item const&`, and `process_all` (current: line 342) stores each returned `io_task<int>` in a vector and awaits it later via `when_all` — a deferred read of a reference bound at construction time. In the snippet as written nothing actually dangled (`items` outlives the `when_all`), but the commit body states the precise hazard correctly: "`process_item(temporary)` would dangle" if a caller ever passed one. `process_item` now takes `item` by value (current: lines 340, 359), so the rendered `fan_out` snippet (`doc/modules/ROOT/pages/4.coroutines/4f.composition.adoc:138`) is correct. `test/doc/snippets/5c_sequences.cpp` `read_all(Stream& stream, Buffers buffers)` (current: line 142, included at `doc/modules/ROOT/pages/5.buffers/5c.sequences.adoc:99`) was left unchanged — correctly, per the commit body: the stream is caller-owned and awaited immediately, the safe idiom. **Residual:** that safe-in-context rationale lives only in the `289cf6bc` commit message; neither adoc page carries it, so a reader comparing the two signatures (`item` by value vs `Stream&`) has no on-page explanation for the asymmetry. Belongs to Phase 4 (wording/clarity) as a short note on `5c.sequences.adoc` near the `read_all` snippet (or `4f.composition.adoc` near `fan_out`) stating why one takes a reference and the other doesn't. | 4 | unassigned |
 | 15 | capy | docstring | **OUT OF PHASE 4 — maintainer API-naming decision, not a doc task (ruled during Phase-4 pre-flight).** `include/boost/capy/concept/execution_context.hpp:73` (`concept ExecutionContext`) vs `include/boost/capy/ex/execution_context.hpp` (`class execution_context`); `include/boost/capy/ex/executor_ref.hpp`; `include/boost/capy/buffers.hpp:397` (`buffer_size`) vs `:475` (`buffer_length`) — a doc-side change here would either document the inconsistency as intentional or silently pick a winner, so the row stays open pending a maintainer naming decision outside this plan. | 4 | unassigned |
 | 18 | both | adoc | **DEFERRED — Review-tier (E2 reclassified Gate->Review in `6944132f`); verify-by-eye only, NOT actionable in this repo.** Verified in the built site (2026-07-28): long design pages (e.g. `9m.WhyNotCobalt.adoc`, 616 lines) render only the left page-tree nav, no right-rail per-page section ToC. `.toc-menu` styling ships in the shared boost-website UI bundle assets (`_/css/site.css`, `_/js/site.js`) but no page activates it — the right-rail ToC is a set-once theme format owned by that external UI bundle. | 1 | unassigned |
 
@@ -198,3 +196,26 @@ page names cited in `DOC_REVIEW_FEEDBACK.md` Section 3, unverified against that 
   `value(s)`, a rule that had no occurrence on either surface before. **C2 hard stays 2,
   C2 advisory stays 67, and Capy.SimpleTense / NoFluff / Terminology stay 0 on the
   docstring surface**, so the four gates Phase 4 promoted are unaffected.
+  **#3** — CLOSED, both legs. The docstring leg closed on 2026-08-03 (`cfa41dcb`); the
+  adoc leg closes here. `4b.launching.adoc`'s `[WARNING]` block now lists all three
+  patterns that split the two calls apart -- stored wrapper (the compile-time-caught one),
+  preconstructed task, and wrapper function -- says explicitly that the last two produce no
+  diagnostic, links `cpp:run_async_wrapper[]` for the per-pattern detail, and xrefs
+  `4g.allocators.adoc` for the {cpp}17-evaluation-order rationale. No signature is typed
+  out and no code is pasted (B1/B2); the one `role=pseudocode` block is the pre-existing
+  compile-error illustration, kept and relabelled as the first pattern.
+  **`4g.allocators.adoc` gets a two-sentence pointer, not the list** (chosen deliberately):
+  it is the rationale page and already owns the timing constraint and the two-call
+  explanation, so duplicating the defeat list there would give two places to keep in sync.
+  The pointer sits directly under its two-call snippet, where a reader who arrives for the
+  rationale meets it.
+  **#8** — CLOSED. The by-value/by-reference asymmetry is now explained on **both** pages:
+  `4f.composition.adoc` (after the `fan_out` snippet) and `5c.sequences.adoc` (after the
+  `consuming_buffers` bullets). Both state the rule -- a coroutine reads its parameters
+  when its body runs, so a task that is stored and awaited later outlives its call
+  expression -- and both cross-link the other page's case. The hazard is stated as
+  **latent**, matching `289cf6bc`'s own commit body: in the snippet as written nothing
+  dangles because `items` outlives the `when_all`; the hazard is what a caller passing a
+  temporary would create.
+  Both notes are Vale-clean: the `.adoc` surface is unmoved at **97** across all ten rules
+  with zero new findings on any of the four edited pages, and C2 stays hard 0 / advisory 67.

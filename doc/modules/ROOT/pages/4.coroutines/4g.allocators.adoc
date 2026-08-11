@@ -28,6 +28,10 @@ This is why `run_async` uses two-call syntax:
 include::example$snippets/4g_allocators.cpp[tag=two_call,indent=0]
 ----
 
+Three patterns split those two calls apart, and two of them do it without any
+diagnostic. xref:4.coroutines/4b.launching.adoc[Starting Coroutines] lists all
+three.
+
 == The Window
 
 The "window" is the interval between setting the thread-local allocator and the coroutine's first suspension point. During this window:
