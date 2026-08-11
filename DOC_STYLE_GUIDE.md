@@ -60,9 +60,22 @@ The Antora pipeline provides two mechanisms; use them instead of hand-authoring:
 - **B3. Intentionally-non-compiling blocks are tagged**, not silently pasted: use a
   pseudocode role for sketches/rejected designs and an external role for other-library
   comparisons, so the compile gate knows to skip them.
-- **B4. A brief describes behavior, not identity.** A reference brief says what the entity
-  *does*, not what it *is*, and never restates its declaration or claims parameters it does
-  not take.
+- **B4. A brief describes behavior, not identity — classes included.** A reference brief
+  says what the entity *does*, not what it *is*, and never restates its declaration or claims
+  parameters it does not take. This binds class briefs as much as function briefs. *(Reversal:
+  both documentation audits read identity-shaped class briefs — "A test utility for…", "Result
+  type for…", "Recycling memory resource with size-class buckets" — as house convention,
+  attested across 17+ headers, and on that reading dropped roughly 230 findings apiece. The
+  maintainer ruled that B4 binds them anyway: describing what a class *is* is not a licensed
+  house style, it is the defect B4 exists to catch. Treat both audits' B4 dispositions on class
+  briefs as superseded; this is what authorizes re-opening that finding set.)*
+- **B5. `@pre` is the house form for preconditions.** Use the Doxygen `@pre` tag; do not use
+  `@par Preconditions`. *(Evidence: the docstring corpus was split exactly 17/17 between the
+  two forms when this was ruled — not two conventions in different files, but a real tie,
+  including within single files (`thread_pool.hpp`, `any_executor.hpp` each use both forms
+  today). There was no house rule to preserve; the maintainer broke the tie in favor of `@pre`.
+  No further rationale was given, and none is needed to apply the rule — treat `@par
+  Preconditions` as the form to replace wherever a docstring is touched.)*
 
 ## Part C — Wording (pragmatic Simplified Technical English)
 
@@ -124,7 +137,13 @@ it only in the sense the row names. **scheduler** is approved only in its P2300 
   motivation.
 - **D2. Every concept page has a runnable example** of the library's *own* type — not only
   of the standard-library types it resembles. A page introducing a type shows that type in
-  use, actually running.
+  use, actually running. *(Primer carve-out: the "library's own type" clause does not bind a
+  section that declares itself background material rather than a Capy concept page. All five
+  pages of `doc/modules/ROOT/pages/3.concurrency/` deliberately use only standard-library
+  types — `3.intro.adoc` frames the section as first-principles concurrency taught before Capy
+  is introduced, not as an introduction to a Capy type. Both prior audits flagged this and both
+  were wrong to; it does not recur, and this note exists only to stop a third pass from
+  re-filing it. No page changes follow from this carve-out.)*
 - **D3. Every non-obvious design choice states its rationale** (or links to the explanation
   page that does). "Because it is" is not documentation.
 - **D4. Document thread-safety *and* executor affinity** at the class level where relevant.
@@ -164,7 +183,7 @@ Not every rule is machine-checkable. Each rule sits in one of three tiers:
 |---|---|
 | **Gate** | A1, A6, A7, B2, B3, C2, C4, C9, C10, D2 |
 | **Warning** | A2, B1, C1, C3, C5, C6, D4, D5, E1 |
-| **Review** | A3, A4, A5, B4, C7, C8, D1, D3, E2, E3, E4 |
+| **Review** | A3, A4, A5, B4, B5, C7, C8, D1, D3, E2, E3, E4 |
 
 The accuracy gates (B2, B3, D2 correctness) are enforced by the snippet-compile job, not by
 Vale — that job is what makes examples unable to drift.
@@ -272,5 +291,20 @@ reason, and `doc/lint/README.md` records the fingerprint shapes a gate spec has 
 ### How an agent uses this guide
 1. Identify the page's Diátaxis mode; keep edits in-mode (A1).
 2. Never type a signature or paste code — link (B1) or include a compiled snippet (B2).
-3. Run `vale` and the doc build locally; fix all `error`s before proposing the change.
+3. Run Vale locally over both corpora, from `doc/`, before proposing the change, and fix all
+   `error`s. Vale must run from `doc/` with `node_modules/.bin` on `PATH` — this project's Vale
+   needs `asciidoctor` (the asciidoctor.js build under `node_modules`, not a Ruby install; there
+   is no Ruby on a stock dev machine here) to parse AsciiDoc, and without both of those it exits
+   2 having printed nothing, which greps identical to a clean run and has already misled two
+   audit sub-agents this way:
+   ```
+   cd doc && export PATH="$PWD/node_modules/.bin:$PATH"
+   vale --output=JSON modules
+   node lint/extract-docstrings.mjs && vale --output=JSON lint/.docstrings
+   ```
+   A `0` in the output is not evidence of a clean run by itself — it is at least as often
+   evidence the run never happened (F.4's silent-and-reassuring failures are exactly this
+   shape). Confirm a non-zero total somewhere before trusting a zero. Vale does not enforce
+   C2 (sentence length) either way — its authority is `doc/lint/sentence-length.mjs`, not Vale
+   (F1); do not look to `vale`'s exit code for C2.
 4. For every new claim, either link the rationale or add it (D3).
