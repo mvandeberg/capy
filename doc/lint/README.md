@@ -70,7 +70,7 @@ while checking nothing. Gate the script:
 
 ```
 --gate 'sentence_length:^C2:'      # live in docs.yml since Phase-4 exit
-                                   # measured at 620fdf2c: exit 1, gatedNew 2
+                                   # re-measured at the Phase-4 final fix wave: exit 1, gatedNew 2
 ```
 
 `^C2:` binds the **hard** slice only — the `include/**` docstrings plus every `.adoc` page outside
@@ -82,7 +82,7 @@ the gated slice contains 0 `advisory-C2` fingerprints.
 ### Run `selftest.mjs` after touching `sentence-length.mjs`
 
 ```
-node lint/selftest.mjs      # exit 0 = 14 assertions hold; exit 1 names what broke
+node lint/selftest.mjs      # exit 0 = 17 assertions hold; exit 1 names what broke
 ```
 
 It exercises the properties whose failure is **silent**, because nothing in the real corpus
@@ -93,6 +93,12 @@ hard/advisory partition including a `9.designish/` look-alike that must stay har
 refactors of the backtick rule were demonstrated to break it while every corpus-level number still
 looked reasonable; both fail this file. Fixtures live in `lint/fixtures/` and are not part of
 either linted corpus.
+
+It also asserts that `extract-docstrings.mjs` extracts **both** Doxygen comment forms, which is the
+same class of silent failure: `///` runs went unextracted until 2026-08, so 86 published doc lines
+were outside every gate, and losing that branch again would just make the corpus smaller and every
+count lower. The expectation is derived from the header tree rather than written down — the headers
+whose *only* doc comments are `///` runs must each produce an output file — so it cannot go stale.
 
 ### `sentence_length` has no baseline entry — so the C2 gate is RED, on purpose
 

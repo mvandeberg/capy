@@ -16,8 +16,13 @@
 #
 #     --gate 'sentence_length:^C2:'
 #
-# which was measured at EXIT=1 / gatedNew=135, so it needs a baseline reseed
-# before it can go green. `^C2:` binds the HARD slice only; the design-essay
+# which is live in docs.yml since the Phase-4 exit. Re-measured at the Phase-4
+# final fix wave: EXIT=1 / gatedNew=2, both findings the grandfathered
+# `when_any.hpp` refusals, so it still needs a baseline reseed before it can go
+# green. (An earlier version of this comment said gatedNew=135, the figure from
+# before the .adoc hard slice was worked to zero; `doc/lint/README.md` carried
+# the identical staleness and was corrected, this copy was missed.)
+# `^C2:` binds the HARD slice only; the design-essay
 # findings are keyed `advisory-C2` and are deliberately unreachable from a
 # `C2`-prefixed spec (DOC_STYLE_GUIDE.md Part C2: hard in API docs, soft in
 # essays).
