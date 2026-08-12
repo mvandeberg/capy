@@ -277,9 +277,10 @@ struct blocking_handler_wrapper
 
     The rvalue ref-qualifier on `operator()` restricts invocation
     to rvalues, so `run_blocking(h)(task)` is the supported spelling.
-    `operator()` moves `h1_`, `h2_`, and the stop token out of the
-    wrapper, leaving it single-use. A stored wrapper needs an explicit
-    `std::move` to invoke:
+    `operator()` moves `h1_` out of the wrapper, and `h2_` too unless
+    `H2` is `default_handler`. The stop token is copied, not moved.
+    The wrapper is single-use regardless. A stored wrapper needs an
+    explicit `std::move` to invoke:
     `auto w = run_blocking(h); std::move(w)(task);`. That explicit
     `std::move` surfaces the single-use hazard that a bare `w(task)`
     on an lvalue would otherwise hide.
