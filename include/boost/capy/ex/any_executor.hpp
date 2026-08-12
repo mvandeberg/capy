@@ -154,8 +154,9 @@ public:
     /** Construct a default instance.
 
         Constructs an empty `any_executor`. `operator bool()` reports
-        the empty state; `context()`, `dispatch()`, and `post()` are
-        undefined behavior until an executor is assigned.
+        the empty state; `context()`, `on_work_started()`,
+        `on_work_finished()`, `dispatch()`, and `post()` are undefined
+        behavior until an executor is assigned.
 
         @par Postconditions
         @li `!*this`

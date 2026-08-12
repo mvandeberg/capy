@@ -118,8 +118,9 @@ public:
 
         Constructs an empty `executor_ref`. `operator bool()` and
         `operator==()` report the empty state; `context()`,
-        `dispatch()`, `post()`, and `target()` are undefined behavior
-        until an executor is assigned.
+        `on_work_started()`, `on_work_finished()`, `dispatch()`,
+        `post()`, and `target()` are undefined behavior until an
+        executor is assigned.
     */
     executor_ref() = default;
 
