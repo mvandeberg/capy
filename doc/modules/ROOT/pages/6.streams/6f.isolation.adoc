@@ -134,6 +134,5 @@ Type-erased wrappers are in `<boost/capy/io/>`:
 
 * cpp:any_stream[]
 * cpp:any_read_stream[], cpp:any_write_stream[]
-* `any_buffer_source`, `any_buffer_sink`
 
 You have now completed the Stream Concepts section. These abstractions—streams and their type-erased wrappers—form the foundation for Capy's I/O model. Continue to xref:../8.examples/8a.hello-task.adoc[Example Programs] to see complete working examples.
