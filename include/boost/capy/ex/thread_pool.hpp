@@ -30,7 +30,8 @@ namespace capy {
 
     @par Thread Safety
     Distinct objects: Safe.
-    Shared objects: Unsafe.
+    Shared objects: Safe for @ref get_executor, @ref join, and
+    @ref stop. Unsafe for construction and destruction.
 
     @par Example
     @code
@@ -71,7 +72,8 @@ public:
 
     /** Construct a thread pool.
 
-        Creates a pool with the specified number of worker threads.
+        Records the requested worker count; no threads are created
+        yet. Threads start lazily on the executor's first `post()`.
         If `num_threads` is zero, the number of threads is set to
         the hardware concurrency, or one if that cannot be determined.
 
