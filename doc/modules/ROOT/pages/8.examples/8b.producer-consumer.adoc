@@ -23,10 +23,10 @@ include::example$producer-consumer/producer_consumer.cpp[tag=full]
 
 == Build
 
-[source,cmake]
+[source,cmake,role=pseudocode]
 ----
 add_executable(producer_consumer producer_consumer.cpp)
-target_link_libraries(producer_consumer PRIVATE capy)
+target_link_libraries(producer_consumer PRIVATE Boost::capy)
 ----
 
 == Walkthrough

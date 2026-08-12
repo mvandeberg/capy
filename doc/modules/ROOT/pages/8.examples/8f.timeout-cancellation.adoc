@@ -25,10 +25,10 @@ include::example$timeout-cancellation/timeout_cancellation.cpp[tag=full]
 
 == Build
 
-[source,cmake]
+[source,cmake,role=pseudocode]
 ----
 add_executable(timeout_cancellation timeout_cancellation.cpp)
-target_link_libraries(timeout_cancellation PRIVATE capy)
+target_link_libraries(timeout_cancellation PRIVATE Boost::capy)
 ----
 
 == Walkthrough

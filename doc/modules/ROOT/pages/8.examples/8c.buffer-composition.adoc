@@ -22,10 +22,10 @@ include::example$buffer-composition/buffer_composition.cpp[tag=full]
 
 == Build
 
-[source,cmake]
+[source,cmake,role=pseudocode]
 ----
 add_executable(buffer_composition buffer_composition.cpp)
-target_link_libraries(buffer_composition PRIVATE capy)
+target_link_libraries(buffer_composition PRIVATE Boost::capy)
 ----
 
 == Walkthrough

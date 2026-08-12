@@ -22,10 +22,10 @@ include::example$hello-task/hello_task.cpp[tag=full]
 
 == Build
 
-[source,cmake]
+[source,cmake,role=pseudocode]
 ----
 add_executable(hello_task hello_task.cpp)
-target_link_libraries(hello_task PRIVATE capy)
+target_link_libraries(hello_task PRIVATE Boost::capy)
 ----
 
 == Walkthrough

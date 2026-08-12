@@ -24,12 +24,20 @@ include::example$programs/quick_start_hello.cpp[tag=full]
 
 == Build and Run
 
+Capy is not header-only, so link against `Boost::capy`:
+
+[source,cmake,role=pseudocode]
+----
+add_executable(hello_coro hello_coro.cpp)
+target_link_libraries(hello_coro PRIVATE Boost::capy)
+----
+
+`Boost::capy` carries its own thread-linkage requirements, so a plain
+`-lcapy` command line cannot reproduce them. Build with `CMake`, then run
+the executable:
+
 [source,bash]
 ----
-# With GCC
-g++ -std=c++20 -o hello_coro hello_coro.cpp -lcapy -pthread
-
-# Run
 ./hello_coro
 ----
 

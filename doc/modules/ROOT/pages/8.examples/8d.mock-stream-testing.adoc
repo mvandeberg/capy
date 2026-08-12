@@ -22,10 +22,10 @@ include::example$mock-stream-testing/mock_stream_testing.cpp[tag=full]
 
 == Build
 
-[source,cmake]
+[source,cmake,role=pseudocode]
 ----
 add_executable(mock_stream_testing mock_stream_testing.cpp)
-target_link_libraries(mock_stream_testing PRIVATE capy)
+target_link_libraries(mock_stream_testing PRIVATE Boost::capy)
 ----
 
 == Walkthrough

@@ -22,10 +22,10 @@ include::example$parallel-fetch/parallel_fetch.cpp[tag=full]
 
 == Build
 
-[source,cmake]
+[source,cmake,role=pseudocode]
 ----
 add_executable(parallel_fetch parallel_fetch.cpp)
-target_link_libraries(parallel_fetch PRIVATE capy)
+target_link_libraries(parallel_fetch PRIVATE Boost::capy)
 ----
 
 == Walkthrough
