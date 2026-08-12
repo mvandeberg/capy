@@ -65,14 +65,15 @@ namespace capy {
     @par Example
     @code
     // Owning - takes ownership of the stream
-    any_write_stream stream(socket{ioc});
+    any_write_stream owning_stream(socket{ioc});
 
     // Reference - wraps without ownership
     socket sock(ioc);
-    any_write_stream stream(&sock);
+    any_write_stream ref_stream(&sock);
 
-    const_buffer buf(data, size);
-    auto [ec, n] = co_await stream.write_some(std::span(&buf, 1));
+    char data[] = "hello";
+    const_buffer buf(data, sizeof(data));
+    auto [ec, n] = co_await owning_stream.write_some(std::span(&buf, 1));
     @endcode
 
     @see any_read_stream, any_stream, WriteStream

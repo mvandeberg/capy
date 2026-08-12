@@ -10,6 +10,7 @@
 #ifndef BOOST_CAPY_IO_TASK_HPP
 #define BOOST_CAPY_IO_TASK_HPP
 
+#include <boost/capy/error.hpp>
 #include <boost/capy/io_result.hpp>
 #include <boost/capy/task.hpp>
 
@@ -20,7 +21,7 @@ namespace capy {
 
     This is a convenience alias for `task<io_result<Ts...>>`.
     The converting constructor on `io_result<>` allows direct
-    `co_return` of error codes:
+    `co_return` of a `std::error_code`:
 
     @code
     io_task<> connect_to_server(socket& s, endpoint ep)
@@ -28,9 +29,11 @@ namespace capy {
         co_return co_await s.connect(ep);  // returns io_result<>
     }
 
-    io_task<> handler(route_params& rp)
+    io_task<> require_ready(bool ready)
     {
-        co_return route::next;  // error_code converts to io_result<>
+        if(!ready)
+            co_return make_error_code(error::eof);  // error_code converts to io_result<>
+        co_return {};
     }
     @endcode
 

@@ -62,9 +62,14 @@ namespace test {
     @par Example
     @code
     fuse f;
-    auto [a, b] = make_stream_pair( f );
 
     auto r = f.armed( [&]( fuse& ) -> task<> {
+        // Constructed inside the lambda: armed() re-invokes this
+        // function once per injected failure point, and a stream
+        // pair constructed outside would carry buffered state
+        // across those rounds.
+        auto [a, b] = make_stream_pair( f );
+
         auto [ec, n] = co_await a.write_some(
             const_buffer( "hello", 5 ) );
         if( ec )

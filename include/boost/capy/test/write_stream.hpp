@@ -46,9 +46,14 @@ namespace test {
     @par Example
     @code
     fuse f;
-    write_stream ws( f );
 
     auto r = f.armed( [&]( fuse& ) -> task<void> {
+        // Constructed inside the lambda: armed() re-invokes this
+        // function once per injected failure point, and a write_stream
+        // constructed outside would carry accumulated data across
+        // those rounds.
+        write_stream ws( f );
+
         auto [ec, n] = co_await ws.write_some(
             const_buffer( "Hello", 5 ) );
         if( ec )
