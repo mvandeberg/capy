@@ -188,8 +188,9 @@ public:
 
     /** Notify that work has started.
 
-        Delegates to the inner executor's `on_work_started()`.
-        This is a no-op for most executor types.
+        Delegates to the inner executor's `on_work_started()`. For a
+        `thread_pool` inner executor, this increments the count that
+        `join()` blocks on.
     */
     void
     on_work_started() const noexcept
@@ -199,8 +200,9 @@ public:
 
     /** Notify that work has finished.
 
-        Delegates to the inner executor's `on_work_finished()`.
-        This is a no-op for most executor types.
+        Delegates to the inner executor's `on_work_finished()`. For a
+        `thread_pool` inner executor, this decrements the count that
+        `join()` blocks on.
     */
     void
     on_work_finished() const noexcept
