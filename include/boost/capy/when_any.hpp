@@ -673,6 +673,11 @@ public:
     non-zero `ec` and so cannot win; if no child has already succeeded,
     the result settles at index 0.
 
+    @par Thread Safety
+    The returned task must be awaited from a single execution context.
+    Child awaitables execute concurrently but complete through the caller's
+    executor.
+
     @param awaitables Range of io_result-returning awaitables (must
         not be empty).
 
@@ -803,6 +808,11 @@ template<IoAwaitableRange R>
     non-zero `ec` and so cannot win; if no child has already succeeded,
     the result settles at index 0.
 
+    @par Thread Safety
+    The returned task must be awaited from a single execution context.
+    Child awaitables execute concurrently but complete through the caller's
+    executor.
+
     @param awaitables Range of io_result<>-returning awaitables (must
         not be empty).
 
@@ -925,6 +935,11 @@ template<IoAwaitableRange R>
     Supports _IoAwaitable cancellation_. A canceled child await-returns a
     non-zero `ec` and so cannot win; if no child has already succeeded,
     the result settles at index 0.
+
+    @par Thread Safety
+    The returned task must be awaited from a single execution context.
+    Child awaitables execute concurrently but complete through the caller's
+    executor.
 
     @param as The awaitables to race. Each must satisfy @ref
         IoAwaitable and is consumed (moved-from) when `when_any`

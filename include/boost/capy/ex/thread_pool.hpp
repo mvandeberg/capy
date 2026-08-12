@@ -61,8 +61,7 @@ public:
         Signals all worker threads to stop, waits for them to
         finish, and destroys any pending work items.
 
-        @par Preconditions
-        No thread outside this pool may post or dispatch work to it
+        @pre No thread outside this pool may post or dispatch work to it
         (or to a strand built on it) concurrently with, or after,
         destruction. Doing so is undefined behavior. Submit such work
         through @ref run_async or @ref run and call @ref join before
@@ -120,8 +119,7 @@ public:
         This function is idempotent. The first call performs the
         join; subsequent calls return immediately.
 
-        @par Preconditions
-        Must not be called from a thread in this pool (undefined
+        @pre Must not be called from a thread in this pool (undefined
         behavior).
 
         @par Postconditions
@@ -144,6 +142,10 @@ public:
         `stop()` causes it to stop waiting for outstanding
         work. The `join()` call still waits for worker threads
         to finish their current item and exit before returning.
+
+        @par Thread Safety
+        May be called concurrently from any thread, including a
+        thread in this pool.
     */
     void
     stop() noexcept;

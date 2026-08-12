@@ -719,6 +719,11 @@ template<IoAwaitableRange R>
     @par Remarks
     Supports _IoAwaitable cancellation_.
 
+    @par Thread Safety
+    The returned task must be awaited from a single execution context.
+    Child awaitables execute concurrently but complete through the caller's
+    executor.
+
     @param awaitables Range of io_result<>-returning awaitables to
         execute concurrently (must not be empty).
 
@@ -826,6 +831,11 @@ template<IoAwaitableRange R>
 
     @par Remarks
     Supports _IoAwaitable cancellation_.
+
+    @par Thread Safety
+    The returned task must be awaited from a single execution context.
+    Child awaitables execute concurrently but complete through the caller's
+    executor.
 
     @par Exception Safety
     If a child throws, the first child exception is rethrown after
