@@ -556,6 +556,11 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
         only when the quitter has not started or has fully completed.
         Destroying a suspended quitter that is being awaited produces
         undefined behavior.
+
+        @par Postconditions
+        `handle()` returns a null handle. Callers needing the
+        original handle must save it, via @ref handle, before
+        calling this.
     */
     void release() noexcept
     {

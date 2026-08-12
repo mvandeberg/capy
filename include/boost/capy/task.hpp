@@ -467,8 +467,9 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
         undefined behavior.
 
         @par Postconditions
-        `handle()` returns the original handle, but the task no longer
-        owns it.
+        `handle()` returns a null handle. Callers needing the
+        original handle must save it, via @ref handle, before
+        calling this.
     */
     void release() noexcept
     {
