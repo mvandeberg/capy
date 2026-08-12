@@ -49,12 +49,12 @@ namespace capy {
         `n` bytes were written from the buffer sequence.
     @li If `ec`, then `n >= 0 && n < buffer_size( buffers )`.
         `n` is the number of bytes written before the I/O
-        condition arose.
+        contingency arose.
 
     Equivalently, `n == buffer_size( buffers )` implies `!ec`. A
     completion that writes the entire buffer sequence is a success, even
-    when the underlying operation also signals a condition. That
-    condition is reported on a subsequent write. This lets generic
+    when the underlying operation also signals a contingency. That
+    contingency is reported on a subsequent write. This lets generic
     composition algorithms such as `when_all` and `when_any` distinguish
     a completed transfer from a failure.
 
@@ -64,9 +64,15 @@ namespace capy {
 
     Buffers in the sequence are consumed in order.
 
+    @par After an Error
+
+    A subsequent `write_some` call is permitted. A conforming stream
+    may report the same contingency, report a different one, or
+    resume delivering data.
+
     @par Error Reporting
 
-    I/O conditions arising from the underlying I/O system are
+    I/O contingencies arising from the underlying I/O system are
     reported via the `error_code` component of the return value.
     Examples are EOF, connection reset, and broken pipe. Failures
     in the library wrapper itself (such as memory allocation
