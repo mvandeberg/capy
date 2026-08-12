@@ -53,9 +53,11 @@ struct is_strand_type<strand<E>> : std::true_type {};
 
     @par Default State
 
-    A default-constructed `any_executor` holds no executor. Calling
-    executor operations on a default-constructed instance results
-    in undefined behavior. Use `operator bool()` to check validity.
+    A default-constructed `any_executor` holds no executor.
+    `operator bool()`, `operator==`, and `target_type()` report the
+    empty state. `context()`, `on_work_started()`, `on_work_finished()`,
+    `dispatch()`, and `post()` are undefined behavior until an
+    executor is assigned.
 
     @par Thread Safety
 
@@ -151,9 +153,9 @@ class any_executor
 public:
     /** Construct a default instance.
 
-        Constructs an empty `any_executor`. Calling any executor
-        operations on a default-constructed instance results in
-        undefined behavior.
+        Constructs an empty `any_executor`. `operator bool()` reports
+        the empty state; `context()`, `dispatch()`, and `post()` are
+        undefined behavior until an executor is assigned.
 
         @par Postconditions
         @li `!*this`

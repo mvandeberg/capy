@@ -116,9 +116,10 @@ class executor_ref
 public:
     /** Construct a default instance.
 
-        Constructs an empty `executor_ref`. Calling any executor
-        operations on a default-constructed instance results in
-        undefined behavior.
+        Constructs an empty `executor_ref`. `operator bool()` and
+        `operator==()` report the empty state; `context()`,
+        `dispatch()`, `post()`, and `target()` are undefined behavior
+        until an executor is assigned.
     */
     executor_ref() = default;
 
