@@ -53,26 +53,29 @@ namespace capy {
 
     @par Example
     @code
+    void reader(any_read_stream&);
+    void writer(any_write_stream&);
+
     // Owning - takes ownership of the stream
-    any_stream stream(socket{ioc});
+    any_stream owning_stream(socket{ioc});
 
     // Reference - wraps without ownership
     socket sock(ioc);
-    any_stream stream(&sock);
+    any_stream ref_stream(&sock);
 
-    // Use read_some from any_read_stream base
-    mutable_buffer rbuf(rdata, rsize);
-    auto [ec1, n1] = co_await stream.read_some(std::span(&rbuf, 1));
+    // Use read_some from the any_read_stream base
+    char rdata[1024];
+    mutable_buffer rbuf(rdata, sizeof(rdata));
+    auto [ec1, n1] = co_await owning_stream.read_some(std::span(&rbuf, 1));
 
-    // Use write_some from any_write_stream base
-    const_buffer wbuf(wdata, wsize);
-    auto [ec2, n2] = co_await stream.write_some(std::span(&wbuf, 1));
+    // Use write_some from the any_write_stream base
+    char wdata[] = "hello";
+    const_buffer wbuf(wdata, sizeof(wdata));
+    auto [ec2, n2] = co_await owning_stream.write_some(std::span(&wbuf, 1));
 
     // Pass to functions expecting one capability
-    void reader(any_read_stream&);
-    void writer(any_write_stream&);
-    reader(stream);  // Implicit upcast
-    writer(stream);  // Implicit upcast
+    reader(owning_stream);  // Implicit upcast
+    writer(owning_stream);  // Implicit upcast
     @endcode
 
     @see any_read_stream, any_write_stream, ReadStream, WriteStream
@@ -102,8 +105,9 @@ public:
 
     /** Construct a default instance.
 
-        Constructs an empty wrapper. Operations on a default-constructed
-        wrapper result in undefined behavior.
+        Constructs an empty wrapper. @ref has_value and `operator bool`
+        report the empty state; calling `read_some` or `write_some`
+        before the wrapper holds a stream is undefined behavior.
     */
     any_stream() = default;
 

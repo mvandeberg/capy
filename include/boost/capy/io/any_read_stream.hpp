@@ -101,8 +101,9 @@ public:
 
     /** Construct a default instance.
 
-        Constructs an empty wrapper. Operations on a default-constructed
-        wrapper result in undefined behavior.
+        Constructs an empty wrapper. @ref has_value and `operator bool`
+        report the empty state; calling @ref read_some before the
+        wrapper holds a stream is undefined behavior.
     */
     any_read_stream() = default;
 
