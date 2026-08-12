@@ -51,19 +51,6 @@ include::example$snippets/9f_write_stream.cpp[tag=write_some_signature,indent=0]
 
 Buffer sequences should be accepted by value when the member function is a coroutine, to ensure the sequence lives in the coroutine frame across suspension points.
 
-== Concept Hierarchy
-
-cpp:WriteStream[] is the base of the write-side hierarchy:
-
-----
-WriteStream   { write_some }
-    |
-    v
-WriteSink     { write_some, write, write_eof(buffers), write_eof() }
-----
-
-Every `WriteSink` is a cpp:WriteStream[]. Algorithms constrained on cpp:WriteStream[] accept both raw streams and sinks. The `WriteSink` concept adds complete-write and EOF signaling on top of the partial-write primitive. See the WriteSink design document for details.
-
 == Composed Algorithms
 
 Two composed algorithms build complete-write behavior on top of `write_some`:
@@ -95,7 +82,7 @@ The critical design insight behind `write_some` as a primitive is that the calle
 
 A composed algorithm like `write_now` cannot do this. It receives a fixed buffer sequence and drains it to completion. When the kernel accepts only part of the data, `write_now` must send the remainder in a second call -- even though the remainder may be small. The caller has no opportunity to read more data from the source between iterations.
 
-=== Diagram: Relaying 100KB from a ReadSource through a TCP Socket
+=== Diagram: Relaying 100KB from a ReadStream through a TCP Socket
 
 Consider relaying 100KB from a cpp:ReadStream[] to a TCP socket. The kernel's send buffer accepts at most 40KB per call. Compare two approaches:
 
@@ -124,7 +111,7 @@ Every time `write_now` partially drains a buffer, the remainder is a small paylo
 
 === Code: `write_now` Without Top-Up
 
-This example reads from a `ReadSource` and writes to a cpp:WriteStream[] using `write_now`. Each chunk is drained to completion before the caller can read more from the source.
+This example reads from a `ReadStream` and writes to a cpp:WriteStream[] using `write_now`. Each chunk is drained to completion before the caller can read more from the source.
 
 [source,cpp]
 ----
@@ -150,18 +137,11 @@ After the kernel accepts 40KB of a 64KB chunk, `write_now` must send the remaini
   or where the write is expected to complete in one call.
 | Cannot top up between iterations. Small remainders
   waste syscall payloads.
-
-| `WriteSink::write`
-| Sink-oriented code where the concrete type implements complete-write
-  natively (buffered writer, file, compressor) and the caller does not
-  manage the loop.
-| Requires `WriteSink`, not just cpp:WriteStream[].
 |===
 
 === Rule of Thumb
 
 - If the caller has a discrete, bounded payload and wants zero-fuss complete-write semantics, use `write_now`.
-- If the destination is a `WriteSink`, use cpp:write[] directly.
 
 == Conforming Types
 
@@ -172,8 +152,6 @@ Examples of types that satisfy cpp:WriteStream[]:
 - **Buffered write streams**: `write_some` appends to an internal buffer and returns immediately when space is available, or drains to the underlying stream when full.
 - **QUIC streams**: `write_some` sends one or more QUIC frames.
 - **Test mock streams**: `write_some` records data and returns configurable results for testing.
-
-All of these types also naturally extend to `WriteSink` by adding cpp:write[], `write_eof(buffers)`, and `write_eof()`.
 
 == Relationship to `ReadStream`
 
@@ -188,9 +166,6 @@ The read-side counterpart is cpp:ReadStream[], which requires `read_some`. The s
 
 | `write_now` (composed)
 | cpp:read[] free function (composed)
-
-| `WriteSink::write`
-| `ReadSource::read`
 |===
 
 The asymmetry is that the read side does not have a `read_now` with eager completion, because reads depend on data arriving from the network -- the synchronous fast path is less reliably useful than for writes into a buffered stream.
@@ -199,8 +174,7 @@ The asymmetry is that the read side does not have a `read_now` with eager comple
 
 cpp:WriteStream[] provides `write_some` as the single partial-write primitive. This is deliberately minimal:
 
-- Algorithms that need complete-write semantics use `write_now` (for cpp:WriteStream[]) or cpp:write[] (for `WriteSink`).
+- Algorithms that need complete-write semantics use `write_now` or cpp:write[], both built on `write_some`.
 - Algorithms that need maximum throughput use `write_some` directly with buffer top-up, achieving fewer syscalls than composed algorithms by keeping the buffer full between iterations.
-- The concept is the base of the hierarchy. `WriteSink` refines it by adding cpp:write[], `write_eof(buffers)`, and `write_eof()`.
 
-The choice between `write_some`, `write_now`, and `WriteSink::write` is a throughput-versus-convenience trade-off. `write_some` gives the caller maximum control. `write_now` gives the caller maximum simplicity. `WriteSink::write` gives the concrete type maximum implementation freedom.
+The choice between `write_some` and `write_now` is a throughput-versus-convenience trade-off. `write_some` gives the caller maximum control. `write_now` gives the caller maximum simplicity.

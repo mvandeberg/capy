@@ -2,7 +2,7 @@
 
 == Overview
 
-This document describes the design of the cpp:ReadStream[] concept: the fundamental partial-read primitive in the concept hierarchy. It explains why `read_some` is the correct building block, how composed algorithms build on top of it, and the relationship to `ReadSource`.
+This document describes the design of the cpp:ReadStream[] concept: the fundamental partial-read primitive in the concept hierarchy. It explains why `read_some` is the correct building block and how composed algorithms build on top of it.
 
 == Definition
 
@@ -55,28 +55,6 @@ include::example$snippets/9c_read_stream.cpp[tag=read_some_signature,indent=0]
 
 Buffer sequences should be accepted by value when the member function is a coroutine, to ensure the sequence lives in the coroutine frame across suspension points.
 
-== Concept Hierarchy
-
-`ReadStream` is the base of the read-side hierarchy:
-
-----
-ReadStream    { read_some }
-    |
-    v
-ReadSource    { read_some, read }
-----
-
-`ReadSource` refines `ReadStream`. Every `ReadSource` is a `ReadStream`. Algorithms constrained on `ReadStream` accept both raw streams and sources. The `ReadSource` concept adds a complete-read primitive on top of the partial-read primitive.
-
-This mirrors the write side:
-
-----
-WriteStream   { write_some }
-    |
-    v
-WriteSink     { write_some, write, write_eof(buffers), write_eof() }
-----
-
 == Composed Algorithms
 
 A composed algorithm builds on `read_some`:
@@ -117,9 +95,6 @@ include::example$snippets/9c_read_stream.cpp[tag=echo,indent=0]
 
 | `read` free function (composed)
 | `write_now` (composed, eager)
-
-| `ReadSource::read`
-| `WriteSink::write`
 |===
 
 == Design Foundations: Why a Full Buffer Is Always Success
@@ -201,6 +176,5 @@ No source is forced into an unnatural pattern. Sources that naturally separate d
 
 - Algorithms that need to fill a buffer completely use the `read` composed algorithm.
 - Algorithms that need to process data as it arrives use `read_some` directly.
-- `ReadSource` refines `ReadStream` by adding `read` for complete-read semantics.
 
 The contract permits errors to accompany partial data, with one rule: a completely filled buffer is always reported as success, and any condition that coincides with it is deferred to the next call. This uses the `(error_code, size_t)` return type to its full potential, keeps a stream from deferring in the common partial case, and keeps `n` a reliable proxy for completion from `read_some` through composed operations. The canonical advance-then-check loop handles every case correctly with no additional call-site cost.
