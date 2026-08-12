@@ -323,7 +323,7 @@ make_trampoline(Ex, Handlers, Alloc)
 
 } // namespace detail
 
-/** Wrapper returned by run_async that accepts a task for execution.
+/** Installs the frame allocator, then starts the task on the executor when called once.
 
     This wrapper holds the run_async_trampoline coroutine, executor, stop token,
     and handlers. The run_async_trampoline is allocated when the wrapper is constructed

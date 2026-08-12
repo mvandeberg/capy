@@ -21,7 +21,7 @@
 namespace boost {
 namespace capy {
 
-/** Recycling memory resource with size-class buckets.
+/** Recycles freed blocks through per-thread, power-of-two size-class buckets.
 
     This memory resource recycles memory blocks using power-of-two
     size classes for O(1) allocation lookup. It maintains a thread-local
