@@ -46,19 +46,17 @@ namespace capy {
 
     @par Example
     @code
-    io_context ctx;
+    thread_pool pool(1);
 
-    // Keep context running while we set things up
-    auto guard = make_work_guard(ctx);
+    // Keep the pool from completing while we set things up
+    auto guard = make_work_guard(pool.get_executor());
 
-    std::thread t([&ctx]{ ctx.run(); });
+    // ... post work to pool ...
 
-    // ... post work to ctx ...
-
-    // Allow context to complete when work is done
+    // Allow the pool to complete when work is done
     guard.reset();
 
-    t.join();
+    pool.join();
     @endcode
 
     @note The executor is returned by reference, allowing callers to

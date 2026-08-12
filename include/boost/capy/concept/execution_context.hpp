@@ -58,12 +58,15 @@ namespace capy {
 
     @par Example
 
+    `post` takes a `continuation&`, which no closure converts to; ordinary
+    callers reach it indirectly through `run_async` or similar combinators:
+
     @code
     template<ExecutionContext Ctx>
-    void spawn_work( Ctx& ctx )
+    void spawn_work( Ctx& ctx, task<> work )
     {
         auto ex = ctx.get_executor();
-        ex.post( []{ } ); // work runs on ctx
+        run_async(ex)(std::move(work)); // schedules work; runs on ctx
     }
     @endcode
 

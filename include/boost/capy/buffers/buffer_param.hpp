@@ -96,15 +96,21 @@ namespace capy {
     This class enables passing arbitrary buffer sequences through
     a virtual function boundary. The template function captures
     the buffer sequence by value and drives the iteration, while
-    the virtual function receives a simple span:
+    the virtual function receives a simple span. A `MutableBufferSequence`
+    also satisfies `ConstBufferSequence`, so plain CTAD
+    (`buffer_param bp(buffers)`) would deduce `span<mutable_buffer>` when
+    called with a mutable sequence. That does not match `write_impl`'s
+    `span<const_buffer>` parameter. Use @ref const_buffer_param to force
+    `const_buffer` storage regardless of what `BS` is:
 
     @code
     class base
     {
     public:
-        task<> write(ConstBufferSequence auto buffers)
+        template<ConstBufferSequence BS>
+        task<> write(BS buffers)
         {
-            buffer_param bp(buffers);
+            const_buffer_param<BS> bp(buffers);
             while(true)
             {
                 auto bufs = bp.data();

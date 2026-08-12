@@ -137,7 +137,7 @@ namespace capy {
     }
 
     // Or with RAII:
-    task<> protected_operation() {
+    task<> protected_operation_raii() {
         auto [ec, guard] = co_await cm.scoped_lock();
         if(ec)
             co_return;
