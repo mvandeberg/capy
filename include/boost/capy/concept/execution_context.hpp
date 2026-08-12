@@ -22,7 +22,7 @@ namespace capy {
 /** Concept for types that provide a place where work is executed.
 
     An execution context owns the resources (threads, event loops,
-    completion ports) needed to execute function objects. It serves
+    completion ports) needed to run coroutine continuations. It serves
     as the factory for executors, which are lightweight handles used
     to submit work. Multiple executors may reference the same context.
 
@@ -42,8 +42,8 @@ namespace capy {
         resources owned by the context.
     @li The context remains valid while any executor referencing it
         exists and may be used.
-    @li Destroying the context destroys all unexecuted work submitted
-        via associated executors.
+    @li Destroying the context abandons work submitted via associated
+        executors that has not started running.
 
     @par Conforming Signatures
 
