@@ -33,7 +33,7 @@
 namespace boost {
 namespace capy {
 
-/** Type-erased wrapper for any ReadStream.
+/** Dispatches `read_some` through a type-erased vtable, using preallocated awaitable storage.
 
     This class provides type erasure for any type satisfying the
     @ref ReadStream concept, enabling runtime polymorphism for

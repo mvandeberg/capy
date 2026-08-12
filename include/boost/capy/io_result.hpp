@@ -22,7 +22,7 @@
 namespace boost {
 namespace capy {
 
-/** Result type for asynchronous I/O operations.
+/** Bundles an error code with optional payload values, exposed via the tuple protocol.
 
     This template provides a unified result type for async operations,
     always containing a `std::error_code` plus optional additional

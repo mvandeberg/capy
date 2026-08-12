@@ -22,7 +22,7 @@
 namespace boost {
 namespace capy {
 
-/** Type-erased wrapper for bidirectional streams.
+/** Dispatches `read_some` and `write_some` through independent type-erased vtables.
 
     This class provides type erasure for any type satisfying both
     the @ref ReadStream and @ref WriteStream concepts, enabling

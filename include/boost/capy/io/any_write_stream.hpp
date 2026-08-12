@@ -34,7 +34,7 @@
 namespace boost {
 namespace capy {
 
-/** Type-erased wrapper for any WriteStream.
+/** Dispatches `write_some` through a type-erased vtable, using preallocated awaitable storage.
 
     This class provides type erasure for any type satisfying the
     @ref WriteStream concept, enabling runtime polymorphism for

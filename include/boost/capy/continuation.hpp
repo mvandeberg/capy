@@ -17,7 +17,7 @@
 namespace boost {
 namespace capy {
 
-/** Executor-facing schedulable unit.
+/** Pairs a coroutine handle with a scratch slot so executors can queue it without heap allocation.
 
     Wraps a `std::coroutine_handle<>` with a single
     pointer-sized scratch slot so executors can queue

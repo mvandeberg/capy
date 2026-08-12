@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2025 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2026 Michael Vandeberg
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -17,7 +18,7 @@
 namespace boost {
 namespace capy {
 
-/** A task type for I/O operations yielding io_result.
+/** Runs a `task<io_result<Ts...>>` body, letting `co_return` convert an error code directly.
 
     This is a convenience alias for `task<io_result<Ts...>>`.
     The converting constructor on `io_result<>` allows direct
