@@ -620,7 +620,7 @@ namespace boost::capy {
     @return A wrapper that accepts a task for execution.
 
     @see task
-    @see executor
+    @see Executor
 */
 template<Executor Ex>
 [[nodiscard]] auto

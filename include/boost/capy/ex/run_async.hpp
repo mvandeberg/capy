@@ -540,7 +540,7 @@ public:
     @return A wrapper that accepts a `task<T>` for immediate execution.
 
     @see task
-    @see executor
+    @see Executor
 */
 template<Executor Ex>
 [[nodiscard]] auto
@@ -584,7 +584,7 @@ run_async(Ex ex)
     @return A wrapper that accepts a `task<T>` for immediate execution.
 
     @see task
-    @see executor
+    @see Executor
 */
 template<Executor Ex, class H1>
     requires detail::RunAsyncHandler<H1>
@@ -628,7 +628,7 @@ run_async(Ex ex, H1 h1)
     @return A wrapper that accepts a `task<T>` for immediate execution.
 
     @see task
-    @see executor
+    @see Executor
 */
 template<Executor Ex, class H1, class H2>
     requires (detail::RunAsyncHandler<H1> && detail::RunAsyncHandler<H2>)
@@ -668,7 +668,7 @@ run_async(Ex ex, H1 h1, H2 h2)
     @return A wrapper that accepts a `task<T>` for immediate execution.
 
     @see task
-    @see executor
+    @see Executor
 */
 template<Executor Ex>
 [[nodiscard]] auto
@@ -695,7 +695,7 @@ run_async(Ex ex, std::stop_token st)
     @return A wrapper that accepts a `task<T>` for immediate execution.
 
     @see task
-    @see executor
+    @see Executor
 */
 template<Executor Ex, class H1>
     requires detail::RunAsyncHandler<H1>
@@ -723,7 +723,7 @@ run_async(Ex ex, std::stop_token st, H1 h1)
     @return A wrapper that accepts a `task<T>` for immediate execution.
 
     @see task
-    @see executor
+    @see Executor
 */
 template<Executor Ex, class H1, class H2>
     requires (detail::RunAsyncHandler<H1> && detail::RunAsyncHandler<H2>)
@@ -751,7 +751,7 @@ run_async(Ex ex, std::stop_token st, H1 h1, H2 h2)
     @return A wrapper that accepts a `task<T>` for immediate execution.
 
     @see task
-    @see executor
+    @see Executor
 */
 template<Executor Ex>
 [[nodiscard]] auto
@@ -773,7 +773,7 @@ run_async(Ex ex, std::pmr::memory_resource* mr)
     @return A wrapper that accepts a `task<T>` for immediate execution.
 
     @see task
-    @see executor
+    @see Executor
 */
 template<Executor Ex, class H1>
 [[nodiscard]] auto
@@ -796,7 +796,7 @@ run_async(Ex ex, std::pmr::memory_resource* mr, H1 h1)
     @return A wrapper that accepts a `task<T>` for immediate execution.
 
     @see task
-    @see executor
+    @see Executor
 */
 template<Executor Ex, class H1, class H2>
 [[nodiscard]] auto
@@ -820,7 +820,7 @@ run_async(Ex ex, std::pmr::memory_resource* mr, H1 h1, H2 h2)
     @return A wrapper that accepts a `task<T>` for immediate execution.
 
     @see task
-    @see executor
+    @see Executor
 */
 template<Executor Ex>
 [[nodiscard]] auto
@@ -843,7 +843,7 @@ run_async(Ex ex, std::stop_token st, std::pmr::memory_resource* mr)
     @return A wrapper that accepts a `task<T>` for immediate execution.
 
     @see task
-    @see executor
+    @see Executor
 */
 template<Executor Ex, class H1>
 [[nodiscard]] auto
@@ -867,7 +867,7 @@ run_async(Ex ex, std::stop_token st, std::pmr::memory_resource* mr, H1 h1)
     @return A wrapper that accepts a `task<T>` for immediate execution.
 
     @see task
-    @see executor
+    @see Executor
 */
 template<Executor Ex, class H1, class H2>
 [[nodiscard]] auto
@@ -893,7 +893,7 @@ run_async(Ex ex, std::stop_token st, std::pmr::memory_resource* mr, H1 h1, H2 h2
     @return A wrapper that accepts a `task<T>` for immediate execution.
 
     @see task
-    @see executor
+    @see Executor
 */
 template<Executor Ex, detail::Allocator Alloc>
 [[nodiscard]] auto
@@ -915,7 +915,7 @@ run_async(Ex ex, Alloc alloc)
     @return A wrapper that accepts a `task<T>` for immediate execution.
 
     @see task
-    @see executor
+    @see Executor
 */
 template<Executor Ex, detail::Allocator Alloc, class H1>
 [[nodiscard]] auto
@@ -938,7 +938,7 @@ run_async(Ex ex, Alloc alloc, H1 h1)
     @return A wrapper that accepts a `task<T>` for immediate execution.
 
     @see task
-    @see executor
+    @see Executor
 */
 template<Executor Ex, detail::Allocator Alloc, class H1, class H2>
 [[nodiscard]] auto
@@ -962,7 +962,7 @@ run_async(Ex ex, Alloc alloc, H1 h1, H2 h2)
     @return A wrapper that accepts a `task<T>` for immediate execution.
 
     @see task
-    @see executor
+    @see Executor
 */
 template<Executor Ex, detail::Allocator Alloc>
 [[nodiscard]] auto
@@ -985,7 +985,7 @@ run_async(Ex ex, std::stop_token st, Alloc alloc)
     @return A wrapper that accepts a `task<T>` for immediate execution.
 
     @see task
-    @see executor
+    @see Executor
 */
 template<Executor Ex, detail::Allocator Alloc, class H1>
 [[nodiscard]] auto
@@ -1009,7 +1009,7 @@ run_async(Ex ex, std::stop_token st, Alloc alloc, H1 h1)
     @return A wrapper that accepts a `task<T>` for immediate execution.
 
     @see task
-    @see executor
+    @see Executor
 */
 template<Executor Ex, detail::Allocator Alloc, class H1, class H2>
 [[nodiscard]] auto
