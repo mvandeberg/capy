@@ -23,7 +23,7 @@
 namespace boost {
 namespace capy {
 
-/** Concept for types that provide awaitable write operations.
+/** Requires `write_some` to return an `IoAwaitable` decomposing to an error code and a size.
 
     A type satisfies `WriteStream` if it provides a `write_some`
     member function template that accepts any @ref ConstBufferSequence

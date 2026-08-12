@@ -223,7 +223,7 @@ public:
     }
 };
 
-/** Concept for sequences of read-only buffer regions.
+/** Requires a type to convert to `const_buffer`, or be a range of such buffers.
 
     A type satisfies `ConstBufferSequence` if it represents one or more
     contiguous memory regions that can be read. This includes single
@@ -241,7 +241,7 @@ concept ConstBufferSequence =
         std::ranges::bidirectional_range<T> &&
         std::is_convertible_v<std::ranges::range_value_t<T>, const_buffer>);
 
-/** Concept for sequences of writable buffer regions.
+/** Requires a type to convert to `mutable_buffer`, or be a range of such buffers.
 
     A type satisfies `MutableBufferSequence` if it represents one or more
     contiguous memory regions that can be written. This includes single
@@ -482,7 +482,7 @@ buffer_length(CB const& bs)
         begin(bs), end(bs), 0);
 }
 
-/// Alias for `mutable_buffer` or `const_buffer` based on sequence type.
+/// Names `mutable_buffer` for a mutable sequence, `const_buffer` otherwise.
 template<typename BS>
 using buffer_type = std::conditional_t<
     MutableBufferSequence<BS>,

@@ -139,7 +139,7 @@ template<class BS, bool MakeConst = false>
 class buffer_param
 {
 public:
-    /// The buffer type (const_buffer or mutable_buffer)
+    /// Names `const_buffer` when `MakeConst`, else `BS`'s own buffer type.
     using buffer_type = std::conditional_t<
         MakeConst,
         const_buffer,
@@ -257,7 +257,7 @@ public:
 template<class BS>
 buffer_param(BS const&) -> buffer_param<BS>;
 
-/// Alias for buffer_param that always uses const_buffer storage.
+/// Forces `buffer_param` to store windows as `const_buffer`, regardless of `BS`.
 template<class BS>
 using const_buffer_param = buffer_param<BS, true>;
 

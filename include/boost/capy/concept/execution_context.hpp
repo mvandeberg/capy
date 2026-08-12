@@ -20,7 +20,7 @@
 namespace boost {
 namespace capy {
 
-/** Concept for types that provide a place where work is executed.
+/** Requires a type to expose a `noexcept get_executor()` bound to its own resources.
 
     An execution context owns the resources (threads, event loops,
     completion ports) needed to run coroutine continuations. It serves

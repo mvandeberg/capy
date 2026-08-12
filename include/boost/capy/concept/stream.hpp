@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2025 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2026 Michael Vandeberg
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -17,7 +18,7 @@
 namespace boost {
 namespace capy {
 
-/** Concept for types providing both read and write operations.
+/** Requires a type to satisfy both `ReadStream` and `WriteStream`.
 
     A type satisfies `Stream` if it satisfies both @ref ReadStream
     and @ref WriteStream.

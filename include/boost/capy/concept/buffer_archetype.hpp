@@ -17,7 +17,7 @@
 namespace boost {
 namespace capy {
 
-/** Archetype for ConstBufferSequence concept checking.
+/** Satisfies `ConstBufferSequence` without being default-constructible.
 
     This type satisfies @ref ConstBufferSequence but cannot be
     default-constructed. Use it only as an unevaluated parameter
@@ -75,14 +75,14 @@ struct const_buffer_archetype_
 };
 
 #ifdef __clang__
-/// The type to use as a ConstBufferSequence archetype.
+/// Falls back to `const_buffer` itself: `const_buffer_archetype_` crashes clang.
 using const_buffer_archetype = const_buffer;
 #else
-/// The type to use as a ConstBufferSequence archetype.
+/// Picks `const_buffer_archetype_` to keep default construction rejected.
 using const_buffer_archetype = const_buffer_archetype_;
 #endif
 
-/** Archetype for MutableBufferSequence concept checking.
+/** Satisfies `MutableBufferSequence` without being default-constructible.
 
     This type satisfies @ref MutableBufferSequence but cannot be
     default-constructed. Use it only as an unevaluated parameter
@@ -146,10 +146,10 @@ struct mutable_buffer_archetype_
 };
 
 #ifdef __clang__
-/// The type to use as a MutableBufferSequence archetype.
+/// Falls back to `mutable_buffer` itself: `mutable_buffer_archetype_` crashes clang.
 using mutable_buffer_archetype = mutable_buffer;
 #else
-/// The type to use as a MutableBufferSequence archetype.
+/// Picks `mutable_buffer_archetype_` to keep default construction rejected.
 using mutable_buffer_archetype = mutable_buffer_archetype_;
 #endif
 

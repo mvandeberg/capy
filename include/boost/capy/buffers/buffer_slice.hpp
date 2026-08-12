@@ -22,7 +22,7 @@
 namespace boost {
 namespace capy {
 
-/** The type produced by `buffer_slice` for a sequence `BS`.
+/** Names whichever buffer type `buffer_slice` returns for a sequence `BS`.
 
     A single buffer is closed under sub-ranging, so slicing it yields a
     buffer of the same kind. Any other sequence yields the generic
@@ -92,7 +92,7 @@ buffer_slice(
     }
 }
 
-/** Deleted rvalue overload.
+/** Rejects a temporary sequence at compile time, since the result would dangle.
 
     Slicing a temporary would yield an immediately dangling view (the
     result borrows the sequence). Hoist the sequence into a named variable

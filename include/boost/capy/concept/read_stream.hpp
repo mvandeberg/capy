@@ -23,7 +23,7 @@
 namespace boost {
 namespace capy {
 
-/** Concept for types providing awaitable read operations.
+/** Requires `read_some` to return an `IoAwaitable` decomposing to an error code and a size.
 
     A type satisfies `ReadStream` if it provides a `read_some`
     member function template that accepts any @ref MutableBufferSequence

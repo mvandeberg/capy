@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2025 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2026 Michael Vandeberg
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -18,7 +19,7 @@
 namespace boost {
 namespace capy {
 
-/** Concept for awaitables that participate in the I/O protocol.
+/** Requires `await_suspend` to accept a coroutine handle and an `io_env` pointer.
 
     An awaitable satisfies `IoAwaitable` if its `await_suspend` accepts
     an `io_env`, enabling scheduler affinity, cancellation, and allocator
@@ -133,7 +134,7 @@ concept IoAwaitable =
         a.await_suspend(h, env);
     };
 
-/** The return type of `co_await a` for awaitable type A.
+/** Names what `co_await a` yields for awaitable type A.
 
     Given an awaitable A, yields the type returned by A::await_resume().
 
@@ -142,7 +143,7 @@ concept IoAwaitable =
 template<typename A>
 using awaitable_result_t = decltype(std::declval<std::decay_t<A>&>().await_resume());
 
-/** Concept for ranges of I/O awaitables.
+/** Requires a sized input range whose value type satisfies `IoAwaitable`.
 
     A range satisfies `IoAwaitableRange` if it is a sized input range
     whose value type satisfies @ref IoAwaitable.

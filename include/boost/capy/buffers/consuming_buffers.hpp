@@ -54,7 +54,7 @@ template<class Seq>
 class consuming_buffers
 {
 public:
-    /// The buffer type of the underlying sequence.
+    /// Names the buffer type the underlying sequence `Seq` yields.
     using buffer_type = capy::buffer_type<Seq>;
 
 private:

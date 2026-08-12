@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2025 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2026 Michael Vandeberg
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -21,7 +22,7 @@
 namespace boost {
 namespace capy {
 
-/** Concept for task types that can be started from non-coroutine contexts.
+/** Requires an `IoAwaitable` whose promise exposes `handle`, `release`, and setters callable from outside a coroutine.
 
     Extends @ref IoAwaitable with the operations that @ref run and
     @ref run_async need. Those operations start a task, transfer ownership
