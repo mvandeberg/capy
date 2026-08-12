@@ -5,7 +5,7 @@ This section explains the cpp:ReadStream[] and cpp:WriteStream[] concepts for pa
 == Prerequisites
 
 * Completed xref:6.streams/6a.overview.adoc[Stream Concepts Overview]
-* Understanding of the six stream concept categories
+* Understanding of the three stream concepts
 
 == ReadStream
 
