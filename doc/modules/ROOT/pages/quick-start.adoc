@@ -24,17 +24,17 @@ include::example$programs/quick_start_hello.cpp[tag=full]
 
 == Build and Run
 
-Capy is not header-only, so link against `Boost::capy`:
+Capy is not installed as a system package, so point the compiler at your
+own checkout's include directory and built library. Replace both paths
+below with where you built Capy:
 
-[source,cmake,role=pseudocode]
+[source,bash,role=pseudocode]
 ----
-add_executable(hello_coro hello_coro.cpp)
-target_link_libraries(hello_coro PRIVATE Boost::capy)
+g++ -std=c++20 -I/path/to/capy/include -o hello_coro hello_coro.cpp \
+    /path/to/capy/build/libboost_capy.a -pthread
 ----
 
-`Boost::capy` carries its own thread-linkage requirements, so a plain
-`-lcapy` command line cannot reproduce them. Build with `CMake`, then run
-the executable:
+Then run it:
 
 [source,bash]
 ----
