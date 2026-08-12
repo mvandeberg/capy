@@ -26,7 +26,7 @@ namespace boost {
 namespace capy {
 namespace test {
 
-/** Iterates every way to split a buffer sequence into two adjacent halves.
+/** Iterates split points of a buffer sequence into two adjacent halves.
 
     This class iterates through all possible ways to split a buffer
     sequence into two parts (b1, b2) where concatenating them yields

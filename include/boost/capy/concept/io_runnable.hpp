@@ -22,7 +22,7 @@
 namespace boost {
 namespace capy {
 
-/** Requires an `IoAwaitable` whose promise exposes `handle`, `release`, and setters callable from outside a coroutine.
+/** Requires an `IoAwaitable` that exposes `handle` and `release`, and whose promise takes a continuation and an environment from outside a coroutine.
 
     Extends @ref IoAwaitable with the operations that @ref run and
     @ref run_async need. Those operations start a task, transfer ownership

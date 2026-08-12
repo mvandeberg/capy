@@ -120,7 +120,7 @@ protected:
 public:
     //------------------------------------------------
 
-    /** Extends an `execution_context` with a `shutdown()` hook run when the context is destroyed.
+    /** Gives a derived service a `shutdown()` hook, run when its owning `execution_context` is destroyed.
 
         Services provide extensible functionality to an execution context.
         Each service type can be registered at most once. Services are

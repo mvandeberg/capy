@@ -18,7 +18,7 @@
 namespace boost {
 namespace capy {
 
-/** Runs a `task<io_result<Ts...>>` body, letting `co_return` convert an error code directly.
+/** Names `task<io_result<Ts...>>`, whose `co_return` can convert an error code directly.
 
     This is a convenience alias for `task<io_result<Ts...>>`.
     The converting constructor on `io_result<>` allows direct
