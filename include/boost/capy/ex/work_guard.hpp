@@ -75,7 +75,7 @@ class work_guard
     bool owns_;
 
 public:
-    /** The underlying executor type. */
+    /** Names the executor type this `work_guard<Ex>` guards. */
     using executor_type = Ex;
 
     /** Construct a work guard.

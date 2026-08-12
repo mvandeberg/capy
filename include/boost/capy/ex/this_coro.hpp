@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2025 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2026 Michael Vandeberg
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -37,7 +38,7 @@ namespace capy {
 */
 namespace this_coro {
 
-/** Tag type for coroutine environment retrieval.
+/** Selects `co_await this_coro::environment` to fetch the running coroutine's environment.
 
     This tag is intercepted by a promise type's `await_transform` to
     yield the coroutine's current execution environment. The tag itself
@@ -48,7 +49,7 @@ namespace this_coro {
 */
 struct environment_tag {};
 
-/** Tag type for coroutine executor retrieval.
+/** Selects `co_await this_coro::executor` to fetch the running coroutine's executor.
 
     This tag is intercepted by a promise type's `await_transform` to
     yield the coroutine's current executor. The tag itself carries no
@@ -59,7 +60,7 @@ struct environment_tag {};
 */
 struct executor_tag {};
 
-/** Tag type for coroutine stop token retrieval.
+/** Selects `co_await this_coro::stop_token` to fetch the running coroutine's stop token.
 
     This tag is intercepted by a promise type's `await_transform` to
     yield the coroutine's current stop token. The tag itself carries
@@ -70,7 +71,7 @@ struct executor_tag {};
 */
 struct stop_token_tag {};
 
-/** Tag type for coroutine frame allocator retrieval.
+/** Selects `co_await this_coro::frame_allocator` to fetch the running coroutine's frame allocator.
 
     This tag is intercepted by a promise type's `await_transform` to
     yield the coroutine's current frame allocator. The tag itself carries

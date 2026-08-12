@@ -26,7 +26,7 @@
 namespace boost {
 namespace capy {
 
-/** Base class for I/O object containers providing service management.
+/** Registers, looks up, and shuts down `service` objects owned by a derived context.
 
     An execution context represents a place where function objects are
     executed. It provides a service registry where polymorphic services
@@ -120,7 +120,7 @@ protected:
 public:
     //------------------------------------------------
 
-    /** Abstract base class for services owned by an execution context.
+    /** Extends an `execution_context` with a `shutdown()` hook run when the context is destroyed.
 
         Services provide extensible functionality to an execution context.
         Each service type can be registered at most once. Services are

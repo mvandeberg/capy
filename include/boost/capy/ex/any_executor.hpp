@@ -35,7 +35,7 @@ struct is_strand_type<strand<E>> : std::true_type {};
 
 } // detail
 
-/** A type-erased wrapper for executor objects.
+/** Forwards `dispatch`/`post`/`context` calls through a shared, type-erased executor pointer.
 
     This class provides type erasure for any executor type, enabling
     runtime polymorphism with automatic memory management via shared

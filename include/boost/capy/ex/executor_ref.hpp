@@ -71,7 +71,7 @@ inline constexpr executor_vtable vtable_for = {
 
 } // detail
 
-/** A type-erased reference wrapper for executor objects.
+/** Forwards `dispatch`/`post`/`context` calls through a non-owning, type-erased executor pointer.
 
     This class provides type erasure for any executor type, enabling
     runtime polymorphism without virtual functions or allocation.

@@ -96,7 +96,7 @@ class strand
     friend struct strand_test;
 
 public:
-    /** The type of the underlying executor.
+    /** Names the executor type this `strand<Ex>` wraps.
     */
     using inner_executor_type = Ex;
 

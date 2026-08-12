@@ -21,7 +21,7 @@
 namespace boost {
 namespace capy {
 
-/** A pool of threads for executing work concurrently.
+/** Distributes posted work across a fixed group of worker threads via a shared queue.
 
     Use this when you need to run coroutines on multiple threads
     without the overhead of creating and destroying threads for
