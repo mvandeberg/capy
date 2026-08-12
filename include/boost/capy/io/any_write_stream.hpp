@@ -222,6 +222,11 @@ public:
 
         @par Preconditions
         The wrapper must contain a valid stream (`has_value() == true`).
+
+        @par After an Error
+        A subsequent call is permitted. The wrapper forwards directly
+        to the underlying stream, imposing no stricter rule than
+        @ref WriteStream.
     */
     template<ConstBufferSequence CB>
     auto

@@ -219,8 +219,11 @@ public:
 
         @par Preconditions
         The wrapper must contain a valid stream (`has_value() == true`).
-        The caller must not call this function again after a prior
-        call returned an error (including EOF).
+
+        @par After an Error
+        A subsequent call is permitted. The wrapper forwards directly
+        to the underlying stream, imposing no stricter rule than
+        @ref ReadStream.
     */
     template<MutableBufferSequence MB>
     auto
