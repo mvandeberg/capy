@@ -530,8 +530,7 @@ public:
     `run_async(ex)(task)`.
 
     @par Thread Safety
-    The wrapper itself should only be used from one thread. The handlers
-    may be invoked from any thread where the executor schedules work.
+    The wrapper itself should only be used from one thread.
 
     @par Example
     @code
@@ -667,8 +666,7 @@ run_async(Ex ex, H1 h1, H2 h2)
     `run_async(ex)(task)`.
 
     @par Thread Safety
-    The wrapper itself should only be used from one thread. The handlers
-    may be invoked from any thread where the executor schedules work.
+    The wrapper itself should only be used from one thread.
 
     @par Example
     @code
@@ -780,8 +778,7 @@ run_async(Ex ex, std::stop_token st, H1 h1, H2 h2)
     `run_async(ex)(task)`.
 
     @par Thread Safety
-    The wrapper itself should only be used from one thread. The handlers
-    may be invoked from any thread where the executor schedules work.
+    The wrapper itself should only be used from one thread.
 
     @pre `mr` outlives every task started through the returned wrapper.
 
@@ -878,8 +875,7 @@ run_async(Ex ex, std::pmr::memory_resource* mr, H1 h1, H2 h2)
     `run_async(ex)(task)`.
 
     @par Thread Safety
-    The wrapper itself should only be used from one thread. The handlers
-    may be invoked from any thread where the executor schedules work.
+    The wrapper itself should only be used from one thread.
 
     @pre `mr` outlives every task started through the returned wrapper.
 
@@ -982,8 +978,7 @@ run_async(Ex ex, std::stop_token st, std::pmr::memory_resource* mr, H1 h1, H2 h2
     `run_async(ex)(task)`.
 
     @par Thread Safety
-    The wrapper itself should only be used from one thread. The handlers
-    may be invoked from any thread where the executor schedules work.
+    The wrapper itself should only be used from one thread.
 
     @param ex The executor to execute the task on.
     @param alloc The allocator for frame allocation (copied and stored).
@@ -1074,8 +1069,7 @@ run_async(Ex ex, Alloc alloc, H1 h1, H2 h2)
     `run_async(ex)(task)`.
 
     @par Thread Safety
-    The wrapper itself should only be used from one thread. The handlers
-    may be invoked from any thread where the executor schedules work.
+    The wrapper itself should only be used from one thread.
 
     @param ex The executor to execute the task on.
     @param st The stop token for cooperative cancellation.
