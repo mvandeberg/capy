@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2025 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2026 Michael Vandeberg
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -25,7 +26,7 @@ namespace boost {
 namespace capy {
 namespace test {
 
-/** A test utility for iterating buffer sequence split points.
+/** Iterates every way to split a buffer sequence into two adjacent halves.
 
     This class iterates through all possible ways to split a buffer
     sequence into two parts (b1, b2) where concatenating them yields
@@ -96,12 +97,11 @@ class bufgrind
     std::size_t pos_ = 0;
 
 public:
-    /// The buffer-sequence type produced for each half of a split.
+    /// Names the buffer-sequence type `buffer_slice` yields for each half.
     using slice_type = std::decay_t<
         decltype(buffer_slice(std::declval<BS const&>()))>;
 
-    /// The type returned by @ref next. Each half is itself a buffer
-    /// sequence (the value returned by `buffer_slice`).
+    /// Pairs the two `slice_type` halves that @ref next yields together.
     using split_type = std::pair<slice_type, slice_type>;
 
     /** Construct a buffer grinder.
@@ -132,10 +132,7 @@ public:
         return pos_ <= size_;
     }
 
-    /** Awaitable returned by @ref next.
-
-        Computes the current split synchronously, so awaiting it
-        never suspends the calling coroutine.
+    /** Computes the current split synchronously, so awaiting it never suspends the caller.
     */
     struct next_awaitable
     {

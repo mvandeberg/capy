@@ -52,7 +52,7 @@ namespace boost {
 namespace capy {
 namespace test {
 
-/** A test utility for systematic error injection.
+/** Reruns a code path, injecting a failure at one later point on each pass.
 
     This class enables exhaustive testing of error handling
     paths by injecting failures at successive points in code.
@@ -240,7 +240,7 @@ class fuse
     }
 
 public:
-    /** Result of a fuse operation.
+    /** Converts to `bool`, reporting success, and carries the failure point on failure.
 
         Contains the outcome of @ref armed or @ref inert
         and, on failure, the source location of the failing

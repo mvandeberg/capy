@@ -37,7 +37,7 @@ namespace boost {
 namespace capy {
 namespace test {
 
-/** A connected stream for testing bidirectional I/O.
+/** Suspends a reader until its paired end writes, or the shared fuse injects an error.
 
     Streams are created in pairs via @ref make_stream_pair.
     Data written to one end becomes available for reading on

@@ -29,7 +29,7 @@ namespace boost {
 namespace capy {
 namespace test {
 
-/** A mock stream for testing write operations.
+/** Captures bytes passed to `write_some`, retrievable afterward through `data`.
 
     Use this to verify code that performs writes without needing
     real I/O. Call @ref write_some to write data, then @ref data

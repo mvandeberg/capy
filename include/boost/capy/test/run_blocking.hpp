@@ -28,7 +28,7 @@ namespace test {
 
 class blocking_context;
 
-/** Single-threaded executor for blocking synchronous tests.
+/** Dispatches work inline for symmetric transfer, or enqueues it into the owning `blocking_context`.
 
     This executor is used internally by @ref run_blocking to
     execute coroutine tasks on the calling thread. Work submitted
@@ -107,7 +107,7 @@ private:
     blocking_context* ctx_;
 };
 
-/** Single-threaded execution context for blocking tests.
+/** Runs a work queue and event loop on the calling thread until the task completes.
 
     Provides a work queue and event loop that runs on the
     calling thread. Coroutines dispatched through the
@@ -132,7 +132,7 @@ class BOOST_CAPY_DECL blocking_context
     impl* impl_;
 
 public:
-    /// The executor type associated with this context.
+    /// Names `blocking_executor` as the type `get_executor()` returns.
     using executor_type = blocking_executor;
 
     /** Construct a blocking context.
@@ -269,7 +269,7 @@ struct blocking_handler_wrapper
     }
 };
 
-/** Wrapper returned by run_blocking that accepts a task.
+/** Starts a `blocking_context`, runs the task on it, and pumps the event loop until it completes.
 
     Holds the handlers and optional stop token. When invoked
     with a task, creates a @ref blocking_context, starts

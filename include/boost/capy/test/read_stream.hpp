@@ -28,7 +28,7 @@ namespace boost {
 namespace capy {
 namespace test {
 
-/** A mock stream for testing read operations.
+/** Buffers data supplied via `provide`, then hands it out through `read_some`.
 
     Use this to verify code that performs reads without needing
     real I/O. Call @ref provide to supply data, then @ref read_some
