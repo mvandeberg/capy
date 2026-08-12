@@ -47,7 +47,7 @@
 namespace boost {
 namespace capy {
 
-/** An asynchronous event for coroutines.
+/** Queues coroutines in `wait()` and resumes all of them when `set()` is called.
 
     This event provides a way to notify multiple coroutines that some
     condition has occurred. When a coroutine awaits an unset event, it
@@ -107,7 +107,7 @@ private:
     detail::intrusive_list<wait_awaiter> waiters_;
 
 public:
-    /** Awaiter returned by wait().
+    /** Suspends the caller until `set()` runs, or resumes it with `error::canceled` on a stop request.
     */
     class wait_awaiter
         : public detail::intrusive_list<wait_awaiter>::node
@@ -365,7 +365,7 @@ public:
         return wait_awaiter{this};
     }
 
-    /** Sets the event.
+    /** Resumes every waiting coroutine and marks the event set for later `wait()` calls.
 
         All waiting coroutines are resumed. Canceled waiters
         are skipped. Subsequent calls to wait() complete

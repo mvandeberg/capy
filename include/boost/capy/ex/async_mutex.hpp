@@ -91,7 +91,7 @@
 namespace boost {
 namespace capy {
 
-/** An asynchronous mutex for coroutines.
+/** Queues coroutines in `lock()` and resumes exactly one when the mutex is free.
 
     This mutex provides mutual exclusion for coroutines without blocking.
     When a coroutine attempts to acquire a locked mutex, it suspends and
@@ -158,7 +158,7 @@ private:
     detail::intrusive_list<lock_awaiter> waiters_;
 
 public:
-    /** Awaiter returned by lock().
+    /** Suspends the caller until the mutex is free, or resumes it with `error::canceled` on a stop request.
     */
     class lock_awaiter
         : public detail::intrusive_list<lock_awaiter>::node
@@ -381,9 +381,7 @@ public:
         }
     };
 
-    /** RAII lock guard for async_mutex.
-
-        Automatically unlocks the mutex when destroyed.
+    /** Unlocks the mutex automatically when destroyed.
     */
     class [[nodiscard]] lock_guard
     {
@@ -465,7 +463,7 @@ public:
         lock_guard& operator=(lock_guard const& other) = delete;
     };
 
-    /** Awaiter returned by scoped_lock() that returns a lock_guard on resume.
+    /** Acquires the mutex like `lock_awaiter`, then resumes with a `lock_guard` that unlocks it.
     */
     class lock_guard_awaiter
     {

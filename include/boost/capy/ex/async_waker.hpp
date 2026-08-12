@@ -130,7 +130,7 @@ private:
     wait_awaiter* waiter_ = nullptr;
 
 public:
-    /** Awaiter returned by wait().
+    /** Suspends the caller until `wake()` runs, or resumes it with `error::canceled` on a stop request.
     */
     class wait_awaiter
     {
