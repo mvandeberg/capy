@@ -348,9 +348,13 @@ make_trampoline(Ex, Handlers, Alloc)
     frame under the wrong allocator. Each does so silently, with no
     compile error.
     @li *Stored wrapper.* Storing the wrapper itself
-        (`auto w = run_async(ex);`) does not compile, because of the
-        rvalue ref-qualifier described earlier. The silent variant is
-        storing the *task*
+        (`auto w = run_async(ex);`) compiles fine. C++17 guaranteed copy
+        elision constructs `w` directly from the prvalue. The deleted
+        copy/move constructors are never considered. What the rvalue
+        ref-qualifier on `operator()` rejects is calling through that
+        stored lvalue: `w(my_task())` does not compile, and
+        `std::move(w)(my_task())` is required instead. The silent
+        variant is storing the *task*
         (`auto t = my_task(); run_async(ex)(std::move(t));`): `t`'s frame
         is allocated before `run_async(ex)` ever runs.
     @li *Preconstructed task.* Passing an already-constructed task object
@@ -373,9 +377,10 @@ make_trampoline(Ex, Handlers, Alloc)
     // Correct usage - wrapper is temporary, task is the direct argument
     run_async(ex)(my_task());
 
-    // Compile error - cannot call operator() on lvalue
+    // Compiles - copy elision constructs w directly from the prvalue
     auto w = run_async(ex);
-    w(my_task());  // Error: operator() requires rvalue
+    w(my_task());             // Compile error: operator() requires rvalue
+    std::move(w)(my_task());  // Compiles: w is now an rvalue
 
     // Compiles, but WRONG - task frame allocated before run_async runs
     auto t = my_task();

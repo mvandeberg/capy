@@ -237,3 +237,43 @@ following a code change) at PR time, via human/agent review — just not via a c
 3. Phase 1's per-file Structure pass finishes touching all 52 headers — natural checkpoint to
    size a dedicated follow-up task, since every docstring will have just been freshly rewritten
    and reviewed anyway.
+
+## Audit evidence for revisit trigger #2 (added post-hoc, DEFER still stands)
+
+A later documentation audit (`DOC_AUDIT_REFERENCE.md`, section R2) exercised trigger #2 above:
+it read all 103 blocks and, for several, actually compiled the corrected form with
+`g++ -std=c++20 -fsyntax-only`. Result: **12 of the 103 blocks were broken** — about 12%,
+not a hypothetical risk. Two of the twelve were not drift but active misinformation:
+
+- `run_async_wrapper`'s `@warning` and `test::run_blocking_wrapper`'s copy of it both asserted
+  that storing the wrapper (`auto w = run_async(ex);`) "does not compile." Compiled and run:
+  it does compile — C++17 guaranteed copy elision constructs `w` directly from the prvalue, so
+  the deleted copy/move constructors are never considered. What actually fails to compile is
+  calling through the stored lvalue (`w(my_task())`); `std::move(w)(my_task())` compiles and
+  runs. Both docstrings have been corrected to state the real guarantee — the rvalue
+  ref-qualifier rejects calls on an lvalue — instead of the false one.
+- The other ten were compile failures or semantic drift from the API they document: a context
+  passed where an `Executor` is required (`work_guard`), a CTAD default that silently produces
+  the wrong buffer const-ness (`buffer_param`'s Virtual Interface Pattern), a closure passed
+  where `post` requires a `continuation&` (`ExecutionContext`), a duplicate function definition
+  in one TU (`async_mutex`), a comment-only `if` body followed by `else` (`cond`, plain syntax
+  error), `.data()` called on a value that has no such member for the sequence concepts in play
+  (`test::buffer_to_string`), symbols (`route_params`, `route::next`) that exist in none of
+  capy, corosio, or burl (`io_task`), a mock object constructed outside the `fuse::armed` retry
+  loop so state leaked across rounds and the trailing comment went stale (`test::stream`,
+  `test::write_stream`), a discarded partial-write result under a concept that documents
+  partial writes as normal (`Stream`), and a redeclared local plus undeclared placeholder names
+  (`any_read_stream`, `any_write_stream`).
+
+None of this changes the recommendation. The DEFER rationale was about mechanism (no MrDocs
+snippet-compile support, bespoke per-block scaffolding, a non-compiling-block convention to
+invent) — a real defect rate does not make that mechanism appear. What it does is retire the
+"reasonable without evidence" caveat the original recommendation carried: the deferred risk
+was real, not just plausible, and this pass fixed the twelve found so far by hand rather than
+by gate. If a future pass finds a similar rate again, that is the point to weigh option (b)'s
+cost against a third hand-fix pass instead of re-deriving this analysis from scratch.
+
+Not fixed as part of this pass, and worth folding into the next one: `any_stream.hpp`'s
+example has the same redeclared-local/undeclared-placeholder shape as `any_read_stream` and
+`any_write_stream` above, but it was outside the audited list (R2 covers 12 blocks, not this
+one) and so was left alone here to keep the fixed count matched to the audited evidence.

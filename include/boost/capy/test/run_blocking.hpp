@@ -275,8 +275,14 @@ struct blocking_handler_wrapper
     the task via `run_async`, and pumps the event loop until
     the task completes.
 
-    The rvalue ref-qualifier on `operator()` ensures the
-    wrapper can only be used as a temporary.
+    The rvalue ref-qualifier on `operator()` restricts invocation
+    to rvalues, so `run_blocking(h)(task)` is the supported spelling.
+    `operator()` moves `h1_`, `h2_`, and the stop token out of the
+    wrapper, leaving it single-use. A stored wrapper needs an explicit
+    `std::move` to invoke:
+    `auto w = run_blocking(h); std::move(w)(task);`. That explicit
+    `std::move` surfaces the single-use hazard that a bare `w(task)`
+    on an lvalue would otherwise hide.
 
     @tparam H1 The success handler type.
     @tparam H2 The error handler type.
