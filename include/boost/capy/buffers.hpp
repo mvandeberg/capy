@@ -246,7 +246,11 @@ concept ConstBufferSequence =
     A type satisfies `MutableBufferSequence` if it represents one or more
     contiguous memory regions that can be written. This includes single
     buffers (convertible to `mutable_buffer`) and ranges of buffers.
-    Every `MutableBufferSequence` also satisfies `ConstBufferSequence`.
+
+    This does not imply `ConstBufferSequence`. A type reaching
+    `mutable_buffer` through its own conversion operator would need a
+    second conversion, to `const_buffer`. An implicit conversion
+    sequence allows only one user-defined step.
 
     @par Syntactic Requirements
     @li Convertible to `mutable_buffer`, OR
