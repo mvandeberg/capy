@@ -57,7 +57,7 @@ struct task_return_base<void>
 
 } // namespace detail
 
-/** Lazy coroutine task satisfying @ref IoRunnable.
+/** Defers a coroutine body until awaited, then runs it inline on the caller's thread.
 
     Use `task<T>` as the return type for coroutines that perform I/O
     and return a value of type `T`. The coroutine body does not start
@@ -129,7 +129,7 @@ template<typename T = void>
 struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
     task
 {
-    /** The coroutine promise type for `task<T>`.
+    /** Stores `task<T>`'s result and joins the I/O awaitable protocol via `io_awaitable_promise_base`.
 
         This is the promise object the compiler associates with a
         `task<T>` coroutine. It satisfies the coroutine promise

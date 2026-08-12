@@ -68,7 +68,7 @@ struct quitter_return_base<void>
 
 } // namespace detail
 
-/** Stop-aware lazy coroutine task satisfying @ref IoRunnable.
+/** Defers a coroutine body until awaited, then unwinds it early on a stop request.
 
     When the stop token is triggered, the next `co_await` inside the
     coroutine short-circuits: the body never sees the result and RAII
@@ -132,7 +132,7 @@ template<typename T = void>
 struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
     quitter
 {
-    /** The coroutine promise type for `quitter<T>`.
+    /** Stores `quitter<T>`'s result and unwinds the body when the stop token fires.
 
         This is the promise object the compiler associates with a
         `quitter<T>` coroutine. It satisfies the coroutine promise
