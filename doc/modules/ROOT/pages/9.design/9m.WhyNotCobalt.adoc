@@ -77,24 +77,9 @@ Templates can achieve this by type-erasing every customization point. The cost m
 
 == Stream Concepts
 
-Capy defines seven coroutine-only stream concepts. Cobalt inherits Asio's `AsyncReadStream` and `AsyncWriteStream`, which are hybrid concepts supporting callbacks, futures, and coroutines. Cobalt's `cobalt::io` wrappers simplify the API and Cobalt defines stream abstractions (`write_stream`, `read_stream`, `stream`) as abstract base classes, a distinct approach from Capy's concept-based hierarchy. Cobalt's wrappers still include full Asio headers. See xref:9.design/9n.WhyNotCobaltConcepts.adoc[Write Stream Design] for a detailed comparison of the two approaches.
+Capy defines three coroutine-only stream concepts. Cobalt inherits Asio's `AsyncReadStream` and `AsyncWriteStream`, which are hybrid concepts supporting callbacks, futures, and coroutines. Cobalt's `cobalt::io` wrappers simplify the API and Cobalt defines stream abstractions (`write_stream`, `read_stream`, `stream`) as abstract base classes, a distinct approach from Capy's concept-based hierarchy. Cobalt's wrappers still include full Asio headers. See xref:9.design/9n.WhyNotCobaltConcepts.adoc[Write Stream Design] for a detailed comparison of the two approaches.
 
-Capy's concepts form a refinement hierarchy that emerged naturally from use-case-first design:
-
-....
-  ReadStream                WriteStream
-  (partial reads)           (partial writes)
-       |                         |
-       v                         v
-  ReadSource                WriteSink
-  (complete reads)          (complete writes + EOF)
-
-
-  BufferSource              BufferSink
-  (zero-copy pull)          (zero-copy prepare/commit)
-....
-
-`BufferSource` and `BufferSink` implement callee-owns-buffers I/O. The source provides buffers; the caller processes them in place. No copies. Memory-mapped files, hardware DMA buffers, and kernel-provided memory all work naturally through this pattern.
+Capy's concepts form a small, flat set that emerged naturally from use-case-first design: cpp:ReadStream[] and cpp:WriteStream[] each define a single partial-transfer primitive (`read_some`, `write_some`); cpp:Stream[] requires both. There is no further refinement.
 
 [cols="1,1,1"]
 |===
@@ -111,22 +96,6 @@ Capy's concepts form a refinement hierarchy that emerged naturally from use-case
 | cpp:Stream[]
 | Yes
 |
-
-| `ReadSource`
-| Yes
-|
-
-| `WriteSink`
-| Yes
-|
-
-| `BufferSource`
-| Yes
-|
-
-| `BufferSink`
-| Yes
-|
 |===
 
 == Type-Erased Streams
@@ -137,7 +106,7 @@ Capy type-erases the stream itself. This is possible because coroutines provide 
 
 Cobalt defines stream abstractions (`write_stream`, `read_stream`, `stream`) as abstract base classes in `cobalt/io/stream.hpp`, taking a different approach from Capy's concept + type-erased wrapper model. See xref:9.design/9n.WhyNotCobaltConcepts.adoc[Write Stream Design] for a side-by-side analysis.
 
-The wrappers compose. `any_buffer_source` also satisfies `ReadSource` — natively if the wrapped type supports both, synthesized otherwise. `any_buffer_sink` also satisfies `WriteSink`. You pick the abstraction level you need.
+The wrappers compose. cpp:any_stream[] satisfies both cpp:any_read_stream[] and cpp:any_write_stream[] by inheriting from each, giving callers a single wrapper for bidirectional streams while keeping `read_some` and `write_some` on independent flat vtables. You pick the abstraction level you need.
 
 ....
   Concept              Type-Erased Wrapper
@@ -145,10 +114,6 @@ The wrappers compose. `any_buffer_source` also satisfies `ReadSource` — native
   ReadStream     ----->  any_read_stream
   WriteStream    ----->  any_write_stream
   Stream         ----->  any_stream
-  ReadSource     ----->  any_read_source
-  WriteSink      ----->  any_write_sink
-  BufferSource   ----->  any_buffer_source  ----> also satisfies any_read_source
-  BufferSink     ----->  any_buffer_sink    ----> also satisfies any_write_sink
 ....
 
 This is how the Dimovian Ideal is mechanically achieved.
@@ -168,22 +133,6 @@ This is how the Dimovian Ideal is mechanically achieved.
 | cpp:any_stream[]
 | Yes
 |
-
-| `any_read_source`
-| Yes
-|
-
-| `any_write_sink`
-| Yes
-|
-
-| `any_buffer_source`
-| Yes
-|
-
-| `any_buffer_sink`
-| Yes
-|
 |===
 
 == Mock Streams and Testability
@@ -194,8 +143,6 @@ Capy's mock types:
 
 * cpp:test::read_stream[test::read_stream], cpp:test::write_stream[test::write_stream] — partial I/O mocks
 * cpp:test::stream[test::stream] — connected pair for bidirectional testing
-* `test::read_source`, `test::write_sink` — complete I/O mocks
-* `test::buffer_source`, `test::buffer_sink` — zero-copy mocks
 
 cpp:test::fuse[test::fuse] injects errors systematically at every I/O operation point. cpp:test::run_blocking[test::run_blocking] executes coroutines synchronously for deterministic unit tests. `max_read_size` and `max_write_size` simulate chunked delivery. `expect()` validates written data.
 
@@ -214,22 +161,6 @@ Tests run without sockets or network access, eliminating non-determinism.
 |
 
 | `test::stream` (connected pair)
-| Yes
-|
-
-| `test::read_source`
-| Yes
-|
-
-| `test::write_sink`
-| Yes
-|
-
-| `test::buffer_source`
-| Yes
-|
-
-| `test::buffer_sink`
 | Yes
 |
 
@@ -575,15 +506,15 @@ Every `co_await ws.write(...)` call creates a coroutine frame, suspends, resumes
 | Backend types exposed
 
 | Stream concepts
-| 7 coroutine-only (refinement hierarchy)
+| 3 coroutine-only (flat)
 | Asio's (hybrid)
 
 | Type-erased streams
-| 7 wrappers
+| 3 wrappers
 | None
 
 | Mock streams
-| 7 mock types + `fuse`
+| 3 mock types + `fuse`
 | None
 
 | Threading
