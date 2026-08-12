@@ -69,13 +69,6 @@ The Antora pipeline provides two mechanisms; use them instead of hand-authoring:
   maintainer ruled that B4 binds them anyway: describing what a class *is* is not a licensed
   house style, it is the defect B4 exists to catch. Treat both audits' B4 dispositions on class
   briefs as superseded; this is what authorizes re-opening that finding set.)*
-- **B5. `@pre` is the house form for preconditions.** Use the Doxygen `@pre` tag; do not use
-  `@par Preconditions`. *(Evidence: the docstring corpus was split exactly 17/17 between the
-  two forms when this was ruled — not two conventions in different files, but a real tie,
-  including within single files (`thread_pool.hpp`, `any_executor.hpp` each use both forms
-  today). There was no house rule to preserve; the maintainer broke the tie in favor of `@pre`.
-  No further rationale was given, and none is needed to apply the rule — treat `@par
-  Preconditions` as the form to replace wherever a docstring is touched.)*
 
 ## Part C — Wording (pragmatic Simplified Technical English)
 
@@ -101,6 +94,21 @@ design essays.
   prior to), *because* (not due to the fact that); delete
   *simply/basically/obviously/of course/note that*.
 - **C10. One term per concept** (Part C.1). Never alternate synonyms.
+- **C11. One documentation command per concept — docstring tags included.** Doxygen offers
+  both `@pre` and `@par Preconditions` for the same concept, a precondition. Use `@pre`; never
+  `@par Preconditions`. *(Placement: this is C10's "one term per concept" applied to command
+  choice rather than word choice, not a drift risk, so it sits in Part C rather than Part B —
+  neither tag can go stale relative to the code; they only differ in which markup an author
+  reaches for. It is deliberately not a C.1 table row: C.1 governs English words chosen while
+  writing prose, enforced by matching that prose after docstring extraction; these are Doxygen
+  commands consumed *by* the extractor itself, and the two do not even survive extraction in
+  the same shape — `@par Preconditions` re-emits as a bare "Preconditions" prose line, `@pre`
+  re-emits with no label at all — so a C.1-style substitution rule could not enforce this as
+  written. Evidence: the docstring corpus was split exactly 17/17 between the two forms when
+  this was ruled — a genuine tie, not two conventions living in different files; `thread_pool.hpp`
+  alone contains both (`@pre` once, `@par Preconditions` twice). There was no house rule to
+  preserve; the maintainer broke the tie in favor of `@pre`. Treat `@par Preconditions` as the
+  form to replace wherever a docstring is touched.)*
 
 ### C.1 Terminology table (controlled vocabulary)
 
@@ -138,12 +146,17 @@ it only in the sense the row names. **scheduler** is approved only in its P2300 
 - **D2. Every concept page has a runnable example** of the library's *own* type — not only
   of the standard-library types it resembles. A page introducing a type shows that type in
   use, actually running. *(Primer carve-out: the "library's own type" clause does not bind a
-  section that declares itself background material rather than a Capy concept page. All five
-  pages of `doc/modules/ROOT/pages/3.concurrency/` deliberately use only standard-library
-  types — `3.intro.adoc` frames the section as first-principles concurrency taught before Capy
-  is introduced, not as an introduction to a Capy type. Both prior audits flagged this and both
-  were wrong to; it does not recur, and this note exists only to stop a third pass from
-  re-filing it. No page changes follow from this carve-out.)*
+  section that declares itself background material rather than a Capy concept page.
+  `doc/modules/ROOT/pages/3.concurrency/3a.foundations.adoc` through `3d.patterns.adoc` each
+  carry several runnable examples, all deliberately of standard-library types, because
+  `3.intro.adoc` frames the whole section as first-principles concurrency taught before Capy is
+  introduced, not as an introduction to a Capy type — this carve-out is what excuses `3a`–`3d`
+  from D2, not from having examples at all. `3.intro.adoc` itself has no `include::example$` of
+  any kind and is not covered by this carve-out; its D2 finding is a separate, already-baselined
+  gap (a prose-only introduction page), not evidence for "deliberately standard-library." Both
+  prior audits flagged `3a`–`3d`'s std-lib examples as a D2 violation and both were wrong to; it
+  does not recur, and this note exists only to stop a third pass from re-filing it. No page
+  changes follow from this carve-out.)*
 - **D3. Every non-obvious design choice states its rationale** (or links to the explanation
   page that does). "Because it is" is not documentation.
 - **D4. Document thread-safety *and* executor affinity** at the class level where relevant.
@@ -183,7 +196,7 @@ Not every rule is machine-checkable. Each rule sits in one of three tiers:
 |---|---|
 | **Gate** | A1, A6, A7, B2, B3, C2, C4, C9, C10, D2 |
 | **Warning** | A2, B1, C1, C3, C5, C6, D4, D5, E1 |
-| **Review** | A3, A4, A5, B4, B5, C7, C8, D1, D3, E2, E3, E4 |
+| **Review** | A3, A4, A5, B4, C7, C8, C11, D1, D3, E2, E3, E4 |
 
 The accuracy gates (B2, B3, D2 correctness) are enforced by the snippet-compile job, not by
 Vale — that job is what makes examples unable to drift.
