@@ -1,4 +1,5 @@
 = Bridging a P2300 Sender
+:page-mode: how-to
 
 Awaiting a `std::execution` (P2300) sender from inside a Capy coroutine.
 
@@ -8,12 +9,6 @@ Awaiting a `std::execution` (P2300) sender from inside a Capy coroutine.
 * How a bridge restores the xref:4.coroutines/4c.executors.adoc#the-same-executor-invariant[same-executor invariant] by posting the resumption through the caller's executor
 * How a sender's value and error completion channels map onto cpp:io_result[]
 
-== Prerequisites
-
-* Completed xref:4.coroutines/4d.io-awaitable.adoc[The IoAwaitable Protocol]
-* A `std::execution` implementation (this example uses https://github.com/bemanproject/execution[beman.execution])
-
-[NOTE]
 ====
 This example is built only when `BOOST_CAPY_BUILD_P2300_EXAMPLES=ON` (it requires C++23 and fetches `beman.execution`). The full source is in `example/sender-bridge/`.
 ====

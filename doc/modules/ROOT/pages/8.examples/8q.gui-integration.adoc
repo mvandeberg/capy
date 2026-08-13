@@ -10,12 +10,6 @@ Running a Capy coroutine on a GUI framework's event loop, and resuming on the GU
 * Awaiting an operation the toolkit completes on a thread of its own
 * Why widget access stays on the GUI thread with no hop written by hand
 
-== Prerequisites
-
-* Completed xref:4.coroutines/4c.executors.adoc#the-same-executor-invariant[The Same-Executor Invariant]
-* Completed xref:4.coroutines/4b.launching.adoc[Starting Coroutines], for cpp:run[]
-* The cpp:Executor[] concept, from xref:8.examples/8n.custom-executor.adoc[Custom Executor]
-
 == Source Code
 
 [source,cpp]

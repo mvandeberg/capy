@@ -1,4 +1,5 @@
 = Hello Task
+:page-mode: how-to
 
 The minimal Capy program: a task that prints a message.
 
@@ -7,11 +8,6 @@ The minimal Capy program: a task that prints a message.
 * Creating a cpp:task[task<>] coroutine
 * Using cpp:thread_pool[] as an execution context
 * Starting tasks with `run_async`
-
-== Prerequisites
-
-* {cpp}20 compiler
-* Capy library installed
 
 == Source Code
 

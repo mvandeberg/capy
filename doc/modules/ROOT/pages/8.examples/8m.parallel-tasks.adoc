@@ -1,4 +1,5 @@
 = Parallel Tasks
+:page-mode: how-to
 
 Distributing CPU-bound work across a thread pool and collecting results.
 
@@ -7,10 +8,6 @@ Distributing CPU-bound work across a thread pool and collecting results.
 * Running tasks in parallel on a cpp:thread_pool[]
 * Collecting results with cpp:when_all[] structured bindings
 * Observing thread IDs to verify parallel execution
-
-== Prerequisites
-
-* Completed xref:8.examples/8g.parallel-fetch.adoc[Parallel Fetch] (introduces `when_all`)
 
 == Source Code
 

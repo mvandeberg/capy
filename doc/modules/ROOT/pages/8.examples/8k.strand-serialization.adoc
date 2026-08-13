@@ -1,4 +1,5 @@
 = Strand Serialization
+:page-mode: how-to
 
 Protecting shared state with a strand instead of a mutex.
 
@@ -7,11 +8,6 @@ Protecting shared state with a strand instead of a mutex.
 * Using a cpp:strand[] to serialize coroutine access to shared state
 * Lock-free shared state management
 * Combining cpp:when_all[] with strand-based serialization
-
-== Prerequisites
-
-* Completed xref:8.examples/8b.producer-consumer.adoc[Producer-Consumer] (introduces `strand`)
-* Understanding of `when_all` from xref:../4.coroutines/4f.composition.adoc[Composition]
 
 == Source Code
 

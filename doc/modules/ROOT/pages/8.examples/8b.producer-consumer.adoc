@@ -1,4 +1,5 @@
 = Producer-Consumer
+:page-mode: how-to
 
 Two tasks communicating via an async event, with strand serialization.
 
@@ -8,11 +9,6 @@ Two tasks communicating via an async event, with strand serialization.
 * Running multiple concurrent tasks with cpp:when_all[]
 * Using cpp:strand[] to serialize access to shared state
 * Task-to-task communication patterns
-
-== Prerequisites
-
-* Completed xref:8.examples/8a.hello-task.adoc[Hello Task]
-* Understanding of how tasks are created and started
 
 == Source Code
 

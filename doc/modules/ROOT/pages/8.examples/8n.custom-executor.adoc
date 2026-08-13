@@ -1,4 +1,5 @@
 = Custom Executor
+:page-mode: how-to
 
 Implementing the Executor concept with a single-threaded run loop.
 
@@ -7,10 +8,6 @@ Implementing the Executor concept with a single-threaded run loop.
 * Satisfying the cpp:Executor[] concept
 * Implementing cpp:execution_context[], cpp:Executor::dispatch[dispatch], and cpp:Executor::post[post]
 * Running Capy coroutines on a custom scheduling system
-
-== Prerequisites
-
-* Understanding of executors from xref:../4.coroutines/4c.executors.adoc[Executors and Execution Contexts]
 
 == Source Code
 

@@ -1,4 +1,5 @@
 = Parallel Fetch
+:page-mode: how-to
 
 Running multiple operations concurrently with cpp:when_all[].
 
@@ -7,11 +8,6 @@ Running multiple operations concurrently with cpp:when_all[].
 * Using `when_all` to run tasks in parallel
 * Structured bindings for results
 * Error propagation in concurrent tasks
-
-== Prerequisites
-
-* Completed xref:8.examples/8f.timeout-cancellation.adoc[Timeout with Cancellation]
-* Understanding of `when_all` from xref:../4.coroutines/4f.composition.adoc[Composition]
 
 == Source Code
 

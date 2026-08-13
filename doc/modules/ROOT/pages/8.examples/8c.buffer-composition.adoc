@@ -1,4 +1,5 @@
 = Buffer Composition
+:page-mode: how-to
 
 Composing buffer sequences without allocation for scatter/gather I/O.
 
@@ -7,11 +8,6 @@ Composing buffer sequences without allocation for scatter/gather I/O.
 * Creating buffers from different sources
 * Using `std::array<const_buffer, N>` and `std::array<mutable_buffer, N>` for scatter/gather I/O
 * Zero-allocation buffer sequence patterns
-
-== Prerequisites
-
-* Completed xref:8.examples/8b.producer-consumer.adoc[Producer-Consumer]
-* Understanding of buffer types from xref:../5.buffers/5b.types.adoc[Buffer Types]
 
 == Source Code
 

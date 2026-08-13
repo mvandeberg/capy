@@ -1,4 +1,5 @@
 = Type-Erased Echo
+:page-mode: how-to
 
 Echo server demonstrating the compilation firewall pattern.
 
@@ -7,11 +8,6 @@ Echo server demonstrating the compilation firewall pattern.
 * Using cpp:any_stream[] for transport-independent code
 * Physical isolation through separate compilation
 * Build time benefits of type erasure
-
-== Prerequisites
-
-* Completed xref:8.examples/8d.mock-stream-testing.adoc[Mock Stream Testing]
-* Understanding of type erasure from xref:../6.streams/6f.isolation.adoc[Physical Isolation]
 
 == Source Code
 

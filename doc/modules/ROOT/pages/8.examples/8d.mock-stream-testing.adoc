@@ -1,4 +1,5 @@
 = Mock Stream Testing
+:page-mode: how-to
 
 Unit testing protocol code with mock streams and error injection.
 
@@ -7,11 +8,6 @@ Unit testing protocol code with mock streams and error injection.
 * Using cpp:test::read_stream[test::read_stream] and cpp:test::write_stream[test::write_stream]
 * Error injection with cpp:test::fuse[fuse]
 * Synchronous testing with cpp:test::run_blocking[run_blocking]
-
-== Prerequisites
-
-* Completed xref:8.examples/8c.buffer-composition.adoc[Buffer Composition]
-* Understanding of streams from xref:../6.streams/6b.streams.adoc[Streams]
 
 == Source Code
 
