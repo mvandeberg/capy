@@ -13,11 +13,11 @@ This creates a challenge. How can a coroutine use a custom allocator when the al
 
 Capy solves this with thread-local propagation:
 
-1. Before evaluating the task argument, `run_async` sets a thread-local allocator
+1. Before evaluating the task argument, cpp:run_async[] sets a thread-local allocator
 2. The task's `operator new` reads this thread-local allocator
 3. The task stores the allocator in its promise for child propagation
 
-This is why `run_async` uses two-call syntax:
+This is why cpp:run_async[] uses two-call syntax:
 
 [source,cpp]
 ----
@@ -49,11 +49,11 @@ To prevent this, any code that calls `.resume()` on a coroutine handle must use 
 include::example$snippets/4g_allocators.cpp[tag=safe_resume,indent=0]
 ----
 
-`safe_resume` saves the current thread-local allocator, calls `h.resume()`, then restores the saved value. This makes TLS behave like a stack: nested resumes cannot spoil the outer value. All of Capy's built-in executors (`thread_pool`, strands, cpp:test::blocking_context[blocking_context]) use `safe_resume` internally. Custom executor event loops must do the same -- see xref:8.examples/8n.custom-executor.adoc[Custom Executor] for an example.
+cpp:safe_resume[] saves the current thread-local allocator, calls `h.resume()`, then restores the saved value. This makes TLS behave like a stack: nested resumes cannot spoil the outer value. All of Capy's built-in executors (cpp:thread_pool[], strands, cpp:test::blocking_context[blocking_context]) use `safe_resume` internally. Custom executor event loops must do the same -- see xref:8.examples/8n.custom-executor.adoc[Custom Executor] for an example.
 
 [NOTE]
 ====
-`safe_resume`'s implementation:
+cpp:safe_resume[]'s implementation:
 
 [source,cpp]
 ----
@@ -62,7 +62,7 @@ include::example$snippets/9k_executor.cpp[tag=safe_resume]
 
 The cost is two TLS accesses (one read, one write) per `.resume()` call, negligible compared to the cost of resuming a coroutine.
 
-Two `.resume()` call sites intentionally do _not_ use `safe_resume`:
+Two `.resume()` call sites intentionally do _not_ use cpp:safe_resume[]:
 
 * **`symmetric_transfer`** (MSVC workaround). The calling coroutine is about to suspend unconditionally. When it later resumes, `await_resume` restores TLS from the promise's stored environment. Save/restore would add overhead with no benefit.
 * **`run_async_wrapper::operator()`**. TLS is already saved in the wrapper's constructor and restored in its destructor, which bracket the entire task lifetime.
@@ -86,7 +86,7 @@ In practice, any standard allocator works.
 
 === With run_async
 
-Pass an allocator to `run_async`:
+Pass an allocator to cpp:run_async[]:
 
 [source,cpp]
 ----
@@ -102,19 +102,19 @@ include::example$snippets/4g_allocators.cpp[tag=run_async_memory_resource,indent
 
 === Default Allocator
 
-When no allocator is specified, `run_async` uses the execution context's default frame allocator, typically a recycling allocator optimized for coroutine frame sizes.
+When no allocator is specified, cpp:run_async[] uses the execution context's default frame allocator, typically a recycling allocator optimized for coroutine frame sizes.
 
 == Recycling Allocator
 
-Capy provides `recycling_memory_resource`, a memory resource optimized for coroutine frames:
+Capy provides cpp:recycling_memory_resource[], a memory resource optimized for coroutine frames:
 
 * Maintains freelists by size class
 * Reuses recently freed blocks (cache-friendly)
 * Falls back to upstream allocator for new sizes
 
-This allocator is used by default for `thread_pool` and other execution contexts.
+This allocator is used by default for cpp:thread_pool[] and other execution contexts.
 
-NOTE: `recycling_memory_resource` honors only the default new alignment (`__STDCPP_DEFAULT_NEW_ALIGNMENT__`, typically `alignof(std::max_align_t)`). The alignment argument passed to `do_allocate`/`do_deallocate` is ignored, so over-aligned requests are not satisfied. This is sufficient for coroutine frames but means the resource is not a drop-in replacement where over-aligned allocations are required.
+NOTE: cpp:recycling_memory_resource[] honors only the default new alignment (`__STDCPP_DEFAULT_NEW_ALIGNMENT__`, typically `alignof(std::max_align_t)`). The alignment argument passed to `do_allocate`/`do_deallocate` is ignored, so over-aligned requests are not satisfied. This is sufficient for coroutine frames but means the resource is not a drop-in replacement where over-aligned allocations are required.
 
 === Observing Reuse
 
@@ -143,9 +143,9 @@ Most users never need to allocate coroutine frames manually -- cpp:task[task<T>]
 include::example$snippets/4g_allocators.cpp[tag=frame_alloc_mixin]
 ----
 
-`frame_alloc_mixin` (in `<boost/capy/ex/frame_alloc_mixin.hpp>`) supplies `operator new` and `operator delete` that:
+cpp:frame_alloc_mixin[] (in `<boost/capy/ex/frame_alloc_mixin.hpp>`) supplies `operator new` and `operator delete` that:
 
-* Read the thread-local frame allocator set by `run_async` (falling back to `std::pmr::get_default_resource()` when none is set).
+* Read the thread-local frame allocator set by cpp:run_async[] (falling back to `std::pmr::get_default_resource()` when none is set).
 * Bypass virtual dispatch when that allocator is the default recycling memory resource.
 * Store the resolved allocator pointer at the tail of each frame, so deallocation uses the correct resource even if the thread-local allocator has since changed.
 
@@ -159,7 +159,7 @@ This is the same strategy used internally by cpp:io_awaitable_promise_base[]. Us
 * The frame size is known at compile time
 * Optimization is enabled
 
-Capy's `task<T>` uses the `[[clang::coro_await_elidable]]` attribute (when available) to enable HALO:
+Capy's cpp:task[task<T>] uses the `[[clang::coro_await_elidable]]` attribute (when available) to enable HALO:
 
 [source,cpp]
 ----

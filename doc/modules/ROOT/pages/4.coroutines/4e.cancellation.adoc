@@ -247,7 +247,7 @@ include::example$snippets/4e_cancellation.cpp[tag=racing_deadline,indent=0]
 ----
 
 cpp:when_any[]`(await_fetch(ch), deadline(waker))` returns as soon as either side
-wakes; the loser's wait resolves with `cond::canceled`. See
+wakes; the loser's wait resolves with cpp:cond::canceled[cond::canceled]. See
 xref:8.examples/8f.timeout-cancellation.adoc[Timeout with Cancellation]
 for the full runnable demo, including the two `std::thread` objects that
 play fetch worker and clock.
@@ -259,7 +259,7 @@ thread. They schedule against the platform event loop instead of a
 
 === User Cancellation
 
-Connect UI cancellation to stop tokens. Pass the token through `run_async` so it propagates automatically via the execution environment. The task accesses it with `co_await this_coro::stop_token` instead of receiving it as a function argument:
+Connect UI cancellation to stop tokens. Pass the token through cpp:run_async[] so it propagates automatically via the execution environment. The task accesses it with `co_await this_coro::stop_token` instead of receiving it as a function argument:
 
 [source,cpp]
 ----
@@ -277,7 +277,7 @@ include::example$snippets/4e_cancellation.cpp[tag=graceful_shutdown,indent=0]
 
 === when_any Cancellation
 
-`when_any` uses stop tokens internally to cancel "losing" tasks when the first task completes. This is covered in xref:4.coroutines/4f.composition.adoc[Concurrent Composition].
+cpp:when_any[] uses stop tokens internally to cancel "losing" tasks when the first task completes. This is covered in xref:4.coroutines/4f.composition.adoc[Concurrent Composition].
 
 == Reference
 

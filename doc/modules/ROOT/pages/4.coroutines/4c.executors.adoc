@@ -61,7 +61,7 @@ include::example$programs/4c_executors_executor_ref.cpp[tag=full]
 
 Here `make_suspended_work` starts a coroutine on the pool and returns the cpp:continuation[] it parked; posting that continuation through the type-erased `ex` resumes it.
 
-`executor_ref` stores a reference to the underlying executor—the original executor must outlive the `executor_ref`.
+cpp:executor_ref[] stores a reference to the underlying executor—the original executor must outlive the `executor_ref`.
 
 == thread_pool: Multi-Threaded Execution
 
@@ -81,7 +81,7 @@ See cpp:thread_pool[] for the exact constructor signature.
 
 === Thread Safety
 
-Work posted to a `thread_pool` may execute on any of its worker threads. If your coroutines access shared data, you must use appropriate synchronization.
+Work posted to a cpp:thread_pool[] may execute on any of its worker threads. If your coroutines access shared data, you must use appropriate synchronization.
 
 == execution_context: Base Class
 
@@ -90,7 +90,7 @@ cpp:execution_context[] is the base class for execution contexts. It provides:
 * Frame allocator access via `get_frame_allocator()`
 * Service infrastructure for extensibility
 
-Custom execution contexts inherit from `execution_context`:
+Custom execution contexts inherit from cpp:execution_context[]:
 
 [source,cpp]
 ----

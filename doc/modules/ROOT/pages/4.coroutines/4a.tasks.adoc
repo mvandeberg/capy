@@ -5,7 +5,7 @@ This section introduces Capy's cpp:task[task<T>] type—the fundamental coroutin
 
 == Overview
 
-`task<T>` is Capy's primary coroutine return type. It represents an asynchronous operation that eventually produces a value of type `T` (or nothing, for `task<void>`).
+cpp:task[task<T>] is Capy's primary coroutine return type. It represents an asynchronous operation that eventually produces a value of type `T` (or nothing, for `task<void>`).
 
 Key characteristics:
 
@@ -17,14 +17,14 @@ Key characteristics:
 
 == Declaring task Coroutines
 
-Any function that returns `task<T>` and contains coroutine keywords (`co_await`, `co_return`) is a `task` coroutine:
+Any function that returns cpp:task[task<T>] and contains coroutine keywords (`co_await`, `co_return`) is a `task` coroutine:
 
 [source,cpp]
 ----
 include::example$snippets/4a_tasks.cpp[tag=declaring]
 ----
 
-The syntax `task<>` is equivalent to `task<void>` and represents a coroutine that completes without producing a value.
+The syntax cpp:task[task<>] is equivalent to `task<void>` and represents a coroutine that completes without producing a value.
 
 == Returning Values with co_return
 
@@ -35,11 +35,11 @@ Use `co_return` to complete the coroutine and provide its result:
 include::example$snippets/4a_tasks.cpp[tag=returning]
 ----
 
-For `task<void>`, you can either use `co_return;` explicitly or let execution fall off the end of the function body.
+For cpp:task[task<void>], you can either use `co_return;` explicitly or let execution fall off the end of the function body.
 
 == Running a Task
 
-A `task` is lazy, so declaring one does not run it. To run a task to completion from ordinary (non-coroutine) code, pass it to cpp:run_async[] with an executor and a completion handler. The task runs on the executor, and its result is delivered to the handler:
+A cpp:task[task] is lazy, so declaring one does not run it. To run a task to completion from ordinary (non-coroutine) code, pass it to cpp:run_async[] with an executor and a completion handler. The task runs on the executor, and its result is delivered to the handler:
 
 [source,cpp]
 ----
@@ -66,7 +66,7 @@ When you `co_await` a task:
 
 == Lazy Execution
 
-A critical property of `task<T>` is *lazy execution*: creating a task does not start its execution. The coroutine body runs only when the task is awaited.
+A critical property of cpp:task[task<T>] is *lazy execution*: creating a task does not start its execution. The coroutine body runs only when the task is awaited.
 
 [source,cpp]
 ----
@@ -125,7 +125,7 @@ include::example$snippets/4a_tasks.cpp[tag=exceptions]
 
 The exception is stored in the promise when it occurs and rethrown in `await_resume` when the calling coroutine resumes.
 
-The `task<T>` type is defined in:
+The cpp:task[task<T>] type is defined in:
 
 [source,cpp]
 ----
