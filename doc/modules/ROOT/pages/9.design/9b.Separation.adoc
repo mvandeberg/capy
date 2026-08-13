@@ -20,7 +20,7 @@ This document applies well-established physical design principles to show why th
 
 **Capy** provides the foundational abstractions for coroutine-based I/O. Tasks. Buffers. Stream concepts. Executors. The IoAwaitable protocol. Type-erased streams. Composition primitives like cpp:when_all[] and cpp:when_any[]. It is pure {cpp}20. It does not include a single line of platform-specific code. No sockets. No file descriptors. No `#ifdef _WIN32`.
 
-**Corosio** provides platform networking. TCP sockets. TLS streams. DNS resolution. Delays and timeouts. Signal handling. It implements four platform-specific event loop backends: IOCP on Windows, epoll on Linux, kqueue on macOS/BSD, and POSIX select as a fallback. Corosio depends on Capy. Capy does not depend on Corosio.
+**Corosio** provides platform networking. TCP sockets. TLS streams. DNS resolution. Delays and timeouts. Signal handling. It implements five platform-specific event loop backends: epoll and io_uring on Linux, kqueue on macOS/BSD, IOCP on Windows, and POSIX select as a fallback. Corosio depends on Capy. Capy does not depend on Corosio.
 
 The dependency arrow points in one direction. That is not an accident.
 
@@ -82,7 +82,7 @@ CCD = 5      CCD = 5
 
 Each component should have a single purpose. Ideally all of the functionality within a component is primitive - if you can write a function in terms of a type rather than as a member of that type, write a free function (or today, a template function constrained by a concept). This keeps levels flat and CCD low.
 
-Merging two libraries at different levels inflates CCD. Every component that only needs buffers and tasks now drags in sockets, TLS, and four platform backends. Testing cost, build cost, and cognitive cost all increase.
+Merging two libraries at different levels inflates CCD. Every component that only needs buffers and tasks now drags in sockets, TLS, and five platform backends. Testing cost, build cost, and cognitive cost all increase.
 
 
 == Deep Modules
@@ -97,7 +97,7 @@ ____
 
 Capy is a deep module. Its public surface is narrow: a handful of concepts (cpp:ReadStream[], cpp:WriteStream[], cpp:Stream[]), a task type, an executor model, and buffer utilities. Behind that surface lives a substantial implementation: coroutine frame allocation, forward propagation of executors and stop tokens, type-erased stream machinery, and composition primitives.
 
-Corosio is also a deep module, but a different one. It hides platform-specific event loop complexity (IOCP, epoll, kqueue, select) behind a uniform socket and timer interface.
+Corosio is also a deep module, but a different one. It hides platform-specific event loop complexity (IOCP, epoll, io_uring, kqueue, select) behind a uniform socket and timer interface.
 
 These two modules hide different information. That is the practical reason they are separate. Lakos would say: do not collocate two independent systems, because doing so creates gratuitous physical dependencies. Ousterhout would say: modules that hide different information should remain different modules.
 
@@ -135,12 +135,13 @@ Merge them, and every test of a buffer copy routine must compile against platfor
 
 == Platform Isolation
 
-Capy is portable {cpp}20. It compiles on any conforming compiler with no platform-specific code. It can be used on embedded systems, in WebAssembly, on platforms that do not have sockets, and in environments where the I/O backend has not been written yet.
+Capy is portable {cpp}20. It compiles on any conforming compiler with no platform-specific I/O code. It can be used on embedded systems, in WebAssembly, on platforms that do not have sockets, and in environments where the I/O backend has not been written yet.
 
-Corosio contains four platform backends, each a substantial body of platform-specific code:
+Corosio contains five platform backends, each a substantial body of platform-specific code:
 
 * *IOCP* on Windows (sockets, overlapped I/O, NT timers)
 * *epoll* on Linux
+* *io_uring* on Linux
 * *kqueue* on macOS and BSD
 * *select* as a POSIX fallback
 

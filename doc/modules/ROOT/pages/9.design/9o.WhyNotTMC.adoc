@@ -358,9 +358,9 @@ Neither is "more fundamental." If you're building a network server, Capy's const
 Capy is a foundation. Corosio builds real networking on it:
 
 * TCP sockets, acceptors
-* TLS streams (WolfSSL)
+* TLS streams (OpenSSL, WolfSSL)
 * Timers, DNS resolution, signal handling
-* Native backends: IOCP (Windows), epoll (Linux), io_uring (planned)
+* Native backends: epoll and io_uring (Linux), kqueue (BSD/macOS), IOCP (Windows), select (portable fallback)
 
 All built on Capy's IoAwaitable protocol. Coroutines only. No callbacks.
 

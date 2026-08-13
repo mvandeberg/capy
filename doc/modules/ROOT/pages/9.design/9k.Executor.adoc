@@ -129,7 +129,7 @@ ____
 
 When `task<T>::await_suspend` returns the parent's coroutine handle, the compiler performs a tail-call-like transfer directly to the parent. No queue, no executor submission, no `defer`. The optimization that `defer` provides through a runtime hint, symmetric transfer provides through a compile-time guarantee.
 
-Corosio confirms this in practice: its entire I/O layer -- sockets, acceptors, timers, resolvers, signals -- across all three backends (epoll, IOCP, select) uses only cpp:Executor::dispatch[dispatch] and cpp:Executor::post[post]. No code path requires `defer`.
+Corosio confirms this in practice: its entire I/O layer -- sockets, acceptors, timers, resolvers, signals -- across all five backends (epoll, kqueue, io_uring, IOCP, select) uses only cpp:Executor::dispatch[dispatch] and cpp:Executor::post[post]. No code path requires `defer`.
 
 == Why `continuation`, Not Raw `coroutine_handle<>`
 
@@ -205,7 +205,7 @@ Corosio demonstrates this pattern throughout its public API. I/O objects accept 
 include::example$snippets/9k_executor.cpp[tag=socket_ctor,indent=0]
 ----
 
-The socket constructor receives cpp:execution_context[]`&` and looks up the socket service. The concrete context type -- `epoll_context`, `iocp_context`, `select_context` -- is irrelevant to the socket.
+The socket constructor receives cpp:execution_context[]`&` and looks up the socket service. The concrete context type -- `corosio::io_context` instantiated with a backend tag such as `epoll_t` or `iocp_t` -- is irrelevant to the socket.
 
 == The `executor_ref` Design
 
@@ -270,7 +270,7 @@ cpp:Executor::post[post] links the continuation into the executor's work queue v
 
 === Platform Independence
 
-This pattern is identical across all three Corosio backends: epoll (Linux), IOCP (Windows), and select (POSIX fallback). The executor concept and cpp:executor_ref[] provide the abstraction that makes this possible. The backend-specific code deals with I/O readiness or completion notification. The executor-specific code deals with coroutine scheduling. The two concerns are cleanly separated.
+This pattern is identical across all five Corosio backends: epoll and io_uring (Linux), kqueue (BSD/macOS), IOCP (Windows), and select (portable fallback). The executor concept and cpp:executor_ref[] provide the abstraction that makes this possible. The backend-specific code deals with I/O readiness or completion notification. The executor-specific code deals with coroutine scheduling. The two concerns are cleanly separated.
 
 NOTE: For the TLS save/restore protocol required around `.resume()` calls (cpp:safe_resume[]), including which two call sites are deliberately exempt, see xref:../4.coroutines/4g.allocators.adoc#_tls_preservation[TLS Preservation].
 
