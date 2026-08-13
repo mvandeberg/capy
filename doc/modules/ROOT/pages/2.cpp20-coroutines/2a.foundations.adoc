@@ -6,13 +6,13 @@ This section introduces the fundamental concepts you need before working with {c
 
 Before beginning this tutorial, you should have:
 
-* A {cpp} compiler with {cpp}20 support (GCC 10+, Clang 14+, or MSVC 2019 16.8+)
+* A {cpp} compiler with {cpp}20 support (GCC 12+, Clang 17+, or MSVC 14.34+)
 * Familiarity with basic {cpp} concepts: functions, classes, templates, and lambdas
 * Understanding of how function calls work: the call stack, local variables, and return values
 
 The examples in this tutorial use standard {cpp}20 features. Compile with:
 
-* GCC: `g++ -std=c++20 -fcoroutines your_file.cpp`
+* GCC: `g++ -std=c++20 your_file.cpp`
 * Clang: `clang++ -std=c++20 your_file.cpp`
 * MSVC: `cl /std:c++20 your_file.cpp`
 
