@@ -8,6 +8,7 @@
 //
 
 = Mock Streams
+:page-mode: concept
 
 Concept-conforming test doubles for the partial-I/O concepts in
 xref:6.streams/6b.streams.adoc[Streams]. Use them to drive protocol
@@ -167,20 +168,3 @@ a different error-handling branch inside `read_line`.
 include::example$snippets/7b_mock_streams.cpp[tag=read_line_test]
 ----
 
-== Reference
-
-[cols="1,3"]
-|===
-| Header | Contents
-
-| `<boost/capy/test/read_stream.hpp>`
-| Mock ReadStream with controllable partial reads.
-
-| `<boost/capy/test/write_stream.hpp>`
-| Mock WriteStream with controllable partial writes and expectations.
-
-| `<boost/capy/test/stream.hpp>`
-| Connected bidirectional pair for client/server tests.
-|===
-
-Continue to xref:7.testing/7e.buffer-inspection.adoc[Buffer Inspection].

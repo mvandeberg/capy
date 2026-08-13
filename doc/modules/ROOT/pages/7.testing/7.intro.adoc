@@ -8,6 +8,7 @@
 //
 
 = Testing
+:page-mode: concept
 
 Real I/O is a poor foundation for unit tests. Network operations are slow,
 non-deterministic, and do not fail on demand -- so error-handling paths go
@@ -49,5 +50,3 @@ then exception mode. `run_blocking` keeps the whole thing on the calling
 thread. Buffer utilities such as `bufgrind` and `buffer_to_string`
 wrap the mock data for assertions. They let you verify that every split of
 an input buffer produces the same correct output.
-
-Continue to xref:7.testing/7a.drivers.adoc[Driving Tests] to begin.

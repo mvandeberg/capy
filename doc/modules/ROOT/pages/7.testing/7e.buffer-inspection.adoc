@@ -8,6 +8,7 @@
 //
 
 = Buffer Inspection
+:page-mode: concept
 
 Two small utilities round out the toolkit. cpp:test::bufgrind[bufgrind] iterates every split
 point of a buffer sequence, exercising every chunk-boundary condition in the
@@ -116,19 +117,4 @@ the output at each split:
 include::example$snippets/7e_buffer_inspection.cpp[tag=parser_all_splits,indent=0]
 ----
 
-== Reference
-
-[cols="1,3"]
-|===
-| Header | Contents
-
-| `<boost/capy/test/bufgrind.hpp>`
-| Exhaustive buffer split-point iterator.
-
-| `<boost/capy/test/buffer_to_string.hpp>`
-| Buffer-sequence to string helper.
-|===
-
-You have reached the end of the Testing section. Continue
-to xref:8.examples/8.intro.adoc[Example Programs] for end-to-end usage
-or xref:reference:boost/capy.adoc[Reference] for the API browser.
+See xref:reference:boost/capy.adoc[Reference] for the full API browser.

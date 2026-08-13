@@ -8,17 +8,13 @@
 //
 
 = Driving Tests
+:page-mode: concept
 
 Three utilities work together to run capy code synchronously inside a unit
 test. cpp:test::run_blocking[run_blocking] drives a coroutine to completion on the calling
 thread. cpp:test::fuse[fuse] injects errors at controlled points and reruns the test body
 until every failure path is covered. cpp:set_current_thread_name[] labels worker
 threads so that multi-threaded test output is readable.
-
-== Prerequisites
-
-* xref:4.coroutines/4.intro.adoc[Coroutines in Capy]
-* xref:6.streams/6.intro.adoc[Stream Concepts]
 
 == run_blocking
 
@@ -260,20 +256,3 @@ cpp:test::read_stream[read_stream], cpp:test::write_stream[write_stream], or oth
 Construct those mocks with the same `fuse f`. The armed loop then exercises every I/O
 failure path through both error-code and exception modes automatically.
 
-== Reference
-
-[cols="1,3"]
-|===
-| Header | Contents
-
-| `<boost/capy/test/run_blocking.hpp>`
-| Synchronous coroutine driver.
-
-| `<boost/capy/test/fuse.hpp>`
-| Systematic error injection.
-
-| `<boost/capy/test/thread_name.hpp>`
-| Thread naming for diagnostics.
-|===
-
-Continue to xref:7.testing/7b.mock-streams.adoc[Mock Streams].
