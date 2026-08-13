@@ -1,5 +1,5 @@
 = System I/O Integration
-:page-mode: concept
+:page-mode: explanation
 
 This section explains how buffer sequences interface with operating system I/O operations.
 

@@ -1,5 +1,5 @@
 ﻿= Buffer Types
-:page-mode: concept
+:page-mode: explanation
 
 This section introduces Capy's fundamental buffer types: cpp:const_buffer[] and cpp:mutable_buffer[].
 

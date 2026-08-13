@@ -1,5 +1,5 @@
 = Why Concepts, Not Spans
-:page-mode: concept
+:page-mode: explanation
 
 This section explains why Capy uses concept-driven buffer sequences instead of `std::span`, and why this design enables composition without allocation.
 

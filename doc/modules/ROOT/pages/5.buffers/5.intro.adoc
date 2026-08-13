@@ -8,7 +8,7 @@
 //
 
 = Buffer Sequences
-:page-mode: concept
+:page-mode: explanation
 
 Every I/O operation ultimately comes down to moving bytes between your program and the outside world--a socket, a file, a pipe. The question is: how do you describe where those bytes live in memory?
 
