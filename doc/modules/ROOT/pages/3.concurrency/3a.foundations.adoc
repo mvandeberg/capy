@@ -85,7 +85,7 @@ Lambda expressions are often the clearest choice:
 include::example$programs/3a_foundations_lambda.cpp[tag=full]
 ----
 
-The lambda captures `x` by value—it copies `x` into the lambda. By default, `std::thread` copies all arguments passed to it. Even if your function declares a reference parameter, the thread receives a copy.
+The lambda captures `x` by value—it copies `x` into the lambda. By default, `std::thread` also decays and copies every argument passed to its constructor, before invoking the callable.
 
 To pass by reference, use `std::ref()`:
 
@@ -94,7 +94,7 @@ To pass by reference, use `std::ref()`:
 include::example$programs/3a_foundations_ref.cpp[tag=full]
 ----
 
-Without `std::ref()`, the thread would modify a copy, leaving `counter` unchanged.
+Without `std::ref()`, this fails to compile. `std::thread` decays arguments to values, and a decayed `int` cannot bind to `increment`'s `int&` parameter.
 
 === Member Functions
 
