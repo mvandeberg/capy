@@ -32,7 +32,7 @@ If `buffer_empty(buffers)` is true, `n` is 0. The empty buffer is not itself a c
 
 The caller must not assume the buffer is filled. `read_some` may return fewer bytes than the buffer can hold. This is the defining property of a partial-read primitive.
 
-Once `read_some` returns an error (including EOF), the caller must not call `read_some` again. The stream is done. Not all implementations can reproduce a prior error on subsequent calls, so the behavior after an error is undefined.
+Once `read_some` returns an error (including EOF), a subsequent call is still permitted. A conforming stream may report the same condition again, report a different one, or resume delivering data -- the concept does not pick one of the three, so callers cannot assume the stream is exhausted for good.
 
 Buffers in the sequence are filled in order.
 
@@ -53,7 +53,7 @@ The caller must ensure that the memory referenced by `buffers` remains valid unt
 include::example$snippets/9c_read_stream.cpp[tag=read_some_signature,indent=0]
 ----
 
-Buffer sequences should be accepted by value when the member function is a coroutine, to ensure the sequence lives in the coroutine frame across suspension points.
+Buffer sequences should be accepted by value unconditionally, not only when the member function is a coroutine. A by-value parameter is copied into the coroutine frame or into the awaitable's state, so the returned awaitable is self-contained. A by-const-reference parameter binds to caller storage and dangles as soon as the awaitable is stored or moved instead of being consumed immediately by `co_await` in the same scope -- a risk that applies whether or not `read_some` itself is a coroutine.
 
 == Composed Algorithms
 
