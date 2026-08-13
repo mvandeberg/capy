@@ -221,8 +221,8 @@ concurrent coroutines is undefined behavior.
   end has its own independent limit.
 
 | `provide(std::string_view sv)`
-| Inject bytes into this stream for reading, bypassing the fuse.
-  Resumes a suspended `read_some` if any.
+| Inject bytes into the peer's incoming buffer, bypassing the fuse.
+  Resumes a suspended `read_some` on the peer if any.
 
 | `expect(std::string_view expected) -> std::pair<std::error_code, bool>`
 | Read exactly `expected.size()` bytes and compare. Returns the error
