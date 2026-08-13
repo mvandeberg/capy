@@ -76,23 +76,8 @@ need to write into the produced buffers rather than only read from them.
 include::example$snippets/7e_buffer_inspection.cpp[tag=mutability,indent=0]
 ----
 
-[cols="1,2"]
-|===
-| Member | Description
-
-| `bufgrind(BS const& bs, std::size_t step = 1)`
-| Construct over a buffer sequence. `step` controls how many bytes to
-  advance on each call to `next()`. A step of 0 is treated as 1.
-  The final split at `buffer_size(bs)` is always included.
-
-| `operator bool() const`
-| Return `true` while more split positions remain.
-
-| `next()`
-| Advance to the next split position. Returns an awaitable that yields
-  `split_type`, a `std::pair` of `slice_type<BS>` values representing
-  the two pieces at the current position.
-|===
+See cpp:test::bufgrind[] for the complete member list: the
+constructor's `step` parameter, `operator bool`, and `next`.
 
 == buffer_to_string
 
@@ -117,14 +102,7 @@ input:
 include::example$snippets/7e_buffer_inspection.cpp[tag=reconstruct,indent=0]
 ----
 
-[cols="1,2"]
-|===
-| Function | Description
-
-| `buffer_to_string(Buffers const&... bufs) -> std::string`
-| Concatenate one or more `ConstBufferSequence` arguments into a single
-  `std::string`. Arguments are appended in the order given.
-|===
+See cpp:test::buffer_to_string[] for the exact signature.
 
 == Putting It Together
 
