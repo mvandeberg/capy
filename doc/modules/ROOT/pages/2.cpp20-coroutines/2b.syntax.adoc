@@ -45,7 +45,7 @@ For coroutines that do not return a value, use `co_return;` without an argument.
 The distinction between regular functions and coroutines matters because they behave fundamentally differently at runtime:
 
 * A regular function allocates its local variables on the stack. When it returns, those variables are gone.
-* A coroutine allocates its local variables in a heap-allocated *coroutine frame*. When it suspends, those variables persist. When it resumes, they are still there.
+* A coroutine allocates its local variables in a *coroutine frame*, typically on the heap. When it suspends, those variables persist. When it resumes, they are still there.
 
 Here is the minimal structure needed to create a coroutine:
 

@@ -76,7 +76,7 @@ include::example$snippets/2d_advanced.cpp[tag=generator_final_suspend,indent=0]
 
 == Coroutine Allocation
 
-Every coroutine needs memory for its *coroutine frame*—the heap-allocated structure holding local variables, parameters, and suspension state.
+Every coroutine needs memory for its *coroutine frame*—the structure, typically heap-allocated, holding local variables, parameters, and suspension state.
 
 === Default Allocation
 

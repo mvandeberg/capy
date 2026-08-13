@@ -24,7 +24,7 @@ In {cpp}20, lambda coroutine captures are stored in the lambda closure object, *
 
 1. The lambda closure is created, capturing `sock` by reference
 2. The lambda's `operator()()` is called
-3. A coroutine frame is allocated on the heap
+3. A coroutine frame is allocated (typically on the heap; HALO may elide this)
 4. The coroutine suspends at `initial_suspend`
 5. `operator()()` returns the task
 6. **The lambda closure is destroyed** — it was a temporary

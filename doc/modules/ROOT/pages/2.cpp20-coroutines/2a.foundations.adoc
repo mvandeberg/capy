@@ -51,7 +51,7 @@ When a coroutine resumes:
 * Local variables are restored to their previous values
 * Execution continues from the suspension point
 
-This capability is implemented through a *coroutine frame*—a heap-allocated block of memory that stores the coroutine's state. Unlike stack frames, coroutine frames persist across suspension points because they live on the heap rather than the stack.
+This capability is implemented through a *coroutine frame*—a block of memory, typically heap-allocated, that stores the coroutine's state. Unlike stack frames, coroutine frames persist across suspension points. xref:2.cpp20-coroutines/2d.advanced.adoc[Part IV] covers when the compiler can place one elsewhere instead.
 
 [source,cpp,role=pseudocode]
 ----

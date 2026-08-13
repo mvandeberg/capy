@@ -188,6 +188,6 @@ include::example$programs/2c_machinery_fibonacci.cpp[tag=full]
 
 The Fibonacci generator runs an infinite loop internally. It produces values forever. But because it yields and suspends after each value, the caller controls when (and whether) to ask for more values. The generator only computes values on demand.
 
-The variables `a` and `b` persist across yields because they live in the coroutine frame on the heap.
+The variables `a` and `b` persist across yields because they live in the coroutine frame, typically on the heap.
 
 You have now learned how promise types and coroutine handles work together to create useful abstractions like generators. The next section covers advanced topics: symmetric transfer, allocation, and exception handling.
