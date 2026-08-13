@@ -1,5 +1,5 @@
 = Streams (Partial I/O)
-:page-mode: concept
+:page-mode: explanation
 
 This section explains the cpp:ReadStream[] and cpp:WriteStream[] concepts for partial I/O operations.
 

@@ -1,5 +1,5 @@
 = Physical Isolation
-:page-mode: concept
+:page-mode: explanation
 
 This section explains how type-erased wrappers enable compilation firewalls and transport-independent APIs.
 
@@ -124,11 +124,11 @@ When profiling shows wrapper overhead matters:
 2. Use concrete types in hot paths
 3. Accept the template cost for that code path
 
+These abstractions—streams and their type-erased wrappers—form the foundation for Capy's I/O model.
+
 == Reference
 
 Type-erased wrappers are in `<boost/capy/io/>`:
 
 * cpp:any_stream[]
 * cpp:any_read_stream[], cpp:any_write_stream[]
-
-These abstractions—streams and their type-erased wrappers—form the foundation for Capy's I/O model.

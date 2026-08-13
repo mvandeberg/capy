@@ -1,5 +1,5 @@
 = Stream Concepts Overview
-:page-mode: concept
+:page-mode: explanation
 
 This section introduces Capy's stream concepts—the abstractions that enable data to flow through your programs.
 

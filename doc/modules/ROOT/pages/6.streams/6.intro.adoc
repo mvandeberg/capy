@@ -8,7 +8,7 @@
 //
 
 = Stream Concepts
-:page-mode: concept
+:page-mode: explanation
 
 Data flows. It arrives from a network socket in unpredictable chunks. It leaves through a file descriptor as fast as the disk allows. It passes through encryption, compression, and framing layers--each transforming it before handing it off to the next. Modeling this flow well is one of the most important things an I/O library can do.
 
