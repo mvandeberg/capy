@@ -44,8 +44,8 @@ only difference is the type of the stream or source you pass in.
 
 A typical test constructs one or more mocks, arms a `fuse`, and hands the
 mocks to the code under test inside a `run_blocking` call. The `fuse`
-repeats the test body automatically -- once for each failure site and once
-in exception mode. `run_blocking` keeps the whole thing on the calling
+repeats the test body automatically in two full sweeps -- error-code mode,
+then exception mode. `run_blocking` keeps the whole thing on the calling
 thread. Buffer utilities such as `bufgrind` and `buffer_to_string`
 wrap the mock data for assertions. They let you verify that every split of
 an input buffer produces the same correct output.
