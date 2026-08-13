@@ -140,7 +140,7 @@ include::example$snippets/5d_system_io.cpp[tag=io_uring_fixed,indent=0]
 
 Similar optimization with pre-registered memory regions for zero-copy I/O.
 
-Capy's Corosio library exposes these optimizations where available.
+Corosio does not currently expose these optimizations. Every operation goes through the per-call translation described above.
 
 == Writing Efficient Code
 

@@ -26,7 +26,7 @@ POSIX uses `void*` for buffers. This expresses semantic neutrality: "I move memo
 
 Two concrete forces favor `void*` specifically over `std::span<std::byte>`:
 
-* *Platform types already use it.* The OS structures Capy maps onto—`iovec`'s `iov_base`, `WSABUF`'s `buf`—are `void*`/`char*`. Erasing to `void*` makes conversion to those structures a layout match rather than a reinterpretation.
+* *Platform types already use it.* The OS structures Capy maps onto—`iovec`'s `iov_base`, `WSABUF`'s `buf`—are `void*`/`char*`, so the pointer field never needs reinterpreting. Only `iovec` matches Capy's full struct layout; `WSABUF`'s field order and width differ, as the Layout Compatibility section below explains.
 * *Callers supply many element types.* User data arrives as `char[]`, `unsigned char[]`, `std::byte[]`, `std::string`, and more. A single neutral pointer erases all of them to one representation. `std::span<std::byte>` would force every caller to reinterpret their bytes first, and `std::span<void>` is ill-formed—{cpp} cannot express a type-agnostic buffer with `span`.
 
 Capy provides `const_buffer` and `mutable_buffer` as semantically neutral buffer types with known layout.
@@ -111,12 +111,10 @@ The buffer's size, in bytes, is `count * sizeof(element)`.
 
 == Layout Compatibility
 
-`const_buffer` and `mutable_buffer` have the same memory layout as OS buffer structures:
+`const_buffer` and `mutable_buffer` place the pointer first and the size second:
 
-* POSIX: `struct iovec { void* iov_base; size_t iov_len; }`
-* Windows: `struct WSABUF { ULONG len; CHAR* buf; }` (note: different order)
-
-This means conversion to OS structures is efficient—often just a reinterpret_cast for arrays of buffers.
+* POSIX: `struct iovec { void* iov_base; size_t iov_len; }` — same order, same widths. An array of buffers converts to `iovec` with a direct reinterpret_cast.
+* Windows: `struct WSABUF { ULONG len; CHAR* buf; }` — reversed order, and a 32-bit length instead of `size_t`. Capy copies descriptors into a `WSABUF` array instead of casting; see xref:5.buffers/5d.system-io.adoc[System I/O Integration].
 
 == Single Buffers as Sequences
 
