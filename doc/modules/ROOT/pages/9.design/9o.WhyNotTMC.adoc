@@ -1,4 +1,5 @@
 = Capy and TooManyCooks: A Comparison
+:page-mode: explanation
 
 You want to write async code in {cpp}. You've heard about coroutines. Two libraries exist: Capy and TooManyCooks (TMC). Both let you write `co_await`. Both run on multiple threads.
 

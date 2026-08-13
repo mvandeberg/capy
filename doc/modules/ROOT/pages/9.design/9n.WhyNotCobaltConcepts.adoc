@@ -1,4 +1,5 @@
 = Write Stream Design: A Side-by-Side Analysis
+:page-mode: explanation
 
 Both Capy and Cobalt allow you to write a non-template coroutine algorithm that operates on a type-erased write stream. The function signatures look similar:
 

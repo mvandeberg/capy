@@ -8,6 +8,7 @@
 //
 
 = Why Capy Is Separate
+:page-mode: explanation
 
 "Why are Capy and Corosio two separate libraries? Why not just put everything in one place?"
 

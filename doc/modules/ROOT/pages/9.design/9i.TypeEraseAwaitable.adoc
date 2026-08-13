@@ -1,4 +1,5 @@
 = Type-Erasing Awaitables
+:page-mode: explanation
 
 == Overview
 

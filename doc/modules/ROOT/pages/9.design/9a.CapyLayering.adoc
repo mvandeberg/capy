@@ -8,6 +8,7 @@
 //
 
 = Layered Abstractions
+:page-mode: explanation
 
 {cpp} async libraries have traditionally forced users into a single abstraction level, and every choice comes with baggage. You go with templates and you get zero overhead, full optimization, and unreadable error messages that scroll for pages. Compile times explode. You cannot hide implementation behind a compilation boundary, so you have no ABI stability. You go with virtual dispatch and you get readable code, stable ABIs, and a runtime cost that every call path pays whether it needs to or not.
 

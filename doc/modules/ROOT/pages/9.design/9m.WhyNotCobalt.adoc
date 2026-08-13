@@ -1,4 +1,5 @@
 = Capy and Boost.Cobalt: A Comparison
+:page-mode: explanation
 
 Both libraries use {cpp}20 coroutines for asynchronous programming. The differences begin with the foundation.
 
