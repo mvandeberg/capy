@@ -9,6 +9,7 @@ Using Boost.Asio async operations directly inside a Capy coroutine through a `us
 * How the token bridges `std::stop_token` to Asio's cancellation slot
 * How the bridge preserves the xref:4.coroutines/4c.executors.adoc#the-same-executor-invariant[same-executor invariant]
 
+[NOTE]
 ====
 This example is built when a `Boost::asio` target is available. The full source is in `example/asio/` (`use_capy_example.cpp` and the reusable token in `api/use_capy.hpp`).
 ====
