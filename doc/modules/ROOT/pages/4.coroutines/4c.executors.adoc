@@ -119,8 +119,8 @@ include::example$snippets/4c_executors.cpp[tag=shared_resource]
 
 The strand maintains a queue of pending work. When work is dispatched:
 
-1. If no other work is executing on the strand, the new work runs immediately
-2. If other work is executing, the new work is queued
+1. If the calling thread is already executing within the strand, the new work runs immediately, inline
+2. Otherwise, the new work is queued, even if the strand is idle
 3. When the current work completes, the next queued item runs
 
 This provides logical single-threading without blocking physical threads.
