@@ -324,7 +324,7 @@ The critical path difference is completion. TMC+Asio goes through `resume_contin
 
 * cpp:any_stream[], cpp:any_read_stream[], cpp:any_write_stream[]
 * Write a function taking `any_stream&` - it compiles once
-* One virtual call per I/O operation
+* Five vtable calls per I/O operation, not one per continuation
 * Clean ABI boundaries
 
 *TMC:*

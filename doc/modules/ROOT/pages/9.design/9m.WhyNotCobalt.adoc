@@ -102,7 +102,7 @@ Capy's concepts form a small, flat set that emerged naturally from use-case-firs
 
 Traditional approaches to type erasure in Asio focus on the lowest-level elements: the completion handler, the executor, the allocator. This is not the right layer. Type-erasing these individually adds overhead at every customization point while still leaving the stream type concrete and visible.
 
-Capy type-erases the stream itself. This is possible because coroutines provide structural type erasure — the continuation is always a handle, not a template parameter. When the library is coroutines-only, one virtual call per I/O operation is the total cost. The completion handler, executor, and allocator do not need individual erasure because they are not part of the stream's operation signature.
+Capy type-erases the stream itself. This is possible because coroutines provide structural type erasure — the continuation is always a handle, not a template parameter. When the library is coroutines-only, five vtable calls per I/O operation is the total cost — not one per continuation. The completion handler, executor, and allocator do not need individual erasure because they are not part of the stream's operation signature.
 
 Cobalt defines stream abstractions (`write_stream`, `read_stream`, `stream`) as abstract base classes in `cobalt/io/stream.hpp`, taking a different approach from Capy's concept + type-erased wrapper model. See xref:9.design/9n.WhyNotCobaltConcepts.adoc[Write Stream Design] for a side-by-side analysis.
 

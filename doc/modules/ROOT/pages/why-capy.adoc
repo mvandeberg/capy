@@ -47,7 +47,7 @@ Asio does offer type-erasure—but at the wrong level. `any_executor` erases the
 
 Why hasn't anyone type-erased the stream? Because with callbacks and futures, it's expensive. The completion handler type is part of the stream's operation signature. Erasing it means virtual calls on the hot path—for every continuation, not just every I/O operation.
 
-Coroutines change this equation. A coroutine's continuation is always the same thing: a handle to resume. The caller doesn't need to know what type resumes it. This is structural type-erasure—built into the language. Capy exploits this. Type-erasing a stream costs one virtual call per I/O operation. That's it. No per-callback overhead. No template instantiation cascades.
+Coroutines change this equation. A coroutine's continuation is always the same thing: a handle to resume. The caller doesn't need to know what type resumes it. This is structural type-erasure—built into the language. Capy exploits this. Type-erasing a stream costs five vtable calls per I/O operation, not one per continuation. No per-callback overhead. No template instantiation cascades.
 
 Write cpp:any_stream[]`&` and accept any stream. Your function compiles once. It links anywhere. Your build times drop. Your binaries shrink. Your error messages become readable. And because coroutines are ordinary functions (not templates), you get natural ABI stability. Link against a new stream implementation without recompiling your code.
 
