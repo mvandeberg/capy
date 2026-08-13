@@ -1,12 +1,7 @@
 = Part III: Coroutine Machinery
+:page-mode: concept
 
 This section explains the promise type and coroutine handle—the core machinery that controls coroutine behavior. You build a complete generator type by understanding how these pieces work together.
-
-== Prerequisites
-
-* Completed xref:2.cpp20-coroutines/2b.syntax.adoc[Part II: {cpp}20 Syntax]
-* Understanding of the three coroutine keywords
-* Familiarity with awaitables and awaiters
 
 == The Promise Type
 
@@ -189,5 +184,3 @@ include::example$programs/2c_machinery_fibonacci.cpp[tag=full]
 The Fibonacci generator runs an infinite loop internally. It produces values forever. But because it yields and suspends after each value, the caller controls when (and whether) to ask for more values. The generator only computes values on demand.
 
 The variables `a` and `b` persist across yields because they live in the coroutine frame, typically on the heap.
-
-You have now learned how promise types and coroutine handles work together to create useful abstractions like generators. The next section covers advanced topics: symmetric transfer, allocation, and exception handling.

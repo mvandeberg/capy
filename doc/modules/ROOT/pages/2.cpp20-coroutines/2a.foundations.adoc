@@ -1,20 +1,7 @@
 = Part I: Foundations
+:page-mode: concept
 
 This section introduces the fundamental concepts you need before working with {cpp}20 coroutines. It explains how normal functions work, what makes coroutines different, and why coroutines exist as a language feature.
-
-== Prerequisites
-
-Before beginning this tutorial, you should have:
-
-* A {cpp} compiler with {cpp}20 support (GCC 12+, Clang 17+, or MSVC 14.34+)
-* Familiarity with basic {cpp} concepts: functions, classes, templates, and lambdas
-* Understanding of how function calls work: the call stack, local variables, and return values
-
-The examples in this tutorial use standard {cpp}20 features. Compile with:
-
-* GCC: `g++ -std=c++20 your_file.cpp`
-* Clang: `clang++ -std=c++20 your_file.cpp`
-* MSVC: `cl /std:c++20 your_file.cpp`
 
 == Functions and the Call Stack
 
@@ -112,5 +99,3 @@ Coroutines also enable:
 * *Generators* — Functions that produce sequences of values on demand, computing each value only when requested
 * *State machines* — Complex control flow expressed as linear code with suspension points
 * *Cooperative multitasking* — Multiple logical tasks interleaved on a single thread
-
-You have now learned what coroutines are and why they exist. The next section covers the {cpp}20 syntax for creating coroutines.

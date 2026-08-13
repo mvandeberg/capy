@@ -1,11 +1,7 @@
 = Part II: {cpp}20 Syntax
+:page-mode: concept
 
 This section introduces the three {cpp}20 keywords that create coroutines and walks you through building your first coroutine step by step.
-
-== Prerequisites
-
-* Completed xref:2.cpp20-coroutines/2a.foundations.adoc[Part I: Foundations]
-* Understanding of why coroutines exist and what problem they solve
 
 == The Three Keywords
 
@@ -111,5 +107,3 @@ These are useful building blocks for promise types and custom awaitables.
 ----
 include::example$snippets/2b_syntax.cpp[tag=standard_awaiters,indent=0]
 ----
-
-You have now learned the three coroutine keywords and how awaitables work. The next section covers the promise type and coroutine handle—the machinery that makes coroutines function.

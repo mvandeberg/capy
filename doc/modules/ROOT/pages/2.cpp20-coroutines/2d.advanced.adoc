@@ -1,11 +1,7 @@
 = Part IV: Advanced Topics
+:page-mode: concept
 
 This section covers advanced coroutine topics: symmetric transfer for efficient resumption, coroutine allocation strategies, and exception handling. These concepts are essential for building production-quality coroutine types.
-
-== Prerequisites
-
-* Completed xref:2.cpp20-coroutines/2c.machinery.adoc[Part III: Coroutine Machinery]
-* Understanding of promise types, coroutine handles, and generators
 
 == Symmetric Transfer
 
@@ -204,16 +200,5 @@ This generator:
 * Prevents `co_await` inside generators via deleted `await_transform`
 * Manages coroutine lifetime with RAII
 * Supports move semantics
-
-== Conclusion
-
-You have now learned the complete mechanics of {cpp}20 coroutines:
-
-* *Keywords* — `co_await`, `co_yield`, and `co_return` transform functions into coroutines
-* *Promise types* — Control coroutine behavior at initialization, suspension, completion, and error handling
-* *Coroutine handles* — Lightweight references for resuming, querying, and destroying coroutines
-* *Symmetric transfer* — Efficient control flow without stack accumulation
-* *Allocation* — Custom allocation and HALO optimization
-* *Exception handling* — Capturing and propagating exceptions across suspension points
 
 These fundamentals prepare you for understanding Capy's cpp:task[task<T>] type and the IoAwaitable protocol. Both build on standard coroutine machinery with executor affinity and stop token propagation.
