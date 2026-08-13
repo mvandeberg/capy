@@ -33,12 +33,8 @@ Capy provides `const_buffer` and `mutable_buffer` as semantically neutral buffer
 
 == const_buffer
 
-`const_buffer` represents a contiguous region of read-only memory:
-
-[source,cpp]
-----
-include::example$snippets/5b_types.cpp[tag=const_buffer_interface,indent=0]
-----
+`const_buffer` represents a contiguous region of read-only memory. See
+cpp:const_buffer[] for the full interface.
 
 === Construction
 
@@ -67,12 +63,8 @@ This is useful when processing a buffer incrementally.
 
 == mutable_buffer
 
-`mutable_buffer` represents a contiguous region of writable memory:
-
-[source,cpp]
-----
-include::example$snippets/5b_types.cpp[tag=mutable_buffer_interface,indent=0]
-----
+`mutable_buffer` represents a contiguous region of writable memory. See
+cpp:mutable_buffer[] for the full interface.
 
 The interface mirrors `const_buffer`, but `data()` returns non-const `void*`.
 
