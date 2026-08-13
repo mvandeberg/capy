@@ -157,6 +157,16 @@ it only in the sense the row names. **scheduler** is approved only in its P2300 
   prior audits flagged `3a`–`3d`'s std-lib examples as a D2 violation and both were wrong to; it
   does not recur, and this note exists only to stop a third pass from re-filing it. No page
   changes follow from this carve-out.)*
+  *(Landing-page carve-out: every `*.intro.adoc` — all nine, `:page-mode: explanation` — is a
+  motivating essay plus a mechanical child list, never an introduction of a Capy type. `3.intro`'s
+  gap above is one instance of this general case, not a special case of its own. `doc-lint.mjs`'s
+  D2 check is scoped to `CONCEPT_DIRS` (a pedagogical category — "this chapter teaches
+  progressively") and deliberately does **not** read `:page-mode:` at all, so a page cannot leave
+  D2's scope by declaring a mode, correct or not — the six chapter-intro pages
+  (`2`–`7.intro.adoc`) stay in D2's scope and keep failing it for the same reason `3.intro.adoc`
+  always did: they introduce no type, so there is no example to add. That six-finding count is a
+  documented, intentional consequence of D2's own scope, not a regression to chase to zero by
+  adding decorative `include::example$` blocks to pages that don't need one.)*
 - **D3. Every non-obvious design choice states its rationale** (or links to the explanation
   page that does). "Because it is" is not documentation.
 - **D4. Document thread-safety *and* executor affinity** at the class level where relevant.

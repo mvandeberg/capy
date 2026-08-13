@@ -5,11 +5,22 @@
 // findings are emitted as JSON on stdout for `baseline.json` / CI to consume.
 //
 // Checks:
-//   A1 — every page under pages/ declares :page-mode:
+//   A1 — every page under pages/ declares :page-mode:, and the value is one
+//        of DOC_STYLE_GUIDE.md Part A's four Diátaxis modes (tutorial,
+//        how-to, reference, explanation). Presence alone used to pass; a
+//        typo or a non-mode value (e.g. the former `concept`) slipped
+//        through and silently fell out of D2's scope (see below). Bite-test
+//        per style-guide F4: plant an invalid value, confirm A1 fails.
 //   A6 — quick-start is within the first 3 top-level nav.adoc entries
 //   B2 — no [source,cpp] block holds raw code (must start with
 //        include::example$... or carry role=pseudocode/role=external)
-//   D2 — every tutorial/concept page has >=1 include::example$
+//   D2 — every page in a CONCEPT_DIRS chapter (or quick-start.adoc) has
+//        >=1 include::example$. D2's "concept page" is a pedagogical
+//        category, not a Diátaxis mode — deliberately independent of
+//        :page-mode:, so a page cannot leave D2's scope by declaring a
+//        different (even a legitimate) mode. See DOC_STYLE_GUIDE.md's D2
+//        entry for why landing pages (*.intro.adoc, mode: explanation) are
+//        outside this scope on purpose, not by omission.
 //
 import fs from 'node:fs';
 import path from 'node:path';
@@ -18,9 +29,13 @@ const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..')
 const PAGES_DIR = path.join(ROOT, 'modules/ROOT/pages');
 const NAV_FILE = path.join(ROOT, 'modules/ROOT/nav.adoc');
 
+// The four Diátaxis modes DOC_STYLE_GUIDE.md Part A defines. A1 rejects
+// anything else, including the legacy `concept` value (never a Diátaxis
+// mode — it was D2's subject noun leaking into A1's value namespace).
+const VALID_MODES = new Set(['tutorial', 'how-to', 'reference', 'explanation']);
+
 // Directories whose pages are concept/tutorial material for D2's heuristic.
-// :page-mode: is authoritative when present; this is the fallback used until
-// A1 is fixed everywhere (see task-2-report.md, Step 7 note).
+// Deliberately NOT keyed off :page-mode: — see the D2 comment above.
 const CONCEPT_DIRS = [
   '2.cpp20-coroutines', '3.concurrency', '4.coroutines',
   '5.buffers', '6.streams', '7.testing',
@@ -42,8 +57,7 @@ function pageMode(text) {
   return m ? m[1] : null;
 }
 
-function isConceptOrTutorial(relPath, mode) {
-  if (mode) return mode === 'concept' || mode === 'tutorial';
+function isConceptOrTutorial(relPath) {
   const top = relPath.split(path.sep)[0];
   return TUTORIAL_FILES.has(relPath) || CONCEPT_DIRS.includes(top);
 }
@@ -56,7 +70,11 @@ for (const file of files) {
   const text = fs.readFileSync(file, 'utf8');
   const mode = pageMode(text);
 
-  if (!mode) findings.A1.push({ file: rel, message: 'no :page-mode: attribute' });
+  if (!mode) {
+    findings.A1.push({ file: rel, message: 'no :page-mode: attribute' });
+  } else if (!VALID_MODES.has(mode)) {
+    findings.A1.push({ file: rel, message: `invalid :page-mode: value '${mode}' (must be one of ${[...VALID_MODES].join(', ')})` });
+  }
 
   const lines = text.split('\n');
   for (let i = 0; i < lines.length; i++) {
@@ -74,7 +92,7 @@ for (const file of files) {
     }
   }
 
-  if (isConceptOrTutorial(rel, mode) && !text.includes('include::example$')) {
+  if (isConceptOrTutorial(rel) && !text.includes('include::example$')) {
     findings.D2.push({ file: rel, message: 'tutorial/concept page has no include::example$' });
   }
 }
