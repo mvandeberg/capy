@@ -8,6 +8,7 @@
 //
 
 = Stream Concepts
+:page-mode: concept
 
 Data flows. It arrives from a network socket in unpredictable chunks. It leaves through a file descriptor as fast as the disk allows. It passes through encryption, compression, and framing layers--each transforming it before handing it off to the next. Modeling this flow well is one of the most important things an I/O library can do.
 
@@ -15,4 +16,13 @@ Capy organizes data flow around three concepts: cpp:ReadStream[], cpp:WriteStrea
 
 A socket might give you 47 bytes when you asked for 1024. That is not an error--it is the nature of the hardware. Some code needs to handle those 47 bytes immediately and ask for more. Other code needs exactly 1024 bytes and should not return until it has them (or an error occurs). Capy's stream concepts cover the partial case directly: `read_some` and `write_some` transfer whatever the hardware allows. The complete case is a composed algorithm, not a separate concept. cpp:read[], cpp:write[], cpp:read_at_least[], and cpp:write_at_least[] loop over `read_some` or `write_some` until the buffer is satisfied or an error occurs.
 
-This section introduces the concepts that form Capy's vocabulary for data flow. It explains the distinction between partial and complete I/O, and how the composed algorithms build on the stream concepts. The section also covers physical isolation, which lets you write I/O logic that is composable, testable, and independent of any particular transport. Once you understand these concepts, every I/O operation in the library feels familiar.
+== What This Section Covers
+
+* xref:6.streams/6a.overview.adoc[Overview] -- What `ReadStream`, `WriteStream`, and
+  `Stream` model, and why partial I/O needs its own concepts.
+* xref:6.streams/6b.streams.adoc[Streams (Partial I/O)] -- The `ReadStream` and
+  `WriteStream` concepts, and the type-erased `any_stream` wrappers.
+* xref:6.streams/6f.isolation.adoc[Physical Isolation] -- Type erasure as a compilation
+  firewall for transport-independent, testable I/O code.
+
+Once you understand these concepts, every I/O operation in the library feels familiar.

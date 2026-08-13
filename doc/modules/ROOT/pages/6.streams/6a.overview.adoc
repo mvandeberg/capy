@@ -1,10 +1,7 @@
 = Stream Concepts Overview
+:page-mode: concept
 
 This section introduces Capy's stream concepts—the abstractions that enable data to flow through your programs.
-
-== Prerequisites
-
-* Understanding of buffer sequences
 
 == Three Concepts for Data Flow
 
@@ -89,5 +86,3 @@ include::example$snippets/6a_overview.cpp[tag=caller_decides,indent=0]
 ----
 
 Same code, different transports: the in-memory test stream shown here, a TCP socket, or a TLS stream. Compile once, link anywhere.
-
-Continue to xref:6.streams/6b.streams.adoc[Streams (Partial I/O)] to learn the `ReadStream` and `WriteStream` concepts in detail.

@@ -1,11 +1,7 @@
 = Physical Isolation
+:page-mode: concept
 
 This section explains how type-erased wrappers enable compilation firewalls and transport-independent APIs.
-
-== Prerequisites
-
-* Completed xref:6.streams/6b.streams.adoc[Streams (Partial I/O)]
-* Understanding of type-erased wrappers
 
 == The Compilation Firewall Pattern
 
@@ -135,4 +131,4 @@ Type-erased wrappers are in `<boost/capy/io/>`:
 * cpp:any_stream[]
 * cpp:any_read_stream[], cpp:any_write_stream[]
 
-You have now completed the Stream Concepts section. These abstractions—streams and their type-erased wrappers—form the foundation for Capy's I/O model. Continue to xref:../8.examples/8a.hello-task.adoc[Example Programs] to see complete working examples.
+These abstractions—streams and their type-erased wrappers—form the foundation for Capy's I/O model.

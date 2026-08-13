@@ -1,11 +1,7 @@
 = Streams (Partial I/O)
+:page-mode: concept
 
 This section explains the cpp:ReadStream[] and cpp:WriteStream[] concepts for partial I/O operations.
-
-== Prerequisites
-
-* Completed xref:6.streams/6a.overview.adoc[Stream Concepts Overview]
-* Understanding of the three stream concepts
 
 == ReadStream
 
@@ -149,5 +145,3 @@ The implementation doesn't know the concrete stream type. It compiles once and w
 | `<boost/capy/io/any_stream.hpp>`
 | Type-erased bidirectional stream wrapper
 |===
-
-You have now learned the stream concepts for partial I/O. Continue to xref:6.streams/6f.isolation.adoc[Physical Isolation].
