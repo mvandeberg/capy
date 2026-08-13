@@ -36,7 +36,7 @@ The second layer is type-erased wrappers. cpp:any_stream[], cpp:any_read_stream[
 include::example$snippets/9a_capy_layering.cpp[tag=any_stream_echo,indent=0]
 ----
 
-The cost is five vtable calls per I/O operation, not one per continuation. For operations dominated by syscalls and network latency, this cost is invisible. For tight loops over in-memory buffers, it matters.
+The cost is up to five vtable calls per I/O operation, not one per continuation -- four when the read or write completes synchronously, since `await_suspend` is skipped whenever `await_ready` returns `true`. For operations dominated by syscalls and network latency, this cost is invisible. For tight loops over in-memory buffers, it matters.
 
 The third layer is coroutine type erasure via cpp:task[task<>]. This is the most powerful form of type erasure in the language. Inside a coroutine, when you write `co_await`, everything in the awaitable becomes type-erased from the perspective of the caller. The caller sees a `task<>`. The implementation is invisible. A pure virtual function returning `task<>` hides the stream type, the buffer strategy, the algorithm, the error handling - everything:
 
