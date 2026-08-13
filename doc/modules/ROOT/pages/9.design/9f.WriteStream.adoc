@@ -2,7 +2,7 @@
 
 == Overview
 
-This document describes the design of the cpp:WriteStream[] concept: the fundamental partial-write primitive in the concept hierarchy. It explains why `write_some` is the correct building block, how algorithms expressed directly in terms of `write_some` can outperform composed complete-write algorithms like `write_now`, and when each approach is appropriate.
+This document describes the design of the cpp:WriteStream[] concept: the fundamental partial-write primitive among Capy's stream concepts. It explains why `write_some` is the correct building block, how algorithms expressed directly in terms of `write_some` can outperform composed complete-write algorithms like `write_now`, and when each approach is appropriate.
 
 == Definition
 
@@ -17,39 +17,7 @@ A cpp:WriteStream[] provides a single operation:
 
 === `write_some(buffers)` -- Partial Write
 
-Attempts to write up to cpp:buffer_size[]`(buffers)` bytes from the buffer sequence to the stream. Returns `(error_code, std::size_t)` where `n` is the number of bytes written.
-
-==== Semantics
-
-If cpp:buffer_size[]`(buffers) > 0`:
-
-- If `!ec`, then `n >= 1 && n \<=` cpp:buffer_size[]`(buffers)`. `n` bytes were written from the buffer sequence.
-- If `ec`, then `n >= 0 && n \<` cpp:buffer_size[]`(buffers)`. `n` is the number of bytes written before the I/O condition arose.
-
-Equivalently, `n ==` cpp:buffer_size[]`(buffers)` implies `!ec`: a completion that writes the entire buffer sequence is a success, even when the underlying operation also signals a condition. That condition is reported on a subsequent write.
-
-If cpp:buffer_empty[]`(buffers)` is true, `n` is 0. The empty buffer is not itself a cause for error, but `ec` may reflect the state of the stream.
-
-The caller must not assume that all bytes are consumed. `write_some` may write fewer bytes than offered. This is the defining property of a partial-write primitive.
-
-==== Error Reporting
-
-I/O conditions arising from the underlying I/O system (connection reset, broken pipe, etc.) are reported via the `error_code` component of the return value. Failures in the library wrapper itself (such as memory allocation failure) are reported via exceptions.
-
-*Throws:* `std::bad_alloc` if coroutine frame allocation fails.
-
-==== Buffer Lifetime
-
-The caller must ensure that the memory referenced by `buffers` remains valid until the `co_await` expression returns.
-
-==== Conforming Signatures
-
-[source,cpp]
-----
-include::example$snippets/9f_write_stream.cpp[tag=write_some_signature,indent=0]
-----
-
-Buffer sequences should be accepted by value unconditionally, not only when the member function is a coroutine. A by-value parameter is copied into the coroutine frame or into the awaitable's state, so the returned awaitable is self-contained. A by-const-reference parameter binds to caller storage and dangles as soon as the awaitable is stored or moved instead of being consumed immediately by `co_await` in the same scope -- a risk that applies whether or not `write_some` itself is a coroutine.
+See cpp:WriteStream[] for the full syntactic and semantic contract: return-value semantics, error reporting, throws, buffer lifetime, and conforming signatures.
 
 == Composed Algorithms
 
