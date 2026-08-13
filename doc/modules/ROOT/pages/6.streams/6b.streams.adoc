@@ -20,25 +20,7 @@ The `requires` clause names a single representative buffer (cpp:mutable_buffer_a
 
 === read_some Semantics
 
-[source,cpp]
-----
-include::example$snippets/6b_streams.cpp[tag=read_some_signature,indent=0]
-----
-
-Attempts to read up to `buffer_size(buffers)` bytes from the stream into the buffer sequence. Await-returns `(error_code, std::size_t)`:
-
-If `buffer_size(buffers) > 0`:
-
-* If `!ec`, then `n >= 1 && n \<= buffer_size(buffers)`. `n` bytes were read into the buffer sequence.
-* If `ec`, then `n >= 0 && n < buffer_size(buffers)`. `n` is the number of bytes read before the I/O condition arose.
-
-Equivalently, `n == buffer_size(buffers)` implies `!ec`. A read that fills the buffer sequence is a success even when the underlying operation also signals a condition such as end-of-stream. That condition is reported on a subsequent read.
-
-If `buffer_empty(buffers)` is true, `n` is 0. The empty buffer is not itself a cause for error, but `ec` may reflect the state of the stream.
-
-I/O conditions from the underlying system are reported via `ec`. Failures in the library itself (such as allocation failure) are reported via exceptions.
-
-*Throws:* `std::bad_alloc` if coroutine frame allocation fails.
+See cpp:ReadStream[] for the full contract: return-value semantics, error reporting, throws, and buffer lifetime.
 
 === Partial Transfer
 
@@ -71,25 +53,7 @@ As with `ReadStream`, the cpp:const_buffer_archetype[] is only a representative:
 
 === write_some Semantics
 
-[source,cpp]
-----
-include::example$snippets/6b_streams.cpp[tag=write_some_signature,indent=0]
-----
-
-Attempts to write up to `buffer_size(buffers)` bytes from the buffer sequence to the stream. Await-returns `(error_code, std::size_t)`:
-
-If `buffer_size(buffers) > 0`:
-
-* If `!ec`, then `n >= 1 && n \<= buffer_size(buffers)`. `n` bytes were written from the buffer sequence.
-* If `ec`, then `n >= 0 && n < buffer_size(buffers)`. `n` is the number of bytes written before the I/O condition arose.
-
-Equivalently, `n == buffer_size(buffers)` implies `!ec`: a write that drains the entire buffer sequence is a success even when the underlying operation also signals a condition. That condition is reported on a subsequent write.
-
-If `buffer_empty(buffers)` is true, `n` is 0. The empty buffer is not itself a cause for error, but `ec` may reflect the state of the stream.
-
-I/O conditions from the underlying system are reported via `ec`. Failures in the library itself (such as allocation failure) are reported via exceptions.
-
-*Throws:* `std::bad_alloc` if coroutine frame allocation fails.
+See cpp:WriteStream[] for the full contract: return-value semantics, error reporting, throws, and buffer lifetime.
 
 === Partial Transfer
 
