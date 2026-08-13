@@ -8,6 +8,7 @@
 //
 
 = Contingencies
+:page-mode: explanation
 
 A _contingency_ is any situation occurring during an operation
 on a stream, caused by the stream's state, that prevents this operation

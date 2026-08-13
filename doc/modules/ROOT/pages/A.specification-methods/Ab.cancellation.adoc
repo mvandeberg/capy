@@ -8,6 +8,7 @@
 //
 
 = Cancellation
+:page-mode: explanation
 
 A function is said to _support IoAwaitable cancellation_ when its return type 
 models concept cpp:IoAwaitable[] and this return object `a` controls a coroutine which
