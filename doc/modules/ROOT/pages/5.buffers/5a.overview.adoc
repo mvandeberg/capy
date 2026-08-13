@@ -1,11 +1,7 @@
 = Why Concepts, Not Spans
+:page-mode: concept
 
 This section explains why Capy uses concept-driven buffer sequences instead of `std::span`, and why this design enables composition without allocation.
-
-== Prerequisites
-
-* Basic {cpp} experience with memory and pointers
-* Familiarity with {cpp}20 concepts
 
 == The I/O Use Case
 
@@ -127,5 +123,3 @@ The concept-driven approach:
 * Enables zero-allocation composition
 * Provides a single signature that accepts anything buffer-like
 * Follows proven STL design principles
-
-Continue to xref:5.buffers/5b.types.adoc[Buffer Types] to learn about `const_buffer` and `mutable_buffer`.

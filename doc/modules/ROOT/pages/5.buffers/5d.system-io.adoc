@@ -1,11 +1,7 @@
 = System I/O Integration
+:page-mode: concept
 
 This section explains how buffer sequences interface with operating system I/O operations.
-
-== Prerequisites
-
-* Completed xref:5.buffers/5c.sequences.adoc[Buffer Sequences]
-* Understanding of buffer sequence concepts
 
 == The Virtual Boundary
 
@@ -172,8 +168,6 @@ Buffer translation is rarely the bottleneck. Focus on:
 
 Not buffer descriptor copying.
 
-== Reference
-
 The buffer sequence concepts and translation utilities are in:
 
 [source,cpp]
@@ -182,5 +176,3 @@ include::example$snippets/5d_system_io.cpp[tag=include_buffers]
 ----
 
 OS-specific I/O is handled by Corosio, which builds on Capy's buffer model.
-
-You have now learned how buffer sequences integrate with operating system I/O. Continue to xref:5.buffers/5e.algorithms.adoc[Buffer Algorithms] to learn about measuring and copying buffers.

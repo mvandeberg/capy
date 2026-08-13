@@ -8,6 +8,7 @@
 //
 
 = Buffer Sequences
+:page-mode: concept
 
 Every I/O operation ultimately comes down to moving bytes between your program and the outside world--a socket, a file, a pipe. The question is: how do you describe where those bytes live in memory?
 
@@ -15,4 +16,18 @@ The obvious answer is a pointer and a size. And for a single contiguous buffer, 
 
 Capy's buffer model is designed for this reality. Instead of forcing you to copy data into a single contiguous allocation, Capy uses _buffer sequences_. These are lightweight, zero-copy abstractions that let you describe any arrangement of memory and pass it directly to the OS. The design is concept-driven, meaning the compiler verifies correctness at compile time with no runtime overhead.
 
-This section covers everything you need to work with memory in Capy's I/O model. It introduces the fundamental buffer types, how to compose them into sequences for scatter/gather I/O, and how they map to operating system primitives. It also describes the algorithms that manipulate buffer data and the dynamic buffer abstractions that grow as data arrives. Understanding buffers is essential for everything that follows--streams, I/O operations, and protocol implementations all build on the abstractions introduced here.
+== What This Section Covers
+
+* xref:5.buffers/5a.overview.adoc[Why Concepts, Not Spans] -- Why Capy models buffers with
+  concepts instead of a single span type.
+* xref:5.buffers/5b.types.adoc[Buffer Types] -- `const_buffer` and `mutable_buffer`, the
+  two concrete buffer types.
+* xref:5.buffers/5c.sequences.adoc[Buffer Sequences] -- Composing buffers into sequences
+  for zero-allocation scatter/gather I/O.
+* xref:5.buffers/5d.system-io.adoc[System I/O Integration] -- How buffer sequences
+  translate to platform `iovec`/`WSABUF` structures.
+* xref:5.buffers/5e.algorithms.adoc[Buffer Algorithms] -- Measuring and copying buffer
+  sequences with `buffer_size`, `buffer_copy`, and related algorithms.
+
+Understanding buffers is essential for everything that follows--streams, I/O operations,
+and protocol implementations all build on the abstractions introduced here.

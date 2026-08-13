@@ -1,11 +1,7 @@
 ﻿= Buffer Types
+:page-mode: concept
 
 This section introduces Capy's fundamental buffer types: cpp:const_buffer[] and cpp:mutable_buffer[].
-
-== Prerequisites
-
-* Completed xref:5.buffers/5a.overview.adoc[Why Concepts, Not Spans]
-* Understanding of why concept-driven buffers enable composition
 
 == Buffers Are Handles
 
@@ -126,17 +122,3 @@ The library provides `begin()` and `end()` functions that work uniformly:
 include::example$snippets/5b_types.cpp[tag=begin_end_uniform,indent=0]
 ----
 
-== Reference
-
-[cols="1,3"]
-|===
-| Header | Description
-
-| `<boost/capy/buffers.hpp>`
-| Core buffer types and concepts
-
-| `<boost/capy/buffers/make_buffer.hpp>`
-| Buffer creation utilities
-|===
-
-You have now learned about `const_buffer` and `mutable_buffer`. Continue to xref:5.buffers/5c.sequences.adoc[Buffer Sequences] to understand how these types compose into sequences.
