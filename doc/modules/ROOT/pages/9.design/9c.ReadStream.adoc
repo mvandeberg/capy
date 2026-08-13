@@ -2,7 +2,7 @@
 
 == Overview
 
-This document describes the design of the cpp:ReadStream[] concept: the fundamental partial-read primitive in the concept hierarchy. It explains why `read_some` is the correct building block and how composed algorithms build on top of it.
+This document describes the design of the cpp:ReadStream[] concept: the fundamental partial-read primitive among Capy's stream concepts. It explains why `read_some` is the correct building block and how composed algorithms build on top of it.
 
 == Definition
 
@@ -17,43 +17,7 @@ A `ReadStream` provides a single operation:
 
 === `read_some(buffers)` -- Partial Read
 
-Attempts to read up to `buffer_size(buffers)` bytes from the stream into the buffer sequence. Returns `(error_code, std::size_t)` where `n` is the number of bytes read.
-
-==== Semantics
-
-If `buffer_size(buffers) > 0`:
-
-- If `!ec`, then `n >= 1 && n \<= buffer_size(buffers)`. `n` bytes were read into the buffer sequence.
-- If `ec`, then `n >= 0 && n \< buffer_size(buffers)`. `n` is the number of bytes read before the I/O condition arose.
-
-Equivalently, `n == buffer_size(buffers)` implies `!ec`: a completion that fills the buffer sequence is a success, even when the underlying operation also signals a condition such as end-of-stream. That condition is reported on a subsequent read.
-
-If `buffer_empty(buffers)` is true, `n` is 0. The empty buffer is not itself a cause for error, but `ec` may reflect the state of the stream.
-
-The caller must not assume the buffer is filled. `read_some` may return fewer bytes than the buffer can hold. This is the defining property of a partial-read primitive.
-
-Once `read_some` returns an error (including EOF), a subsequent call is still permitted. A conforming stream may report the same condition again, report a different one, or resume delivering data -- the concept does not pick one of the three, so callers cannot assume the stream is exhausted for good.
-
-Buffers in the sequence are filled in order.
-
-==== Error Reporting
-
-I/O conditions arising from the underlying I/O system (EOF, connection reset, broken pipe, etc.) are reported via the `error_code` component of the return value. Failures in the library wrapper itself (such as memory allocation failure) are reported via exceptions.
-
-*Throws:* `std::bad_alloc` if coroutine frame allocation fails.
-
-==== Buffer Lifetime
-
-The caller must ensure that the memory referenced by `buffers` remains valid until the `co_await` expression returns.
-
-==== Conforming Signatures
-
-[source,cpp]
-----
-include::example$snippets/9c_read_stream.cpp[tag=read_some_signature,indent=0]
-----
-
-Buffer sequences should be accepted by value unconditionally, not only when the member function is a coroutine. A by-value parameter is copied into the coroutine frame or into the awaitable's state, so the returned awaitable is self-contained. A by-const-reference parameter binds to caller storage and dangles as soon as the awaitable is stored or moved instead of being consumed immediately by `co_await` in the same scope -- a risk that applies whether or not `read_some` itself is a coroutine.
+See cpp:ReadStream[] for the full syntactic and semantic contract: return-value semantics, behavior after an error, error reporting, throws, buffer lifetime, and conforming signatures.
 
 == Composed Algorithms
 
