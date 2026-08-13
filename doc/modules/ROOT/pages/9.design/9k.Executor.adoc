@@ -236,7 +236,7 @@ cpp:executor_ref[] avoids all three. The vtable pointer goes directly to a `stat
 
 === Why Not {cpp} Virtual Functions
 
-{cpp} virtual dispatch places the vtable pointer inside each heap-allocated object. Every virtual call chases a pointer from the object to its vtable, which may reside at an unpredictable address in memory. When objects of different types are interleaved on the heap, their vtable pointers point to different locations in `.rodata`, defeating spatial prefetch and polluting the instruction cache.
+{cpp} virtual dispatch places the vtable pointer inside each heap-allocated object. Every virtual call chases a pointer from the object to its vtable, which may reside at an unpredictable address in memory. When objects of different types are interleaved on the heap, their vtable pointers point to different locations in `.rodata`, defeating spatial prefetch and polluting the data cache.
 
 cpp:executor_ref[] separates the vtable from the object. The vtable is a `static constexpr` structure -- one per executor type, shared by all instances of that type. Because most programs use only one or two executor types (a thread pool executor and perhaps a strand), the vtable stays hot in L1 cache. The executor pointer and the vtable pointer sit adjacent in the cpp:executor_ref[] object, so both are loaded in a single cache line.
 
