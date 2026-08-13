@@ -1,11 +1,7 @@
 = The task Type
+:page-mode: concept
 
 This section introduces Capy's cpp:task[task<T>] type—the fundamental coroutine type for asynchronous programming in Capy.
-
-== Prerequisites
-
-* Completed xref:../2.cpp20-coroutines/2d.advanced.adoc[{cpp}20 Coroutines Tutorial]
-* Understanding of promise types, coroutine handles, and symmetric transfer
 
 == Overview
 
@@ -129,8 +125,6 @@ include::example$snippets/4a_tasks.cpp[tag=exceptions]
 
 The exception is stored in the promise when it occurs and rethrown in `await_resume` when the calling coroutine resumes.
 
-== Reference
-
 The `task<T>` type is defined in:
 
 [source,cpp]
@@ -144,5 +138,3 @@ Or included via the umbrella header:
 ----
 include::example$snippets/4a_tasks.cpp[tag=include_umbrella]
 ----
-
-You have now learned how to declare, return values from, and await `task<T>` coroutines. The next section explains how to start tasks for execution using `run_async` and cpp:run[].

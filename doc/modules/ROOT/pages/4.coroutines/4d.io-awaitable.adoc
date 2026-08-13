@@ -1,11 +1,7 @@
 = The IoAwaitable Protocol
+:page-mode: concept
 
 This section explains the IoAwaitable protocol—Capy's mechanism for propagating execution context through coroutine chains.
-
-== Prerequisites
-
-* Completed xref:4.coroutines/4c.executors.adoc[Executors and Execution Contexts]
-* Understanding of standard awaiter protocol (`await_ready`, `await_suspend`, `await_resume`)
 
 == The Problem: Context Propagation
 
@@ -204,17 +200,3 @@ Two complete, buildable bridges live in the examples:
 * xref:8.examples/8o.sender-bridge.adoc[Bridging a P2300 Sender] — `await_sender` adapts a `std::execution` sender, mapping its completion channels onto cpp:io_result[] and posting the resumption through the executor.
 * xref:8.examples/8p.asio-use-capy.adoc[Calling Asio from a Capy Coroutine] — the `use_capy` completion token turns any Asio async operation into an `IoAwaitable`.
 
-== Reference
-
-[cols="1,3"]
-|===
-| Header | Description
-
-| `<boost/capy/concept/io_awaitable.hpp>`
-| The IoAwaitable concept definition
-
-| `<boost/capy/concept/io_runnable.hpp>`
-| The IoRunnable concept for launchable tasks
-|===
-
-You have now learned how the IoAwaitable protocol enables context propagation through coroutine chains. The next section covers stop tokens and cooperative cancellation.

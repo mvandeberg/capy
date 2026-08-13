@@ -8,6 +8,7 @@
 //
 
 = Coroutines in Capy
+:page-mode: concept
 
 You know how {cpp}20 coroutines work at the language level. You understand threads, synchronization, and the problems that concurrency introduces. Now it is time to see how Capy brings these together into a practical, high-performance library.
 
@@ -15,4 +16,24 @@ Capy's coroutine model is built around a single principle: asynchronous code sho
 
 But this is not magic, and it is not a black box. Every piece of Capy's coroutine infrastructure is designed to be transparent. You can see how tasks are scheduled, control where they run, propagate cancellation, compose concurrent operations, and tune memory allocation. Understanding these mechanisms is what separates someone who uses the library from someone who uses it _well_.
 
-This section is the bridge between theory and practice. It shows how Capy turns C++20 coroutines into a complete async programming model. The topics run from starting and scheduling tasks, through cancellation and concurrent composition, to fine-grained control over memory allocation. Each topic builds on the last, and by the end you are writing real asynchronous programs with Capy.
+== What This Section Covers
+
+* xref:4.coroutines/4a.tasks.adoc[The task Type] -- Declaring, returning values from, and
+  awaiting cpp:task[task<T>] coroutines.
+* xref:4.coroutines/4b.launching.adoc[Starting Coroutines] -- Starting coroutines with
+  cpp:run_async[], and binding child tasks with cpp:run[].
+* xref:4.coroutines/4c.executors.adoc[Executors and Execution Contexts] -- Executors,
+  execution contexts, thread pools, and strands.
+* xref:4.coroutines/4d.io-awaitable.adoc[The IoAwaitable Protocol] -- How the executor and
+  stop token propagate through a chain of awaited coroutines.
+* xref:4.coroutines/4e.cancellation.adoc[Stop Tokens and Cancellation] -- Cooperative
+  cancellation with `std::stop_token`, and how Capy tasks observe it.
+* xref:4.coroutines/4f.composition.adoc[Concurrent Composition] -- Running tasks
+  concurrently with cpp:when_all[] and cpp:when_any[].
+* xref:4.coroutines/4g.allocators.adoc[Frame Allocators] -- How coroutine frames are
+  allocated, and how to customize the allocator.
+* xref:4.coroutines/4h.lambda-captures.adoc[Lambda Coroutine Captures] -- A critical
+  pitfall: lambda captures versus coroutine frame lifetime.
+
+Each topic builds on the last, and by the end you are writing real asynchronous programs
+with Capy.

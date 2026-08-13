@@ -1,11 +1,7 @@
 = Lambda Coroutine Captures
+:page-mode: concept
 
 Lambda captures are a common source of undefined behavior in coroutine code. This section explains the problem and the safe patterns to use instead.
-
-== Prerequisites
-
-* Completed xref:4.coroutines/4g.allocators.adoc[Frame Allocators]
-* Understanding of coroutine frame lifetime from xref:../2.cpp20-coroutines/2c.machinery.adoc[Part III: Coroutine Machinery]
 
 == The Problem
 
@@ -128,7 +124,3 @@ The {cpp} standard specifies that coroutine parameters are copied to the corouti
 * The closure is external to the function body
 
 There have been proposals to change this behavior, but as of {cpp}23 the issue remains.
-
-== Next Steps
-
-You have now learned the major pitfalls of lambda coroutines. This completes the Coroutines in Capy section. Continue to xref:../5.buffers/5a.overview.adoc[Buffer Sequences] to learn about Capy's buffer model.

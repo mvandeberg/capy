@@ -1,11 +1,7 @@
 = Concurrent Composition
+:page-mode: concept
 
 This section explains how to run multiple tasks concurrently using cpp:when_all[] and cpp:when_any[].
-
-== Prerequisites
-
-* Completed xref:4.coroutines/4e.cancellation.adoc[Stop Tokens and Cancellation]
-* Understanding of stop token propagation
 
 == Overview
 
@@ -204,5 +200,3 @@ This design ensures proper context propagation to all children.
 | `<boost/capy/ex/async_waker.hpp>`
 | Single-waiter notification point for deadlines and other external events
 |===
-
-You have now learned how to compose tasks concurrently with `when_all` and `when_any`. The next section covers frame allocators for customizing coroutine memory allocation.

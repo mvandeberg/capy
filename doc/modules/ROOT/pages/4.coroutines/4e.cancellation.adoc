@@ -1,11 +1,7 @@
 = Stop Tokens and Cancellation
+:page-mode: concept
 
 This section teaches cooperative cancellation from the ground up. It explains {cpp}20 stop tokens as a general-purpose notification mechanism, and how Capy uses them for coroutine cancellation.
-
-== Prerequisites
-
-* Completed xref:4.coroutines/4d.io-awaitable.adoc[The IoAwaitable Protocol]
-* Understanding of how context propagates through coroutine chains
 
 == The Problem
 
@@ -297,5 +293,3 @@ Key types:
 * `std::stop_source` — Creates and manages stop state
 * `std::stop_token` — Observes stop state
 * `std::stop_callback<F>` — Registers callbacks for stop notification
-
-You have now learned how stop tokens provide cooperative cancellation for coroutines. The next section covers concurrent composition with cpp:when_all[] and `when_any`.

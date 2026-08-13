@@ -1,11 +1,7 @@
 = Starting Coroutines
+:page-mode: concept
 
 This section explains how to start coroutines for execution. It covers `run_async` for entry from non-coroutine code and cpp:run[] for executor hopping within coroutine code.
-
-== Prerequisites
-
-* Completed xref:4.coroutines/4a.tasks.adoc[The task Type]
-* Understanding of lazy task execution
 
 == The Execution Model
 
@@ -148,17 +144,3 @@ include::example$snippets/4b_launching.cpp[tag=handler_thread,indent=0]
 
 If you need results on a specific thread, use appropriate synchronization or dispatch mechanisms.
 
-== Reference
-
-[cols="1,3"]
-|===
-| Header | Description
-
-| `<boost/capy/ex/run_async.hpp>`
-| Entry point for starting tasks from non-coroutine code
-
-| `<boost/capy/ex/run.hpp>`
-| Executor binding for child tasks within coroutines
-|===
-
-You have now learned how to start coroutines using `run_async` and bind child tasks to specific executors using `run`. The next section covers executors and execution contexts in detail.
