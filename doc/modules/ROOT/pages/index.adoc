@@ -1,4 +1,5 @@
 = Capy
+:page-mode: explanation
 
 Capy abstracts away sockets, files, and asynchrony with type-erased streams and buffer sequences—code compiles fast because the implementation is hidden. It provides the framework for concurrent algorithms that transact in buffers of memory: networking, serial ports, console, timers, and any platform I/O. This is only possible because Capy is coroutine-only, enabling optimizations and ergonomics that hybrid approaches must sacrifice.
 

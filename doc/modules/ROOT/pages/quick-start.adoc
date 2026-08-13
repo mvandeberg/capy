@@ -8,6 +8,7 @@
 //
 
 = Quick Start
+:page-mode: tutorial
 
 This page gets you from zero to a working coroutine program in five minutes.
 

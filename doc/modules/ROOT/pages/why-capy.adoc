@@ -1,4 +1,5 @@
 = Why Capy?
+:page-mode: explanation
 
 Boost.Asio is currently the world leader in portable asynchronous I/O. The standard is silent here. The global ecosystem offers nothing comparable.
 
