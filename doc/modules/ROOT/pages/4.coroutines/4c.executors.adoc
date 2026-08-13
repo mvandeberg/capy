@@ -35,12 +35,10 @@ That deliberate change is what `run` provides. It runs a subtree on a different 
 
 == The Executor Concept
 
-An *executor* is an object that can schedule work for execution. An executor must be nothrow copy- and move-constructible and provide the following interface:
-
-[source,cpp]
-----
-include::example$snippets/4c_executors.cpp[tag=executor_concept]
-----
+An *executor* is an object that can schedule work for execution. See
+cpp:Executor[] for the exact syntactic and semantic requirements, and
+xref:9.design/9k.Executor.adoc[Executor Concept Design] for the
+rationale behind them.
 
 === dispatch() vs post()
 
@@ -80,10 +78,7 @@ include::example$programs/4c_executors_thread_pool.cpp[tag=full]
 
 === Constructor Parameters
 
-[source,cpp]
-----
-include::example$snippets/4c_executors.cpp[tag=thread_pool_ctor,indent=0]
-----
+See cpp:thread_pool[] for the exact constructor signature.
 
 * `num_threads` — Number of worker threads. If 0, uses hardware concurrency.
 * `thread_name_prefix` — Prefix for thread names (useful for debugging).
