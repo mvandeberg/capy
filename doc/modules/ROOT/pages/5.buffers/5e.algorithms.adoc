@@ -73,8 +73,10 @@ Note the distinction:
 
 Copies data from one buffer sequence to another:
 
-cpp:buffer_copy[] is a function object with a single call operator whose
-`at_most` parameter defaults to copying everything available:
+cpp:buffer_copy[] is declared below with a function-style signature for
+readability. The real declaration is a callable function object, not a
+free function, but usage is identical. Its `at_most` parameter
+defaults to copying everything available:
 
 [source,cpp]
 ----
