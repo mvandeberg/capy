@@ -20,12 +20,7 @@ One abstraction level cannot serve all of these needs simultaneously. The insigh
 
 Capy offers three layers. They coexist. They interoperate. Users pick the one that matches their constraints.
 
-The first layer is concepts. These are the template-based interfaces: cpp:ReadStream[], cpp:WriteStream[], cpp:Stream[]. Algorithms written against concepts get full optimization. The compiler sees through everything. There is no indirection, no vtable, no allocation overhead. This is what you use for hot inner loops, for protocol parsing, for any path where performance dominates:
-
-[source,cpp]
-----
-include::example$snippets/9a_capy_layering.cpp[tag=write_signature,indent=0]
-----
+The first layer is concepts. These are the template-based interfaces: cpp:ReadStream[], cpp:WriteStream[], cpp:Stream[]. Algorithms written against concepts get full optimization. The compiler sees through everything. There is no indirection, no vtable, no allocation overhead. This is what you use for hot inner loops, for protocol parsing, for any path where performance dominates. cpp:write[] is one example: a free function template constrained by cpp:WriteStream[] and cpp:ConstBufferSequence[].
 
 The cost is that templates propagate. Every caller sees the full implementation. Compile times grow. You cannot hide this behind a `.cpp` file.
 
