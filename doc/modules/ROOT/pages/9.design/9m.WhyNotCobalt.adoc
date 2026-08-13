@@ -413,7 +413,7 @@ Capy's coroutine-driven serializer runs at 1.69x the baseline. Cobalt's `promise
 
 The Capy implementation:
 
-[source,cpp,role=external]
+[source,cpp,role=pseudocode]
 ----
 namespace {
 
