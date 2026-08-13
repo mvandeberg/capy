@@ -1,5 +1,5 @@
 ﻿= Frame Allocators
-:page-mode: concept
+:page-mode: explanation
 
 This section explains how coroutine frames are allocated and how to customize allocation for performance.
 

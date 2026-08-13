@@ -1,5 +1,5 @@
 = The task Type
-:page-mode: concept
+:page-mode: explanation
 
 This section introduces Capy's cpp:task[task<T>] type—the fundamental coroutine type for asynchronous programming in Capy.
 

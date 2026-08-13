@@ -1,5 +1,5 @@
 = Executors and Execution Contexts
-:page-mode: concept
+:page-mode: explanation
 
 This section explains executors and execution contexts—the mechanisms that control where and how coroutines execute.
 

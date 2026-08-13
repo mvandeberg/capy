@@ -1,5 +1,5 @@
 = Concurrent Composition
-:page-mode: concept
+:page-mode: how-to
 
 This section explains how to run multiple tasks concurrently using cpp:when_all[] and cpp:when_any[].
 

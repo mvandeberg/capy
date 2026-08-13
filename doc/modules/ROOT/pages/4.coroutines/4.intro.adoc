@@ -8,7 +8,7 @@
 //
 
 = Coroutines in Capy
-:page-mode: concept
+:page-mode: explanation
 
 You know how {cpp}20 coroutines work at the language level. You understand threads, synchronization, and the problems that concurrency introduces. Now it is time to see how Capy brings these together into a practical, high-performance library.
 

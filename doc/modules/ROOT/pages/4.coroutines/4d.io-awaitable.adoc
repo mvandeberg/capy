@@ -1,5 +1,5 @@
 = The IoAwaitable Protocol
-:page-mode: concept
+:page-mode: explanation
 
 This section explains the IoAwaitable protocol—Capy's mechanism for propagating execution context through coroutine chains.
 

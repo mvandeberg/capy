@@ -1,5 +1,5 @@
 = Lambda Coroutine Captures
-:page-mode: concept
+:page-mode: how-to
 
 Lambda captures are a common source of undefined behavior in coroutine code. This section explains the problem and the safe patterns to use instead.
 

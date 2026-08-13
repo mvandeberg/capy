@@ -1,5 +1,5 @@
 = Stop Tokens and Cancellation
-:page-mode: concept
+:page-mode: explanation
 
 This section teaches cooperative cancellation from the ground up. It explains {cpp}20 stop tokens as a general-purpose notification mechanism, and how Capy uses them for coroutine cancellation.
 
