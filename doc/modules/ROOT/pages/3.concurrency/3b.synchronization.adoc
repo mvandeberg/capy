@@ -1,11 +1,7 @@
 = Part II: Synchronization
+:page-mode: concept
 
 This section introduces the dangers of shared data access and the synchronization primitives that protect against them. It covers race conditions, mutexes, lock guards, and deadlocks.
-
-== Prerequisites
-
-* Completed xref:3.concurrency/3a.foundations.adoc[Part I: Foundations]
-* Understanding of threads and their lifecycle
 
 == The Danger: Race Conditions
 
@@ -110,5 +106,3 @@ include::example$snippets/3b_synchronization.cpp[tag=scoped_lock_multi]
 2. *Use std::scoped_lock for multiple mutexes* — Let the library handle deadlock avoidance
 3. *Hold locks for minimal time* — Reduce the window for contention
 4. *Avoid nested locks when possible* — Simpler designs prevent deadlock by construction
-
-You have now learned about race conditions, mutexes, lock guards, and deadlocks. The next section covers advanced synchronization primitives: atomics, condition variables, and shared locks.

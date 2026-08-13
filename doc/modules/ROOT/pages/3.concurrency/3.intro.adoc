@@ -8,6 +8,7 @@
 //
 
 = Introduction to Concurrency
+:page-mode: concept
 
 Your processor has multiple cores. Your operating system runs hundreds of threads. Your users expect responsive interfaces while your server handles thousands of simultaneous connections. Concurrency is not an advanced topic reserved for specialists--it is the reality of modern software.
 
@@ -15,4 +16,16 @@ Yet concurrent programming has a reputation for being treacherous, and that repu
 
 The good news: these problems are well understood. Decades of research and practice have produced clear patterns, precise vocabulary, and reliable tools. Once you understand the fundamentals, concurrent code becomes something you can reason about with confidence. Those fundamentals are what a data race actually is, why memory ordering matters, and how synchronization primitives work.
 
-This section builds your understanding of concurrency from first principles. No prior experience with threads or parallel programming is needed. It covers what makes concurrent code hard to reason about, how the standard synchronization tools work, and the architectural patterns that tame that complexity. When you finish, you have the vocabulary and mental models to understand how Capy's coroutine-based concurrency works under the hood. That understanding includes why it eliminates entire categories of the bugs described here.
+== What This Section Covers
+
+* xref:3.concurrency/3a.foundations.adoc[Part I: Foundations] -- Threads, their lifecycle,
+  and how to create, join, and detach them.
+* xref:3.concurrency/3b.synchronization.adoc[Part II: Synchronization] -- Race conditions,
+  mutexes, lock guards, and how to avoid deadlock.
+* xref:3.concurrency/3c.advanced.adoc[Part III: Advanced Primitives] -- Atomics, condition
+  variables, and shared locks for finer-grained synchronization.
+* xref:3.concurrency/3d.patterns.adoc[Part IV: Communication & Patterns] -- Futures,
+  promises, `std::async`, and practical patterns for concurrent code.
+
+When you finish, you have the vocabulary and mental models to understand how Capy's
+coroutine-based concurrency works under the hood.

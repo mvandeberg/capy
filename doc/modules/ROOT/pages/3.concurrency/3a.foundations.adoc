@@ -1,14 +1,7 @@
 = Part I: Foundations
+:page-mode: concept
 
 This section introduces the fundamental concepts of concurrent programming. It explains what concurrency is, why it matters, and how threads provide the foundation for parallel execution.
-
-== Prerequisites
-
-Before beginning this tutorial, you should have:
-
-* A {cpp} compiler with {cpp}11 or later support
-* Familiarity with basic {cpp} concepts: functions, classes, and lambdas
-* Understanding of how programs execute sequentially
 
 == Why Concurrency Matters
 
@@ -141,5 +134,3 @@ include::example$snippets/3a_foundations.cpp[tag=joinable,indent=0]
 ----
 
 A thread is joinable if it represents an actual thread of execution. After joining or detaching, or after default construction, a `std::thread` is not joinable.
-
-You have now learned the basics of threads: creation, execution, and lifecycle management. The next section covers the dangers of shared data and how to protect it with synchronization primitives.

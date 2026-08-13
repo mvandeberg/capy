@@ -1,11 +1,7 @@
 = Part III: Advanced Primitives
+:page-mode: concept
 
 This section covers advanced synchronization primitives: atomics for lock-free operations, condition variables for efficient waiting, and shared locks for reader/writer patterns.
-
-== Prerequisites
-
-* Completed xref:3.concurrency/3b.synchronization.adoc[Part II: Synchronization]
-* Understanding of mutexes, lock guards, and deadlocks
 
 == Atomics: Lock-Free Operations
 
@@ -113,5 +109,3 @@ include::example$snippets/3c_advanced.cpp[tag=thread_safe_cache,indent=0]
 ----
 
 Multiple threads can call `get()` simultaneously without blocking each other. Only `put()` requires exclusive access.
-
-You have now learned about atomics, condition variables, and shared locks. The next section covers communication patterns: futures, promises, async, and practical concurrent patterns.
