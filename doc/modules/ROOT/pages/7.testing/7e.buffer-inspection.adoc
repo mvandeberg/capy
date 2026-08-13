@@ -8,7 +8,7 @@
 //
 
 = Buffer Inspection
-:page-mode: concept
+:page-mode: how-to
 
 Two small utilities round out the toolkit. cpp:test::bufgrind[bufgrind] iterates every split
 point of a buffer sequence, exercising every chunk-boundary condition in the

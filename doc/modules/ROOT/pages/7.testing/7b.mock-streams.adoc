@@ -8,7 +8,7 @@
 //
 
 = Mock Streams
-:page-mode: concept
+:page-mode: how-to
 
 Concept-conforming test doubles for the partial-I/O concepts in
 xref:6.streams/6b.streams.adoc[Streams]. Use them to drive protocol

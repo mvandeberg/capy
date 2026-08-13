@@ -8,7 +8,7 @@
 //
 
 = Example Programs
-:page-mode: how-to
+:page-mode: explanation
 
 The best way to learn a library is to watch it solve real problems. This section is a collection of complete, working programs. They demonstrate how the pieces you have learned--tasks, buffers, streams, cancellation, composition--fit together in practice.
 
