@@ -1,4 +1,4 @@
-= Part I: Foundations
+= Concurrency Foundations
 :page-mode: tutorial
 
 This section introduces the fundamental concepts of concurrent programming. It explains what concurrency is, why it matters, and how threads provide the foundation for parallel execution.

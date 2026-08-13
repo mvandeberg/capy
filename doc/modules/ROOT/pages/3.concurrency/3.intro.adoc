@@ -18,13 +18,13 @@ The good news: these problems are well understood. Decades of research and pract
 
 == What This Section Covers
 
-* xref:3.concurrency/3a.foundations.adoc[Part I: Foundations] -- Threads, their lifecycle,
+* xref:3.concurrency/3a.foundations.adoc[Concurrency Foundations] -- Threads, their lifecycle,
   and how to create, join, and detach them.
-* xref:3.concurrency/3b.synchronization.adoc[Part II: Synchronization] -- Race conditions,
+* xref:3.concurrency/3b.synchronization.adoc[Synchronization] -- Race conditions,
   mutexes, lock guards, and how to avoid deadlock.
-* xref:3.concurrency/3c.advanced.adoc[Part III: Advanced Primitives] -- Atomics, condition
+* xref:3.concurrency/3c.advanced.adoc[Advanced Primitives] -- Atomics, condition
   variables, and shared locks for finer-grained synchronization.
-* xref:3.concurrency/3d.patterns.adoc[Part IV: Communication & Patterns] -- Futures,
+* xref:3.concurrency/3d.patterns.adoc[Communication & Patterns] -- Futures,
   promises, `std::async`, and practical patterns for concurrent code.
 
 When you finish, you have the vocabulary and mental models to understand how Capy's

@@ -1,4 +1,4 @@
-= Part IV: Communication & Patterns
+= Communication & Patterns
 :page-mode: tutorial
 
 This section covers communication mechanisms for getting results from threads and practical patterns for concurrent programming.

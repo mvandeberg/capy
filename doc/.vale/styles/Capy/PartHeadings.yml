@@ -3,4 +3,4 @@ message: "Heading uses 'Part N' ceremony instead of a descriptive title (style g
 level: warning
 scope: heading
 raw:
-  - '^Part\s+\d+\b'
+  - '^Part\s+([0-9]+|[IVXLC]+)\b'

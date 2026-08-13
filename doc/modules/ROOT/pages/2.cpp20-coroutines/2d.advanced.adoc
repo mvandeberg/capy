@@ -1,4 +1,4 @@
-= Part IV: Advanced Topics
+= Advanced Topics
 :page-mode: tutorial
 
 This section covers advanced coroutine topics: symmetric transfer for efficient resumption, coroutine allocation strategies, and exception handling. These concepts are essential for building production-quality coroutine types.

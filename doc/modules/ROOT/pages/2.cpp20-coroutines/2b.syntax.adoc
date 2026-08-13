@@ -1,4 +1,4 @@
-= Part II: {cpp}20 Syntax
+= {cpp}20 Syntax
 :page-mode: tutorial
 
 This section introduces the three {cpp}20 keywords that create coroutines and walks you through building your first coroutine step by step.
@@ -50,7 +50,7 @@ Here is the minimal structure needed to create a coroutine:
 include::example$snippets/2b_syntax.cpp[tag=simple_coroutine,indent=0]
 ----
 
-The `promise_type` nested structure provides the minimum scaffolding the compiler needs. xref:2.cpp20-coroutines/2c.machinery.adoc[Part III: Coroutine Machinery] explains what each method does.
+The `promise_type` nested structure provides the minimum scaffolding the compiler needs. xref:2.cpp20-coroutines/2c.machinery.adoc[Coroutine Machinery] explains what each method does.
 
 For now, observe that the presence of `co_return` transforms what looks like a regular function into a coroutine. If you try to compile a function with coroutine keywords but without proper infrastructure, the compiler produces errors.
 

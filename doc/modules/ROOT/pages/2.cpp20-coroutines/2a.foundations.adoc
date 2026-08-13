@@ -1,4 +1,4 @@
-= Part I: Foundations
+= Coroutine Foundations
 :page-mode: tutorial
 
 This section introduces the fundamental concepts you need before working with {cpp}20 coroutines. It explains how normal functions work, what makes coroutines different, and why coroutines exist as a language feature.
@@ -38,7 +38,7 @@ When a coroutine resumes:
 * Local variables are restored to their previous values
 * Execution continues from the suspension point
 
-This capability is implemented through a *coroutine frame*—a block of memory, typically heap-allocated, that stores the coroutine's state. Unlike stack frames, coroutine frames persist across suspension points. xref:2.cpp20-coroutines/2d.advanced.adoc[Part IV] covers when the compiler can place one elsewhere instead.
+This capability is implemented through a *coroutine frame*—a block of memory, typically heap-allocated, that stores the coroutine's state. Unlike stack frames, coroutine frames persist across suspension points. xref:2.cpp20-coroutines/2d.advanced.adoc[Advanced Topics] covers when the compiler can place one elsewhere instead.
 
 [source,cpp,role=pseudocode]
 ----
