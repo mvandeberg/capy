@@ -1,5 +1,5 @@
 = Part II: Synchronization
-:page-mode: concept
+:page-mode: tutorial
 
 This section introduces the dangers of shared data access and the synchronization primitives that protect against them. It covers race conditions, mutexes, lock guards, and deadlocks.
 

@@ -1,5 +1,5 @@
 = Part III: Coroutine Machinery
-:page-mode: concept
+:page-mode: tutorial
 
 This section explains the promise type and coroutine handle—the core machinery that controls coroutine behavior. You build a complete generator type by understanding how these pieces work together.
 

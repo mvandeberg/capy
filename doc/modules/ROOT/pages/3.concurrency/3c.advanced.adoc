@@ -1,5 +1,5 @@
 = Part III: Advanced Primitives
-:page-mode: concept
+:page-mode: tutorial
 
 This section covers advanced synchronization primitives: atomics for lock-free operations, condition variables for efficient waiting, and shared locks for reader/writer patterns.
 

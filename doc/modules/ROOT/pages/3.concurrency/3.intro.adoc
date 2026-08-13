@@ -8,7 +8,7 @@
 //
 
 = Introduction to Concurrency
-:page-mode: concept
+:page-mode: explanation
 
 Your processor has multiple cores. Your operating system runs hundreds of threads. Your users expect responsive interfaces while your server handles thousands of simultaneous connections. Concurrency is not an advanced topic reserved for specialists--it is the reality of modern software.
 

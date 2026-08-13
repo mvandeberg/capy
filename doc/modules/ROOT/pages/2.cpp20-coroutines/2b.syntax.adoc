@@ -1,5 +1,5 @@
 = Part II: {cpp}20 Syntax
-:page-mode: concept
+:page-mode: tutorial
 
 This section introduces the three {cpp}20 keywords that create coroutines and walks you through building your first coroutine step by step.
 

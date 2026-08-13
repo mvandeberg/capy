@@ -8,7 +8,7 @@
 //
 
 = Introduction To {cpp}20 Coroutines
-:page-mode: concept
+:page-mode: explanation
 
 Every {cpp} function you have ever written follows the same contract: it runs from start to finish, then returns. The caller waits. The stack frame lives and dies in lockstep with that single invocation. This model has served us well for decades. But it forces a hard tradeoff when programs need to wait--for a network response, a disk read, a timer, or another thread. The function either blocks (wasting a thread) or you restructure your code into callbacks, state machines, or futures that scatter your logic across multiple places.
 

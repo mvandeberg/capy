@@ -1,5 +1,5 @@
 = Part IV: Communication & Patterns
-:page-mode: concept
+:page-mode: tutorial
 
 This section covers communication mechanisms for getting results from threads and practical patterns for concurrent programming.
 
@@ -89,9 +89,7 @@ include::example$programs/3d_patterns_parallel_for.cpp[tag=full]
 
 The work is divided into chunks, each handled by its own thread. For CPU-bound work on large datasets, this can dramatically reduce execution time.
 
-== Summary
-
-=== Best Practices
+== Best Practices
 
 * *Start with std::async* when possible
 * *Prefer immutable data* — shared data that never changes needs no synchronization

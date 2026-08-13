@@ -1,5 +1,5 @@
 = Part I: Foundations
-:page-mode: concept
+:page-mode: tutorial
 
 This section introduces the fundamental concepts you need before working with {cpp}20 coroutines. It explains how normal functions work, what makes coroutines different, and why coroutines exist as a language feature.
 
