@@ -47,7 +47,7 @@ include::example$snippets/5c_sequences.cpp[tag=concept_models,indent=0]
 
 `std::string` and `std::string_view` are ranges of characters,
 not of buffers, so they do not satisfy the concepts themselves. Wrap them
-with `make_buffer` to obtain a single-buffer sequence.
+with cpp:make_buffer[] to obtain a single-buffer sequence.
 
 == Heterogeneous Composition
 
@@ -73,7 +73,7 @@ These functions handle both single buffers (returning pointer-to-self) and range
 
 == buffer_slice
 
-`buffer_slice` returns a byte sub-range of a buffer sequence, as a value:
+cpp:buffer_slice[] returns a byte sub-range of a buffer sequence, as a value:
 
 [source,cpp]
 ----
@@ -117,7 +117,7 @@ value: it collects its tasks first, then awaits them together.
 The concepts require bidirectional ranges (not just forward ranges) for two reasons:
 
 1. Some algorithms traverse buffers backwards
-2. The slice views produced by `buffer_slice` and cpp:consuming_buffers::data[]`()` need to adjust the first and last buffers' bounds
+2. The slice views produced by cpp:buffer_slice[] and cpp:consuming_buffers::data[]`()` need to adjust the first and last buffers' bounds
 
 If your custom buffer sequence only provides forward iteration, wrap it in a type that provides bidirectional access.
 

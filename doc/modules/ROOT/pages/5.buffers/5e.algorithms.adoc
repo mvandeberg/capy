@@ -45,7 +45,7 @@ include::example$snippets/5e_algorithms.cpp[tag=buffer_length_example,indent=0]
 
 Note the distinction:
 
-* `buffer_size` — total bytes (data measurement)
+* cpp:buffer_size[] — total bytes (data measurement)
 * cpp:buffer_length[] — number of buffers (sequence length)
 
 == Copying Buffers
@@ -76,7 +76,7 @@ This is useful for implementing protocols with size limits.
 
 === Cross-Sequence Copy
 
-`buffer_copy` handles sequences with different structure:
+cpp:buffer_copy[] handles sequences with different structure:
 
 [source,cpp]
 ----

@@ -80,7 +80,7 @@ This single signature accepts:
 * A single cpp:const_buffer[]
 * A `span<const_buffer>`
 * A `vector<const_buffer>`
-* A `string_view` wrapped with cpp:make_buffer[] (which yields a single `const_buffer`)
+* A `string_view` wrapped with cpp:make_buffer[] (which yields a single cpp:const_buffer[])
 * A custom composite type
 * *Any composition of the above—without allocation*
 
@@ -108,7 +108,7 @@ Even `std::byte` imposes a semantic opinion. POSIX uses `void*` for semantic neu
 
 But `span<void>` doesn't compile—{cpp} can't express type-agnostic buffer abstraction with `span`.
 
-Capy provides `const_buffer` and cpp:mutable_buffer[] as semantically neutral buffer types, without imposing `std::byte` semantics. Their layout matches POSIX `iovec` directly; Windows `WSABUF` differs, so Capy copies descriptors there instead.
+Capy provides cpp:const_buffer[] and cpp:mutable_buffer[] as semantically neutral buffer types, without imposing `std::byte` semantics. Their layout matches POSIX `iovec` directly; Windows `WSABUF` differs, so Capy copies descriptors there instead.
 
 == Summary
 
