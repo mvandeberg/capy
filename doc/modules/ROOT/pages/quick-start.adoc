@@ -84,5 +84,5 @@ include::example$snippets/quick_start.cpp[tag=errors,indent=0]
 Now that you have a working program:
 
 * xref:4.coroutines/4a.tasks.adoc[Tasks] — Learn how lazy tasks work
-* xref:4.coroutines/4b.launching.adoc[Starting Tasks] — Understand `run_async` in detail
+* xref:4.coroutines/4b.launching.adoc[Starting Tasks] — Understand cpp:run_async[] in detail
 * xref:4.coroutines/4c.executors.adoc[Executors and Execution Contexts] — Control where coroutines execute

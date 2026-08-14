@@ -37,7 +37,7 @@ NOTE: The stream operations can still throw exceptions to indicate conditions
       their postconditions, such as failures to grow a buffer, or 
       failure to allocate a coroutine frame.
 
-NOTE: Operations on streams often await-return `capy::io_result<std::size_t>`
+NOTE: Operations on streams often await-return cpp:capy::io_result[capy::io_result<std::size_t>]
       destructuring to `[ec, n]`, where `n` represents the number of processed bytes.
       Upon a reported contingency, a non-zero `n` indicates the state of the partial
       or sometimes even a full read. When an inner operation reports a contingency,

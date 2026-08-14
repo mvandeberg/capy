@@ -10,7 +10,7 @@ Capy is two things at once:
 * *A protocol.* cpp:IoAwaitable[] is a protocol for propagating a coroutine's _execution environment_—its executor, stop token, and allocator—forward through `co_await` chains. This is the vocabulary that lets awaitable-based coroutine libraries interoperate.
 * *A reference implementation.* A concrete library—thread pool, task types, byte streams, buffer sequences, synchronization primitives—that proves the protocol works in practice.
 
-The protocol is the smaller, more general library living inside Capy. Without a shared protocol, _N_ coroutine libraries need _N_×(_N_−1) adapters to interoperate. With one shared protocol for environment propagation, a single bridge covers everyone. This is the role `IoAwaitable` plays.
+The protocol is the smaller, more general library living inside Capy. Without a shared protocol, _N_ coroutine libraries need _N_×(_N_−1) adapters to interoperate. With one shared protocol for environment propagation, a single bridge covers everyone. This is the role cpp:IoAwaitable[] plays.
 
 [IMPORTANT]
 ====
@@ -115,13 +115,13 @@ include::example$programs/index_page_echo.cpp[tag=full]
 
 The `echo` function accepts an `any_stream&`—a type-erased wrapper that works with any concrete stream implementation. The function reads data into a buffer, then writes it back. Both operations use `co_await` to suspend until the I/O completes.
 
-The `task<>` return type (equivalent to `task<void>`) creates a lazy coroutine that does not start executing until awaited or started with cpp:run_async[].
+The cpp:task[task<>] return type (equivalent to `task<void>`) creates a lazy coroutine that does not start executing until awaited or started with cpp:run_async[].
 
 == Next Steps
 
 * xref:quick-start.adoc[Quick Start] — Set up your first Capy project
 * xref:2.cpp20-coroutines/2a.foundations.adoc[{cpp}20 Coroutines Tutorial] — Learn coroutines from the ground up
 * xref:3.concurrency/3a.foundations.adoc[Concurrency Tutorial] — Understand threads, mutexes, and synchronization
-* xref:4.coroutines/4a.tasks.adoc[Coroutines in Capy] — Deep dive into `task<T>` and the IoAwaitable protocol
+* xref:4.coroutines/4a.tasks.adoc[Coroutines in Capy] — Deep dive into cpp:task[task<T>] and the IoAwaitable protocol
 * xref:5.buffers/5a.overview.adoc[Buffer Sequences] — Master the concept-driven buffer model
 * xref:6.streams/6a.overview.adoc[Stream Concepts] — Understand the three stream concepts
