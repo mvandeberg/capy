@@ -67,7 +67,7 @@ include::example$snippets/7a_drivers.cpp[tag=run_blocking_cancellation,indent=0]
 ----
 
 The mock sources, sinks, and buffer adapters complete synchronously, so they
-check the token up front. An outstanding stop request yields `error::canceled`
+check the token up front. An outstanding stop request yields cpp:error::canceled[error::canceled]
 on the next operation. A connected cpp:test::stream[stream] whose `read_some` is *blocked*
 waiting for its peer is resumed with `error::canceled` when the token fires. A
 read that can satisfy from already-buffered data is unaffected.
@@ -167,7 +167,7 @@ constructors, the `armed`/`inert`/`operator()` entry points,
 
 == thread_name
 
-`set_current_thread_name` names the calling thread so that debuggers,
+cpp:set_current_thread_name[] names the calling thread so that debuggers,
 `htop`, and core dumps show a recognizable label instead of a generic thread
 ID. This is most useful when a test failure occurs inside a thread pool
 worker and you need to identify which worker was involved. The function is a
@@ -184,7 +184,7 @@ Platform limits on the name length:
 include::example$snippets/7a_drivers.cpp[tag=thread_name,indent=0]
 ----
 
-`set_current_thread_name` lives in namespace `boost::capy`, not
+cpp:set_current_thread_name[] lives in namespace `boost::capy`, not
 `boost::capy::test`, because the function is useful in any context, not only
 tests.
 
@@ -192,7 +192,7 @@ tests.
 |===
 | Function | Description
 
-| `set_current_thread_name(char const* name)`
+| cpp:set_current_thread_name[]`(char const* name)`
 | Set the OS thread name for the calling thread. Truncated to the
   platform limit. No-op on unsupported platforms.
 |===

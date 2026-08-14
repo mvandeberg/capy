@@ -92,7 +92,7 @@ include::example$snippets/7b_mock_streams.cpp[tag=write_stream_chunked,indent=0]
 Call `expect()` before or after writes to assert that the written data
 matches a prefix. Matched bytes are consumed from both sides. If written
 data does not match the expected prefix, the next `write_some` call
-returns `error::test_failure`.
+returns cpp:error::test_failure[error::test_failure].
 
 [source,cpp]
 ----
@@ -112,7 +112,7 @@ calling coroutine suspends until the peer calls `write_some`. This
 makes `stream` useful for testing client/server code without real
 sockets.
 
-Both `stream` ends satisfy `ReadStream` and `WriteStream`.
+Both `stream` ends satisfy cpp:ReadStream[] and cpp:WriteStream[].
 
 [source,cpp]
 ----
@@ -136,13 +136,13 @@ operation under test.
 
 Calling `close()` on one end signals EOF to the peer. The peer drains
 any buffered data first; once the buffer is empty, subsequent
-`read_some` calls on the peer return `cond::eof`. The peer may still
+`read_some` calls on the peer return cpp:cond::eof[cond::eof]. The peer may still
 call `write_some` after receiving EOF.
 
 When the fuse injects an error during `read_some` or `write_some`, the
 pair is automatically closed. The calling end returns the injected
 error, and any suspended reader on the other end is resumed with
-`cond::eof`. All subsequent operations on both ends return
+cpp:cond::eof[cond::eof]. All subsequent operations on both ends return
 `cond::eof`.
 
 === Thread Safety
@@ -158,7 +158,7 @@ complete member list: pair construction, `read_some`, `write_some`,
 == Putting It Together
 
 The following snippet tests a function that reads a single line
-terminated by `'\n'` from a `ReadStream`. The `fuse.armed()` loop
+terminated by `'\n'` from a cpp:ReadStream[]. The `fuse.armed()` loop
 runs the coroutine repeatedly, failing at every `read_some` call in
 turn, then reruns in exception mode. Each injected failure exercises
 a different error-handling branch inside `read_line`.
