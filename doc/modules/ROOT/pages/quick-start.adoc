@@ -25,9 +25,15 @@ include::example$programs/quick_start_hello.cpp[tag=full]
 
 == Build and Run
 
-Capy is not installed as a system package, so point the compiler at your
-own checkout's include directory and built library. Replace both paths
-below with where you built Capy:
+Capy is not installed as a system package, so build it first:
+
+[source,bash,role=pseudocode]
+----
+cmake -B build && cmake --build build
+----
+
+Then point the compiler at your own checkout's include directory and built
+library. Replace both paths below with where you built Capy:
 
 [source,bash,role=pseudocode]
 ----

@@ -309,6 +309,31 @@ try {
       '',
     ].join('\n'));
 
+    // G1 (final-review fix): AsciiDoc permits a block's attribute list to be
+    // split across multiple adjacent `[...]` lines, and Asciidoctor merges
+    // them into one. scanBlocks() used to read only the single nearest
+    // `[...]` line above the delimiter, so a `[source,cpp]` marker one line
+    // further up was invisible: `isSource` came back false, the block took
+    // the bare-listing branch, and role=output cleared it as non-code — B2:0.
+    // SHAPE, which still looks at bare-listing content, ALSO missed it: its
+    // `;\s*$` pattern is defeated by the trailing `// running sum` comment,
+    // which is this corpus's own annotation idiom for [role=output] blocks.
+    // The result was a highlighted C++ source block invisible to both B2 and
+    // SHAPE. Confirmed to reproduce against the pre-fix scanBlocks() (attr
+    // read from the single nearest line only) before landing the fix above.
+    write('split-attr.adoc', [
+      ':page-mode: how-to',
+      '',
+      '= Split Attr',
+      '',
+      '[source,cpp]',
+      '[role=output]',
+      '----',
+      'int total = 0;  // running sum',
+      '----',
+      '',
+    ].join('\n'));
+
     const d = spawnSync('node', [path.join(SCRIPT_DIR, 'doc-lint.mjs'), DOCLINT_TMP],
       { encoding: 'utf8', cwd: DOC_DIR, maxBuffer: 16 * 1024 * 1024 });
     check('doc-lint.mjs exits 0 against the B2 fixture tree', d.status === 0,
@@ -357,6 +382,18 @@ try {
       // caused the real closer below it to be misread as a new opener.
       check('B2 does not misfire on a body dash-run whose length differs from its own delimiter\'s',
         delimHits.length === 2, `expected exactly 2 delimiters.adoc findings (5-dash, dot), got: ${JSON.stringify(delimHits)}`);
+
+      // G1: a [source,cpp] block whose attribute list is split across two
+      // adjacent `[...]` lines must still be recognized as source, not fall
+      // through to the bare-listing/SHAPE branch.
+      const splitAttrB2 = dOut.findings.B2.filter((f) => f.file === 'split-attr.adoc');
+      check('B2 catches a [source,cpp] block whose attribute list is split across two lines',
+        splitAttrB2.length === 1 && splitAttrB2[0].line === 5,
+        `expected exactly 1 split-attr.adoc B2 finding at line 5 (the [source,cpp] line), got: ${JSON.stringify(splitAttrB2)}`);
+      const splitAttrShape = dOut.findings.SHAPE.filter((f) => f.file === 'split-attr.adoc');
+      check('split-attribute [source,cpp] block is caught by B2, not diverted into SHAPE',
+        splitAttrShape.length === 0,
+        `split-attr.adoc should have 0 SHAPE findings (B2 should catch it directly), got: ${JSON.stringify(splitAttrShape)}`);
     }
   } finally {
     fs.rmSync(DOCLINT_TMP, { recursive: true, force: true });
@@ -370,6 +407,6 @@ if (failures.length) {
 }
 console.log(JSON.stringify({
   ok: true,
-  assertions: 28,
+  assertions: 30,
   fixtureSummary: out.summary,
 }, null, 2));

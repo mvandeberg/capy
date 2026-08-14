@@ -66,7 +66,7 @@ cancellation paths without real I/O.
 include::example$snippets/7a_drivers.cpp[tag=run_blocking_cancellation,indent=0]
 ----
 
-The mock sources, sinks, and buffer adapters complete synchronously, so they
+The mock streams and buffer adapters complete synchronously, so they
 check the token up front. An outstanding stop request yields cpp:error::canceled[error::canceled]
 on the next operation. A connected cpp:test::stream[stream] whose `read_some` is *blocked*
 waiting for its peer is resumed with `error::canceled` when the token fires. A

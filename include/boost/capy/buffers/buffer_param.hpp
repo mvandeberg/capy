@@ -96,12 +96,13 @@ namespace capy {
     This class enables passing arbitrary buffer sequences through
     a virtual function boundary. The template function captures
     the buffer sequence by value and drives the iteration, while
-    the virtual function receives a simple span. A `MutableBufferSequence`
-    also satisfies `ConstBufferSequence`, so plain CTAD
-    (`buffer_param bp(buffers)`) would deduce `span<mutable_buffer>` when
-    called with a mutable sequence. That does not match `write_impl`'s
-    `span<const_buffer>` parameter. Use @ref const_buffer_param to force
-    `const_buffer` storage regardless of what `BS` is:
+    the virtual function receives a simple span. Plain CTAD
+    (`buffer_param bp(buffers)`) deduces `BS`'s own buffer type, so a
+    mutable sequence yields `span<mutable_buffer>`. That does not match
+    `write_impl`'s `span<const_buffer>` parameter, and a `MutableBufferSequence`
+    does not itself satisfy `ConstBufferSequence` (see @ref MutableBufferSequence).
+    Use @ref const_buffer_param to force `const_buffer` storage regardless of
+    what `BS` is:
 
     @code
     class base

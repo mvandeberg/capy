@@ -118,12 +118,6 @@ One more thing: `std::ranges` cannot help here. `ranges::size` returns the numbe
 | cpp:buffer_slice[]
 ^| -
 
-| `Slice`
-^| -
-
-| `MutableSlice`
-^| -
-
 | cpp:front[]
 ^| -
 

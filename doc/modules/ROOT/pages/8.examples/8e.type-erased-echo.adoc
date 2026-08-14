@@ -37,7 +37,7 @@ include::example$type-erased-echo/main.cpp[tag=full]
 [source,cmake,role=pseudocode]
 ----
 add_library(echo_lib echo.cpp)
-target_link_libraries(echo_lib PUBLIC capy)
+target_link_libraries(echo_lib PUBLIC Boost::capy)
 
 add_executable(echo_demo main.cpp)
 target_link_libraries(echo_demo PRIVATE echo_lib)

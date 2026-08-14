@@ -95,14 +95,16 @@ fixed to `reference` by definition (style guide Part A) — set `inferred_mode=r
 **Return:** `ClassifyRecord`
 
 - `path`: string
-- `inferred_mode`: one of `tutorial`, `how_to`, `reference`, `explanation`, `mixed`
+- `inferred_mode`: one of `tutorial`, `how-to`, `reference`, `explanation`, `mixed`
 - `declared_mode`: string or null
 - `mode_mismatch`: boolean — `true` only when `declared_mode` is **non-null** and disagrees
   with `inferred_mode`, or `inferred_mode` is `mixed`. **A `null` `declared_mode` is never a
   mismatch** — an undeclared `:page-mode:` is the deterministic lint script's gate (A1; see
-  README "Division of labor"), not this tool's judgment call. (Confirmed against the corpus:
-  only 1 of 65 current pages declares `:page-mode:` (`8q.gui-integration.adoc`) — treating
-  `null` as a mismatch would flag every other page and drown the real findings.)
+  README "Division of labor"), not this tool's judgment call, regardless of how many pages in
+  the target corpus currently declare one. (Capy's own corpus went from 1 of 65 pages declaring
+  `:page-mode:` to 65 of 65 over the course of this plan; the rule above did not change and must
+  not be re-tuned to a snapshot count — a corpus in either state defers presence-checking to A1,
+  never to this tool's judgment.)
 - `topic`: string, **one sentence** — the concept the page teaches
 - `approx_word_count`: integer
 

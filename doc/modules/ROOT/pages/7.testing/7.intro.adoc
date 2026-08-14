@@ -18,7 +18,7 @@ completion on the calling thread, and injects failures at every
 `maybe_fail()` site. The toolkit therefore exercises every error branch
 automatically. Because each mock satisfies the same concept as its
 production counterpart, test code reads the same as production code. The
-only difference is the type of the stream or source you pass in.
+only difference is the type of the stream you pass in.
 
 == What This Section Covers
 

@@ -5,7 +5,7 @@ Both libraries use {cpp}20 coroutines for asynchronous programming. The differen
 
 Cobalt is a coroutine layer built on Boost.Asio. It adds coroutine syntax — `promise`, `task`, `generator` — on top of Asio's existing I/O infrastructure. Asio is not coroutines-only. It supports callbacks, futures, and coroutines equally. Cobalt inherits this foundation. It can add coroutine types on top, but it cannot change what lies beneath.
 
-Capy is a coroutine-native I/O foundation designed from the ground up. The design started from the ideal use case and worked backward to the implementation. The concept hierarchy, the type-erased wrappers, the allocator model — these fell out naturally from use-case-first design, without compromise.
+Capy is a coroutine-native I/O foundation designed from the ground up. The design started from the ideal use case and worked backward to the implementation. The flat concept set, the type-erased wrappers, the allocator model — these fell out naturally from use-case-first design, without compromise.
 
 == The Dimovian Ideal
 
@@ -78,7 +78,7 @@ Templates can achieve this by type-erasing every customization point. The cost m
 
 == Stream Concepts
 
-Capy defines three coroutine-only stream concepts. Cobalt inherits Asio's `AsyncReadStream` and `AsyncWriteStream`, which are hybrid concepts supporting callbacks, futures, and coroutines. Cobalt's `cobalt::io` wrappers simplify the API and Cobalt defines stream abstractions (`write_stream`, `read_stream`, `stream`) as abstract base classes, a distinct approach from Capy's concept-based hierarchy. Cobalt's wrappers still include full Asio headers. See xref:9.design/9n.WhyNotCobaltConcepts.adoc[Write Stream Design] for a detailed comparison of the two approaches.
+Capy defines three coroutine-only stream concepts. Cobalt inherits Asio's `AsyncReadStream` and `AsyncWriteStream`, which are hybrid concepts supporting callbacks, futures, and coroutines. Cobalt's `cobalt::io` wrappers simplify the API and Cobalt defines stream abstractions (`write_stream`, `read_stream`, `stream`) as abstract base classes, a distinct approach from Capy's flat set of concepts. Cobalt's wrappers still include full Asio headers. See xref:9.design/9n.WhyNotCobaltConcepts.adoc[Write Stream Design] for a detailed comparison of the two approaches.
 
 Capy's concepts form a small, flat set that emerged naturally from use-case-first design: cpp:ReadStream[] and cpp:WriteStream[] each define a single partial-transfer primitive (`read_some`, `write_some`); cpp:Stream[] requires both. There is no further refinement.
 
@@ -361,7 +361,7 @@ cpp:recycling_memory_resource[] provides zero-overhead recycling after warmup. M
 
 Cobalt is coupled to Asio's `io_context`. The execution model and the platform abstractions are one thing.
 
-Capy separates them. The execution model — executors, cancellation, allocation — lives in Capy. Platform abstractions live in Corosio, a companion library that provides native TCP sockets, acceptors, TLS streams, timers, DNS resolution, and signal handling — all built on Capy's IoAwaitable protocol with native IOCP and epoll backends. You can test Capy's execution model without a network stack. You can swap the I/O backend without changing your application code.
+Capy separates them. The execution model — executors, cancellation, allocation — lives in Capy. Platform abstractions live in Corosio, a companion library that provides native TCP sockets, acceptors, TLS streams, timers, DNS resolution, and signal handling. It builds on Capy's IoAwaitable protocol with five native backends: epoll and io_uring (Linux), kqueue (BSD/macOS), IOCP (Windows), and select (portable fallback). You can test Capy's execution model without a network stack. You can swap the I/O backend without changing your application code.
 
 [cols="1,1,1"]
 |===

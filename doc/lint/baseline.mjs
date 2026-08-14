@@ -128,6 +128,14 @@ function docLintFingerprints() {
   const fingerprints = [];
   const seen = new Map();
   for (const [check, items] of Object.entries(parsed.findings || {})) {
+    // SHAPE is advisory-only and never gated (see doc-lint.mjs's header
+    // comment); folding it into doc_lint's fingerprint set let a single
+    // advisory SHAPE finding keep `currentSet.length` non-zero in
+    // check-no-new-violations.mjs even when A1/A6/B2/D2 — the checks the
+    // gate spec `doc_lint:^(A1|A6|B2|D2):` actually cares about — report
+    // zero, silently disarming the "gated check reports 0 against a
+    // non-empty baseline" backstop (check-no-new-violations.mjs:187).
+    if (check === 'SHAPE') continue;
     for (const it of items) fingerprints.push(occurrenceKey(seen, `${check}:${it.file}`, it.message));
   }
   return { count: fingerprints.length, byRule: parsed.summary, fingerprints: fingerprints.sort() };

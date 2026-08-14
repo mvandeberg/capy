@@ -26,6 +26,13 @@
 //        (AsciiDoc's own rule — `-----`/`....` are not `----`, and this is
 //        also how AsciiDoc nests a `----` inside a `-----`); a fixed
 //        4-character match let a 5-dash listing hide code from the gate.
+//        The attribute list read above the delimiter walks every consecutive
+//        `[...]` line, not just the nearest one — AsciiDoc permits a block's
+//        attribute list to be split across adjacent lines (e.g. `[source,cpp]`
+//        then `[role=output]` on the next line) and Asciidoctor merges them;
+//        reading only the nearest line missed `[source,...]` set on an
+//        earlier line and let a highlighted C++ block through as an
+//        exempt bare listing.
 //   SHAPE — advisory only, NEVER gated (not in the summary the CI gate
 //        spec reads by rule prefix). A role=output/role=figure block is a
 //        permanent B2 exemption, so a block wrongly marked non-code would
@@ -121,15 +128,27 @@ function scanBlocks(lines, ch) {
     openLen = trimmed.length;
     const openerLine = i;
 
-    // The attribute line immediately above (skipping blank lines), if any.
-    // Only a real `[...]` block attribute list counts — prose or a heading
-    // sitting directly above a bare listing is not an attribute line, and
-    // must not be mistaken for one (it can't carry role=, and reporting a
-    // finding against it would point at the wrong line).
+    // The attribute line(s) immediately above (skipping blank lines before
+    // the stack begins), if any. AsciiDoc permits a block's attribute list
+    // to be split across multiple adjacent `[...]` lines (no blank line
+    // between them) and Asciidoctor merges them into one; reading only the
+    // single nearest line missed a role= or [source,...] marker set on an
+    // earlier line in the stack, e.g.:
+    //   [source,cpp]
+    //   [role=output]
+    //   ----
+    // which used to read attr as just `[role=output]`, miss isSource, and
+    // fall into the bare-listing branch below instead of B2. Walk upward
+    // collecting every consecutive `[...]` line, not just the nearest one.
     let a = openerLine - 1;
     while (a >= 0 && lines[a].trim() === '') a--;
-    const prevLine = a >= 0 ? lines[a].trim() : '';
-    const attr = /^\[.*\]$/.test(prevLine) ? prevLine : '';
+    const attrLineIdxs = [];
+    while (a >= 0 && /^\[.*\]$/.test(lines[a].trim())) {
+      attrLineIdxs.unshift(a);
+      a--;
+    }
+    const attr = attrLineIdxs.map((idx) => lines[idx].trim()).join(' ');
+    const attrTopLine = attrLineIdxs.length ? attrLineIdxs[0] : openerLine;
     const isSource = /^\[source\s*,\s*[^,\]]+/i.test(attr);
     const hasClearingRole = /role=(pseudocode|external)\b/.test(attr);
     const hasNonCodeRole = /role=(output|figure)\b/.test(attr);
@@ -167,7 +186,7 @@ function scanBlocks(lines, ch) {
     while (k < lines.length && lines[k].trim() === '') k++;
     const first = (lines[k] || '').trim();
     if (!first.startsWith('include::example$')) {
-      const line = attr !== '' ? a + 1 : openerLine + 1;
+      const line = attr !== '' ? attrTopLine + 1 : openerLine + 1;
       const message = isSource
         ? 'raw code, not include::example$/role=pseudocode/role=external'
         : 'raw code in a bare listing, not include::example$/role=output/role=figure — this block must not contain code';

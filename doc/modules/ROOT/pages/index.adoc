@@ -32,7 +32,7 @@ Capy is _not_ an all-purpose coroutine framework, and it is _not_ an implementat
 * *Stream concepts* — three coroutine stream concepts: cpp:ReadStream[], cpp:WriteStream[], cpp:Stream[]
 * *Type-erased streams* — cpp:any_stream[], cpp:any_read_stream[], cpp:any_write_stream[] for fast compilation
 * *Concurrency facilities* — executors, strands, thread pools, cpp:when_all[], cpp:when_any[]
-* *Test utilities* — mock streams, mock sources/sinks, error injection
+* *Test utilities* — mock streams, error injection
 
 == What This Library Does Not Do
 
@@ -90,7 +90,7 @@ None. Capy is self-contained and does not require Boost.
 
 === Linking
 
-Capy is a compiled library. Link against `capy`.
+Capy is a compiled library. Link against `Boost::capy`.
 
 == Code Convention
 
