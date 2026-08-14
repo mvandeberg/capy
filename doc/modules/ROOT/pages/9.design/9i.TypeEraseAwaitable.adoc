@@ -89,7 +89,7 @@ When a wrapper exposes more than one async operation, it cannot embed a single s
 
 Two sub-cases arise, distinguished by whether the operations share an await-return type:
 
-* *Same await-return type* (Boost.Http's `http::any_read_source`: `read_some` and `read` both await-return `io_result<std::size_t>`). One ops struct (`awaitable_ops`) serves both operations; both `construct_*_awaitable` pointers return the same layout.
+* *Same await-return type* (Boost.Http's `http::any_read_source`: `read_some` and `read` both await-return cpp:io_result[io_result<std::size_t>]). One ops struct (`awaitable_ops`) serves both operations; both `construct_*_awaitable` pointers return the same layout.
 * *Different await-return types* (Boost.Http's `http::any_buffer_source`: `pull` await-returns cpp:io_result[io_result<std::span<const_buffer>>] while its synthesized `read_some`/`read` await-return `io_result<std::size_t>`; `http::any_buffer_sink` and `http::any_write_sink` similarly mix `io_result<>`, `io_result<std::size_t>`). These need more than one ops struct (e.g. `awaitable_ops` plus `read_awaitable_ops`/`write_awaitable_ops`/`eof_awaitable_ops`), and each `construct` returns the ops matching its result type.
 
 Capy's own multi-operation wrapper avoids this problem entirely. cpp:any_stream[] exposes two operations, `read_some` and `write_some`, but does not build a shared per-construct ops table for them: it inherits from cpp:any_read_stream[] and cpp:any_write_stream[], composing two independent flat, single-operation vtables. Per-construct ops are needed only when multiple operations act on one shared inner source or sink object; `any_stream` sidesteps the question because its two operations already live in two separate single-operation wrappers.
@@ -174,17 +174,17 @@ The flat layout keeps all per-awaitable function pointers adjacent to `construct
 | Layout | Wrappers
 
 | Flat vtable (one operation, ops embedded in vtable)
-| `any_read_stream` (`read_some`) +
-  `any_write_stream` (`write_some`)
+| cpp:any_read_stream[] (`read_some`) +
+  cpp:any_write_stream[] (`write_some`)
 
 | Composed flat vtables (multiple operations via inheritance from single-operation wrappers)
-| `any_stream` (`read_some` via cpp:any_read_stream[]; `write_some` via cpp:any_write_stream[] -- two independent flat vtables, no shared ops table)
+| cpp:any_stream[] (`read_some` via cpp:any_read_stream[]; `write_some` via cpp:any_write_stream[] -- two independent flat vtables, no shared ops table)
 
 | Per-construct ops, single ops struct (multiple operations, all sharing one await-return type)
-| Boost.Http's `http::any_read_source` (`read_some`, `read` -- both `io_result<size_t>`)
+| Boost.Http's `http::any_read_source` (`read_some`, `read` -- both cpp:io_result[io_result<size_t>])
 
 | Per-construct ops, multiple ops structs (operations differ in await-return type)
-| Boost.Http's `http::any_buffer_source` (`pull` → `io_result<span>`; synthesized `read_some`/`read` → `io_result<size_t>`) +
+| Boost.Http's `http::any_buffer_source` (`pull` → cpp:io_result[io_result<span>]; synthesized `read_some`/`read` → `io_result<size_t>`) +
   `http::any_buffer_sink` (`commit`/`commit_eof` → `io_result<>`; `write_some`/`write` → `io_result<size_t>`) +
   `http::any_write_sink` (`write_some`/`write` → `io_result<size_t>`; `write_eof()` → `io_result<>`)
 |===
@@ -193,4 +193,4 @@ The flat layout keeps all per-awaitable function pointers adjacent to `construct
 
 With multiple operations against a shared inner object, each `construct` call produces a different concrete awaitable type. The per-awaitable function pointers (`await_ready`, `await_suspend`, `await_resume`, `destroy`) must match the type that was constructed. Returning the correct ops pointer from each `construct` call solves this. Embedding the four function pointers directly in the vtable, as the flat layout does, would require one full set per operation -- workable for one operation, unwieldy for four. When the operations share an await-return type (Boost.Http's `http::any_read_source`) a single ops struct suffices; when they differ (`http::any_buffer_source`, `http::any_buffer_sink`, `http::any_write_sink`) the wrapper carries one ops struct per result type.
 
-This scaling problem is specific to wrappers with several operations on one inner object. `any_stream` never hits it: its two operations belong to two separate inner-object-free bases, each already a flat single-operation wrapper, so composing them by inheritance keeps both vtables flat.
+This scaling problem is specific to wrappers with several operations on one inner object. cpp:any_stream[] never hits it: its two operations belong to two separate inner-object-free bases, each already a flat single-operation wrapper, so composing them by inheritance keeps both vtables flat.

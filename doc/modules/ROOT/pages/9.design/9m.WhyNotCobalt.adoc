@@ -153,15 +153,15 @@ Tests run without sockets or network access, eliminating non-determinism.
 |===
 | Testing Feature | Capy | Cobalt
 
-| `test::read_stream`
+| cpp:test::read_stream[test::read_stream]
 | Yes
 |
 
-| `test::write_stream`
+| cpp:test::write_stream[test::write_stream]
 | Yes
 |
 
-| `test::stream` (connected pair)
+| cpp:test::stream[test::stream] (connected pair)
 | Yes
 |
 

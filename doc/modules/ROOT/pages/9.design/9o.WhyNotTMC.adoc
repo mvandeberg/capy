@@ -436,7 +436,7 @@ TMC for compute scheduling, Capy/Corosio for I/O. They can coexist at different 
 | No
 
 | Type-erased streams
-| Yes (`any_stream`)
+| Yes (cpp:any_stream[])
 | No
 
 | I/O support

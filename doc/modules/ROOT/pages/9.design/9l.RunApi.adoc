@@ -57,7 +57,7 @@ Several alternative naming and syntax proposals were evaluated and discarded. Th
 | `co_await` cpp:run[]`(alloc)(t)`
 
 | `capy::on(ex).block(t)`
-| `test::run_blocking(ex)(t)`
+| cpp:test::run_blocking[]`(ex)(t)`
 |===
 
 What this looks like in practice:

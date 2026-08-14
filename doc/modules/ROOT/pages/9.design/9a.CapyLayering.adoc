@@ -88,19 +88,19 @@ multi_connection conn(ctx, config);
 
 This extends naturally to testing. Derive a mock connection that uses Capy's test stream with a fuse for error injection, and a mock timer for deterministic time control. The base class algorithm runs against the mock exactly as it would against a real connection. No conditional compilation, no test-only code paths in production logic, no `#ifdef TESTING`.
 
-A database library built this way can express protocol parsing with zero-copy buffer sinks for the hot path, implement connection logic against type-erased streams for maintainability, let users select TCP vs. SSL vs. Unix at the type level for linker efficiency, and test without linking OpenSSL or running a real server. The hot paths use concepts. The cold paths use virtual dispatch. The architectural boundaries use `task<>`. Every user finds the abstraction level they need.
+A database library built this way can express protocol parsing with zero-copy buffer sinks for the hot path, implement connection logic against type-erased streams for maintainability, let users select TCP vs. SSL vs. Unix at the type level for linker efficiency, and test without linking OpenSSL or running a real server. The hot paths use concepts. The cold paths use virtual dispatch. The architectural boundaries use cpp:task[task<>]. Every user finds the abstraction level they need.
 
 
 == Choosing the Right Layer
 
 The question that matters is: can a library author look at their problem and immediately see which layer to use? If the answer is yes, the design is working. If they have to think about it, something is wrong.
 
-**Protocol parsing:** use the `ReadStream` and `WriteStream` concepts as template parameters. Zero overhead. Call member functions whose awaitables do all the work, with no coroutine frame allocation. The compiler optimizes everything.
+**Protocol parsing:** use the cpp:ReadStream[] and cpp:WriteStream[] concepts as template parameters. Zero overhead. Call member functions whose awaitables do all the work, with no coroutine frame allocation. The compiler optimizes everything.
 
 **Connection management:** use concrete types like `tcp_socket`. These give you `connect()` and `shutdown()` - the operations that are transport-specific. But the concrete type is derived from `io_stream`, a class that models `capy::Stream`, so you can pass `io_stream&` to a non-template function for the business logic that sits on top of the connection.
 
-**Full transport abstraction across a library boundary:** use `any_stream`. Complete type erasure, but you lose connection management - there is no `connect()` on an `any_stream`. This means you have to carefully arrange your code so it genuinely requires a physical separation in the Lakos sense. The protocol logic and the connection logic live in separate components, and the type-erased boundary sits between them.
+**Full transport abstraction across a library boundary:** use cpp:any_stream[]. Complete type erasure, but you lose connection management - there is no `connect()` on an `any_stream`. This means you have to carefully arrange your code so it genuinely requires a physical separation in the Lakos sense. The protocol logic and the connection logic live in separate components, and the type-erased boundary sits between them.
 
-The layers compose. An algorithm written against a `ReadStream` concept can be called from inside a coroutine that is type-erased behind a `task<>`, which is dispatched through a virtual function on a base class that holds an `any_stream&`. Each layer handles its part. Nothing leaks through the boundaries unless you want it to.
+The layers compose. An algorithm written against a cpp:ReadStream[] concept can be called from inside a coroutine that is type-erased behind a cpp:task[task<>], which is dispatched through a virtual function on a base class that holds an cpp:any_stream[]`&`. Each layer handles its part. Nothing leaks through the boundaries unless you want it to.
 
 This is what it means when we say the user chooses. Capy provides the tools. The user decides where the boundaries go based on what they know about their performance requirements, their compilation budget, and their architecture. The library does not impose a single answer because there is not one.

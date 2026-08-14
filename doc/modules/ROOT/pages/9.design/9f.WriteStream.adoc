@@ -80,7 +80,7 @@ Every time `write_now` partially drains a buffer, the remainder is a small paylo
 
 === Code: `write_now` Without Top-Up
 
-This example reads from a `ReadStream` and writes to a cpp:WriteStream[] using `write_now`. Each chunk is drained to completion before the caller can read more from the source.
+This example reads from a cpp:ReadStream[] and writes to a cpp:WriteStream[] using `write_now`. Each chunk is drained to completion before the caller can read more from the source.
 
 [source,cpp]
 ----
@@ -130,8 +130,8 @@ The read-side counterpart is cpp:ReadStream[], which requires `read_some`. The s
 |===
 | Write Side | Read Side
 
-| `WriteStream::write_some`
-| `ReadStream::read_some`
+| cpp:WriteStream::write_some[write_some]
+| cpp:ReadStream::read_some[read_some]
 
 | `write_now` (composed)
 | cpp:read[] free function (composed)

@@ -107,7 +107,7 @@ Capy pulls the complexity of coroutine execution, buffer management, and context
 
 == Writing Against the Narrowest Interface
 
-A `ReadStream` concept captures the essential operation: anything you can `read_some` from. TCP sockets, TLS streams, file handles, in-memory buffers - one generic algorithm works with all of them. That algorithm belongs in Capy, not Corosio, because it depends only on the concept, not on any particular implementation.
+A cpp:ReadStream[] concept captures the essential operation: anything you can `read_some` from. TCP sockets, TLS streams, file handles, in-memory buffers - one generic algorithm works with all of them. That algorithm belongs in Capy, not Corosio, because it depends only on the concept, not on any particular implementation.
 
 Stepanov's principle applies here: algorithms should be abstracted away from particular implementations so that the minimum requirements the algorithm assumes are the only requirements the code uses. In practice, zero-overhead abstraction is an ideal rather than a guarantee - Chandler Carruth has argued persuasively that real compilers on real hardware rarely achieve it perfectly. But the principle of coding against minimal requirements remains sound, even when the abstraction has some cost.
 
