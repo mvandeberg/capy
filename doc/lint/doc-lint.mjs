@@ -12,8 +12,14 @@
 //        through and silently fell out of D2's scope (see below). Bite-test
 //        per style-guide F4: plant an invalid value, confirm A1 fails.
 //   A6 — quick-start is within the first 3 top-level nav.adoc entries
-//   B2 — no [source,cpp] block holds raw code (must start with
-//        include::example$... or carry role=pseudocode/role=external)
+//   B2 — no [source,<any-lang>] block, and no bare `----` listing, holds
+//        raw code (must start with include::example$... or carry
+//        role=pseudocode/role=external). A bare listing whose attribute
+//        line carries role=output/role=diagram is exempt outright — it is
+//        not code. Originally scoped to [source,cpp]/[source,c++] only,
+//        which left [source,cmake]/[source,c]/[source,bash] and bare
+//        `----` C++ invisible to the gate; widened once every such block
+//        in the corpus was classified (see git history for the audit).
 //   D2 — every page in a CONCEPT_DIRS chapter (or quick-start.adoc) has
 //        >=1 include::example$. D2's "concept page" is a pedagogical
 //        category, not a Diátaxis mode — deliberately independent of
@@ -76,19 +82,40 @@ for (const file of files) {
     findings.A1.push({ file: rel, message: `invalid :page-mode: value '${mode}' (must be one of ${[...VALID_MODES].join(', ')})` });
   }
 
+  // Walk every `----` delimited block (source or bare listing). `open` tracks
+  // whether we are between an opener and its closer so the closer is never
+  // mistaken for the next block's opener.
   const lines = text.split('\n');
+  let open = false;
   for (let i = 0; i < lines.length; i++) {
-    const m = lines[i].match(/^\[source\s*,\s*(cpp|c\+\+)\b[^\]]*\]/i);
-    if (!m) continue;
-    if (/role=(pseudocode|external)/.test(lines[i])) continue;
-    // Find the opening '----' and the first non-blank content line after it.
-    let j = i + 1;
-    while (j < lines.length && lines[j].trim() !== '----') j++;
-    let k = j + 1;
+    if (lines[i].trim() !== '----') continue;
+    if (open) { open = false; continue; }
+    open = true;
+
+    // The attribute line immediately above (skipping blank lines), if any.
+    let a = i - 1;
+    while (a >= 0 && lines[a].trim() === '') a--;
+    const attr = a >= 0 ? lines[a].trim() : '';
+    const isSource = /^\[source\s*,\s*[^,\]]+/i.test(attr);
+    const hasClearingRole = /role=(pseudocode|external)\b/.test(attr);
+    const hasNonCodeRole = /role=(output|diagram)\b/.test(attr);
+
+    // A [source,<lang>,role=pseudocode|external] block, or a bare listing
+    // explicitly marked as program output / an ASCII diagram: not a B2
+    // candidate at all.
+    if (isSource && hasClearingRole) continue;
+    if (!isSource && hasNonCodeRole) continue;
+
+    // Everything else — any [source,<lang>] block without a clearing role,
+    // and any bare `----` listing without a role=output/role=diagram marker
+    // — must open on a compiled include, or it is raw code pasted into the
+    // page.
+    let k = i + 1;
     while (k < lines.length && lines[k].trim() === '') k++;
     const first = (lines[k] || '').trim();
     if (!first.startsWith('include::example$')) {
-      findings.B2.push({ file: rel, line: i + 1, message: 'raw code, not include::example$/role=pseudocode/role=external' });
+      const line = attr !== '' ? a + 1 : i + 1;
+      findings.B2.push({ file: rel, line, message: 'raw code, not include::example$/role=pseudocode/role=external/role=output/role=diagram' });
     }
   }
 
