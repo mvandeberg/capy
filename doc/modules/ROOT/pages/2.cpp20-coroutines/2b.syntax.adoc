@@ -71,6 +71,7 @@ include::example$programs/2b_syntax_counter.cpp[tag=full]
 
 *Output:*
 
+[role=output]
 ----
 counter: 0
 main: resuming

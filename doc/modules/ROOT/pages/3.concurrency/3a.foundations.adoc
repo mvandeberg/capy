@@ -45,6 +45,7 @@ include::example$programs/3a_foundations_parallel.cpp[tag=full]
 
 Run this and you might see output like:
 
+[role=output]
 ----
 Alice: 1
 Bob: 1
@@ -56,6 +57,7 @@ Alice: 3
 
 Or perhaps:
 
+[role=output]
 ----
 AliceBob: : 1
 1

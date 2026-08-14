@@ -57,6 +57,7 @@ Consider relaying 100KB from a cpp:ReadStream[] to a TCP socket. The kernel's se
 
 ==== Approach A: `write_some` with Top-Up (3 syscalls)
 
+[role=diagram]
 ----
           buffer contents          syscall        kernel accepts
 Step 1:   [======== 64KB ========] write_some --> 40KB, read 40KB from source
@@ -67,6 +68,7 @@ Step 3:   [===== 44KB =====]       write_some --> 44KB
 
 ==== Approach B: `write_now` Without Top-Up (4 syscalls)
 
+[role=diagram]
 ----
           buffer contents          syscall        kernel accepts
 Step 1:   [======== 64KB ========] write_some --> 40KB  (write_now, read 64KB)

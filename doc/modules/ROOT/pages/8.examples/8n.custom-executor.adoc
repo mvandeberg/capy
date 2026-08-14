@@ -18,7 +18,7 @@ include::example$custom-executor/custom_executor.cpp[tag=full]
 
 == Build
 
-[source,cmake]
+[source,cmake,role=pseudocode]
 ----
 add_executable(custom_executor custom_executor.cpp)
 target_link_libraries(custom_executor PRIVATE Boost::capy)
@@ -76,6 +76,7 @@ cpp:run_async[] enqueues the initial coroutine. `loop.run()` drains the queue, r
 
 == Output
 
+[role=output]
 ----
 Running event loop on main thread...
 Starting 3 tasks with when_all...

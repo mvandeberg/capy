@@ -64,6 +64,7 @@ The task runs on one of the pool's worker threads.
 
 == Output
 
+[role=output]
 ----
 Hello from Capy!
 ----

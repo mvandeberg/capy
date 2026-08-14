@@ -145,6 +145,7 @@ io_result<size_t> await_resume() {
 
 Immediate completion path -- inner `await_ready` returns true:
 
+[role=diagram]
 ----
 Flat (any_read_stream, any_write_stream): 2 cache lines
   LINE 1  object        stream_, vt_, cached_awaitable_, ...

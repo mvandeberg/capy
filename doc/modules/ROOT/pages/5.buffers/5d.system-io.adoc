@@ -19,7 +19,7 @@ The library handles all conversions automatically.
 
 === POSIX: iovec
 
-[source,c]
+[source,c,role=external]
 ----
 struct iovec {
     void*  iov_base;  // Pointer to data
@@ -31,7 +31,7 @@ Used with `readv()`, `writev()`, `recvmsg()`, `sendmsg()`.
 
 === Windows: WSABUF
 
-[source,c]
+[source,c,role=external]
 ----
 typedef struct _WSABUF {
     ULONG  len;  // Length (note: first!)

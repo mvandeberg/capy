@@ -68,6 +68,7 @@ When you write a buffer sequence, the OS receives all buffers in a single system
 
 == Output
 
+[role=output]
 ----
 === Single Buffer Examples ===
 

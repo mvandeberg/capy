@@ -18,7 +18,7 @@ include::example$programs/8m_parallel_tasks_variadic.cpp[tag=full]
 
 == Build
 
-[source,cmake]
+[source,cmake,role=pseudocode]
 ----
 add_executable(parallel_tasks parallel_tasks.cpp)
 target_link_libraries(parallel_tasks PRIVATE Boost::capy)
@@ -59,6 +59,7 @@ The sum of `[0, N)` is `N*(N-1)/2`. The example verifies that the sum of partial
 
 == Output
 
+[role=output]
 ----
 Dispatching 4 parallel tasks...
   range [0, 2500) on thread 140234567890432

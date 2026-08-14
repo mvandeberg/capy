@@ -279,6 +279,7 @@ NOTE: For the TLS save/restore protocol required around `.resume()` calls (cpp:s
 
 https://wg21.link/P2300[P2300] defines a sender/receiver model where execution context flows _backward_ from receiver to sender via queries after `connect()`:
 
+[source,cpp,role=external]
 ----
 task<int> async_work();              // Frame allocated NOW
 auto sndr = async_work();

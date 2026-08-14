@@ -36,6 +36,7 @@ The reader is symmetric, using `async_read_some`. `run_example` drives both conc
 
 == Output
 
+[role=output]
 ----
 writer: wrote 128 bytes (total 128)
 reader: read 128 bytes (total 128)

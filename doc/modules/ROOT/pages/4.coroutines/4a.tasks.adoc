@@ -75,6 +75,7 @@ include::example$snippets/4a_tasks.cpp[tag=lazy]
 
 *Output:*
 
+[role=output]
 ----
 Task created
 Computing...

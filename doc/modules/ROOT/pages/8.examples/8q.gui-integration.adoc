@@ -19,7 +19,7 @@ include::example$gui-integration/gui_integration.cpp[tag=full]
 
 == Build
 
-[source,cmake]
+[source,cmake,role=pseudocode]
 ----
 add_executable(gui_integration gui_integration.cpp)
 target_link_libraries(gui_integration PRIVATE Boost::capy)
@@ -170,6 +170,7 @@ The stand-in exists to prove the contract, not to model a toolkit. Five pieces c
 
 == Output
 
+[role=output]
 ----
 [gui] label: Loading...
 [gui] label: Loaded 42 rows

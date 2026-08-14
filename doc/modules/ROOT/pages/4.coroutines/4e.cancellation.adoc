@@ -60,6 +60,7 @@ include::example$snippets/4e_cancellation.cpp[tag=observer_pattern,indent=0]
 
 *Output:*
 
+[role=output]
 ----
 Before signal
 Observer 1 notified

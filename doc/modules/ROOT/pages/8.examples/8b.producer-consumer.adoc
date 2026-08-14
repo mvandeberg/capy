@@ -85,6 +85,7 @@ The `std::latch` ensures `main()` waits for the tasks to complete before returni
 
 == Output
 
+[role=output]
 ----
 Producer: preparing data...
 Producer: data ready, signaling

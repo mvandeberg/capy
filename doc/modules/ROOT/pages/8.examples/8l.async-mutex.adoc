@@ -19,7 +19,7 @@ include::example$async-mutex/async_mutex.cpp[tag=full]
 
 == Build
 
-[source,cmake]
+[source,cmake,role=pseudocode]
 ----
 add_executable(async_mutex async_mutex.cpp)
 target_link_libraries(async_mutex PRIVATE Boost::capy)
@@ -55,6 +55,7 @@ The strand serialization example showed how a strand can protect shared state by
 
 == Output
 
+[role=output]
 ----
 Worker 0 waiting for lock
 Worker 0 acquired lock (sequence 0)

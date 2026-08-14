@@ -122,6 +122,7 @@ Cancellation doesn't have to throw. You can return partial results or a sentinel
 
 == Output
 
+[role=output]
 ----
 Demo: Fetch races a deadline
   Completed step 0

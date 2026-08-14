@@ -75,6 +75,7 @@ This systematically tests all error handling paths.
 
 == Output
 
+[role=output]
 ----
 Test: happy path
   PASSED

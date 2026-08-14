@@ -37,6 +37,7 @@ include::example$snippets/7e_buffer_inspection.cpp[tag=all_splits,indent=0]
 
 For a 5-byte input `"hello"`, `bufgrind` yields six positions:
 
+[role=output]
 ----
 pos=0: b1=""      b2="hello"
 pos=1: b1="h"     b2="ello"

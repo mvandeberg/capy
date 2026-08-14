@@ -258,6 +258,7 @@ The solution is to store a _copy_ of the allocator in the awaitable returned by 
 
 In `std::execution` (P2300), context flows _backward_ from receiver to sender via queries _after_ `connect()`:
 
+[source,cpp,role=external]
 ----
 task<int> async_work();              // Frame allocated NOW
 auto sndr = async_work();
@@ -267,6 +268,7 @@ start(op);
 
 In the _IoAwaitable_ model, context flows _forward_ from launcher to task:
 
+[role=diagram]
 ----
 1. Set TLS allocator     -->  2. Call task()
                                3. operator new (uses TLS)

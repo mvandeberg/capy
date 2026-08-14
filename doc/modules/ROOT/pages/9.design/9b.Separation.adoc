@@ -65,6 +65,7 @@ Lakos quantified the cost of getting levels wrong with Cumulative Component Depe
 
 CCD ranges from N for a perfectly horizontal (flat) design to N-squared for a vertical or cyclically dependent one. The metric is additive for independent subsystems. If two independent libraries each have CCD of 5, combining them without adding cross-dependencies gives CCD 10 - exactly the sum:
 
+[role=diagram]
 ----
 --------    ----------
    [3]         [3]

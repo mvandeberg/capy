@@ -70,6 +70,7 @@ include::example$programs/2c_machinery_trace.cpp[tag=full]
 
 *Output:*
 
+[role=output]
 ----
 calling coroutine
 promise constructed
@@ -144,6 +145,7 @@ include::example$programs/2c_machinery_generator.cpp[tag=full]
 
 *Output:*
 
+[role=output]
 ----
 1
 2
@@ -177,6 +179,7 @@ include::example$programs/2c_machinery_fibonacci.cpp[tag=full]
 
 *Output:*
 
+[role=output]
 ----
 0 1 1 2 3 5 8 13 21 34 
 ----

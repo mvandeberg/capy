@@ -55,6 +55,7 @@ I/O errors are reported via `ec` in the cpp:io_result[io_result]. Thrown excepti
 
 == Output
 
+[role=output]
 ----
 === Fetching dashboard for: alice ===
 Fetching user ID for: alice

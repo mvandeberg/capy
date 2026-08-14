@@ -175,6 +175,7 @@ include::example$programs/2d_advanced_exception.cpp[tag=full]
 
 *Output:*
 
+[role=output]
 ----
 Starting risky operation
 Operation failed: Something went wrong

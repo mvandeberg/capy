@@ -34,7 +34,7 @@ include::example$type-erased-echo/main.cpp[tag=full]
 
 == Build
 
-[source,cmake]
+[source,cmake,role=pseudocode]
 ----
 add_library(echo_lib echo.cpp)
 target_link_libraries(echo_lib PUBLIC capy)
@@ -85,6 +85,7 @@ This scales: in large projects, changes to implementation files don't cascade th
 
 == Output
 
+[role=output]
 ----
 Echo output: Hello, World!
 ----
