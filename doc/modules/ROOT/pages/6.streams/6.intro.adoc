@@ -18,10 +18,10 @@ A socket might give you 47 bytes when you asked for 1024. That is not an error--
 
 == What This Section Covers
 
-* xref:6.streams/6a.overview.adoc[Overview] -- What `ReadStream`, `WriteStream`, and
-  `Stream` model, and why partial I/O needs its own concepts.
-* xref:6.streams/6b.streams.adoc[Streams (Partial I/O)] -- The `ReadStream` and
-  `WriteStream` concepts, and the type-erased `any_stream` wrappers.
+* xref:6.streams/6a.overview.adoc[Overview] -- What cpp:ReadStream[], cpp:WriteStream[], and
+  cpp:Stream[] model, and why partial I/O needs its own concepts.
+* xref:6.streams/6b.streams.adoc[Streams (Partial I/O)] -- The cpp:ReadStream[] and
+  cpp:WriteStream[] concepts, and the type-erased `any_stream` wrappers.
 * xref:6.streams/6f.isolation.adoc[Physical Isolation] -- Type erasure as a compilation
   firewall for transport-independent, testable I/O code.
 

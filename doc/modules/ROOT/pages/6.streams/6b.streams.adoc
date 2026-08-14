@@ -5,7 +5,7 @@ This section explains the cpp:ReadStream[] and cpp:WriteStream[] concepts for pa
 
 == ReadStream
 
-A type satisfies `ReadStream` if it provides partial read operations via `read_some`:
+A type satisfies cpp:ReadStream[] if it provides partial read operations via `read_some`:
 
 [source,cpp]
 ----
@@ -38,14 +38,14 @@ include::example$snippets/6b_streams.cpp[tag=dump_stream]
 
 == WriteStream
 
-A type satisfies `WriteStream` if it provides partial write operations via `write_some`:
+A type satisfies cpp:WriteStream[] if it provides partial write operations via `write_some`:
 
 [source,cpp]
 ----
 include::example$snippets/6b_streams.cpp[tag=write_stream_concept]
 ----
 
-As with `ReadStream`, the cpp:const_buffer_archetype[] is only a representative: the real contract is that `write_some` accepts *any* cpp:ConstBufferSequence[], which a {cpp} concept cannot fully express.
+As with cpp:ReadStream[], the cpp:const_buffer_archetype[] is only a representative: the real contract is that `write_some` accepts *any* cpp:ConstBufferSequence[], which a {cpp} concept cannot fully express.
 
 === write_some Semantics
 
@@ -66,7 +66,7 @@ To write all data, loop until complete (or use the `write()` composed operation)
 
 === any_read_stream
 
-Wraps any `ReadStream` in a type-erased container:
+Wraps any cpp:ReadStream[] in a type-erased container:
 
 [source,cpp]
 ----
@@ -79,7 +79,7 @@ Each wrapper has two construction modes. Passing an object by value takes owners
 
 === any_write_stream
 
-Wraps any `WriteStream`:
+Wraps any cpp:WriteStream[]:
 
 [source,cpp]
 ----
@@ -90,7 +90,7 @@ include::example$snippets/6b_streams.cpp[tag=any_write_stream_ctors,indent=0]
 
 === any_stream
 
-Wraps bidirectional streams (both `ReadStream` and `WriteStream`):
+Wraps bidirectional streams (both cpp:ReadStream[] and cpp:WriteStream[]):
 
 [source,cpp]
 ----
