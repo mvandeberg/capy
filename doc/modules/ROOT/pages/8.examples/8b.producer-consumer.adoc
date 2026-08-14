@@ -34,7 +34,7 @@ target_link_libraries(producer_consumer PRIVATE Boost::capy)
 include::example$producer-consumer/producer_consumer.cpp[tag=strand,indent=0]
 ----
 
-A `strand` is an executor adaptor that serializes execution. All coroutines dispatched through a strand are guaranteed not to run concurrently, making it safe to access shared state without explicit locking. `async_event` is not thread-safe, so using a strand ensures safe access.
+A cpp:strand[] is an executor adaptor that serializes execution. All coroutines dispatched through a strand are guaranteed not to run concurrently, making it safe to access shared state without explicit locking. cpp:async_event[] is not thread-safe, so using a strand ensures safe access.
 
 === The Event
 
@@ -43,7 +43,7 @@ A `strand` is an executor adaptor that serializes execution. All coroutines disp
 include::example$producer-consumer/producer_consumer.cpp[tag=event,indent=0]
 ----
 
-`async_event` is a manual-reset signaling mechanism. One task can `set()` it; other tasks can `wait()` for it. When set, all current waiters resume, and the event stays set (later `wait()` calls return immediately) until `clear()` is called.
+cpp:async_event[] is a manual-reset signaling mechanism. One task can `set()` it; other tasks can `wait()` for it. When set, all current waiters resume, and the event stays set (later `wait()` calls return immediately) until `clear()` is called.
 
 === Producer
 
@@ -70,7 +70,7 @@ The consumer waits until the event is set. The `co_await data_ready.wait()` susp
 include::example$producer-consumer/producer_consumer.cpp[tag=run_both,indent=0]
 ----
 
-`when_all` runs both tasks concurrently within the same parent coroutine context, but the strand ensures they don't run at the same time on different threads. The producer signals `data_ready` when the value is set, and the consumer waits for the signal before reading.
+cpp:when_all[] runs both tasks concurrently within the same parent coroutine context, but the strand ensures they don't run at the same time on different threads. The producer signals `data_ready` when the value is set, and the consumer waits for the signal before reading.
 
 === Completion Synchronization
 

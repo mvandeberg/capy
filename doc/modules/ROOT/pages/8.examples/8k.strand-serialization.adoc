@@ -33,7 +33,7 @@ target_link_libraries(strand_serialization PRIVATE Boost::capy)
 include::example$strand-serialization/strand_serialization.cpp[tag=strand,indent=0]
 ----
 
-A `strand` wraps an executor and guarantees that handlers dispatched through it never run concurrently. This replaces the need for a mutex when protecting shared state accessed by coroutines.
+A cpp:strand[] wraps an executor and guarantees that handlers dispatched through it never run concurrently. This replaces the need for a mutex when protecting shared state accessed by coroutines.
 
 === Lock-Free Shared Access
 

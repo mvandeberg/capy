@@ -65,7 +65,7 @@ callback from another library.
 === Racing a Fetch Against a Deadline
 
 `demo_timeout` builds two cpp:io_task[] children, each just a waker wait, and
-races them with `when_any`:
+races them with cpp:when_any[]:
 
 [source,cpp]
 ----
@@ -76,11 +76,11 @@ include::example$timeout-cancellation/timeout_cancellation.cpp[tag=race,indent=0
 `fetch_ch.fetch_ready`. `deadline` completes when a second user thread,
 playing the clock, sleeps for the allotted duration and wakes
 `deadline_waker`. Whichever wakes first wins.
-`when_any` requests stop on the loser, which is exactly how `await_fetch`
+cpp:when_any[] requests stop on the loser, which is exactly how `await_fetch`
 learns to set `cancelled` and let the fetch worker thread bail out early.
 
 cpp:async_waker::wait[wait]`()` must only be awaited on a single-threaded
-executor, so both children run on `thread_pool(1)`. The slow, blocking
+executor, so both children run on cpp:thread_pool[]`(1)`. The slow, blocking
 work itself still happens off that thread, on the two `std::thread`
 objects the demo owns directly.
 

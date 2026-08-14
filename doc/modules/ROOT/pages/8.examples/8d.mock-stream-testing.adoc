@@ -91,7 +91,7 @@ All tests passed!
 
 1. Add a test for EOF handling (what if input doesn't end with newline?)
 2. Test with different max_read_size values
-3. Add a test for write errors using `test::write_stream`
+3. Add a test for write errors using cpp:test::write_stream[test::write_stream]
 
 == Next Steps
 

@@ -33,13 +33,13 @@ target_link_libraries(custom_executor PRIVATE Boost::capy)
 include::example$custom-executor/custom_executor.cpp[tag=inherit]
 ----
 
-Custom execution contexts inherit from `execution_context` and pass `this` to the base constructor. The destructor must call `shutdown()` then `destroy()` to clean up coroutine state.
+Custom execution contexts inherit from cpp:execution_context[] and pass `this` to the base constructor. The destructor must call `shutdown()` then `destroy()` to clean up coroutine state.
 
 === The Executor Concept
 
 The nested `executor_type` must provide:
 
-* cpp:Executor::context[context()] -- returns a reference to the owning `execution_context`
+* cpp:Executor::context[context()] -- returns a reference to the owning cpp:execution_context[]
 * cpp:Executor::on_work_started[on_work_started()] / cpp:Executor::on_work_finished[on_work_finished()] -- work-tracking hooks
 * `dispatch(c)` -- resume immediately if already on this context, otherwise enqueue. Takes a cpp:continuation[]`&` and returns `std::coroutine_handle<>`.
 * `post(c)` -- always enqueue for later execution. Takes a `continuation&`.
