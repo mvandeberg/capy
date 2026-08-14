@@ -99,10 +99,8 @@ namespace capy {
     the virtual function receives a simple span. Plain CTAD
     (`buffer_param bp(buffers)`) deduces `BS`'s own buffer type, so a
     mutable sequence yields `span<mutable_buffer>`. That does not match
-    `write_impl`'s `span<const_buffer>` parameter, and a `MutableBufferSequence`
-    does not itself satisfy `ConstBufferSequence` (see @ref MutableBufferSequence).
-    Use @ref const_buffer_param to force `const_buffer` storage regardless of
-    what `BS` is:
+    `write_impl`'s `span<const_buffer>` parameter. Use @ref const_buffer_param
+    to force `const_buffer` storage regardless of what `BS` is:
 
     @code
     class base

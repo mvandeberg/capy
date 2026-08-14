@@ -334,6 +334,43 @@ try {
       '',
     ].join('\n'));
 
+    // G1 review-round-2 fix: widening the attribute walk to ANY consecutive
+    // `[...]`-shaped line (the first cut of the fix above) created a false
+    // positive. A block anchor (`[[id]]`), an admonition style (`[NOTE]`),
+    // or a quote attribution (`[quote,...]`) can legitimately sit directly
+    // above a block with no blank line between; merging one of those ahead
+    // of a real `[source,cpp,role=pseudocode]` line made the joined string
+    // no longer start with `[source`, so `isSource` went false and a
+    // legitimately-exempt pseudocode block was wrongly flagged as B2. The
+    // walk must stop at the first line that is not itself a `[source,...]`
+    // or `[role=...]` continuation. Confirmed to reproduce against the
+    // review-round-1 fix (any `[...]`-shaped line merged) before landing
+    // the ATTR_CONTINUATION restriction above.
+    write('anchor-above-pseudocode.adoc', [
+      ':page-mode: how-to',
+      '',
+      '= Anchor Above Pseudocode',
+      '',
+      '[[my-anchor]]',
+      '[source,cmake,role=pseudocode]',
+      '----',
+      'add_executable(x x.cpp)',
+      '----',
+      '',
+      '[NOTE]',
+      '[source,cpp,role=pseudocode]',
+      '----',
+      'int y = 2;',
+      '----',
+      '',
+      '[quote,Someone]',
+      '[source,cpp,role=external]',
+      '----',
+      'task<int> async_work();',
+      '----',
+      '',
+    ].join('\n'));
+
     const d = spawnSync('node', [path.join(SCRIPT_DIR, 'doc-lint.mjs'), DOCLINT_TMP],
       { encoding: 'utf8', cwd: DOC_DIR, maxBuffer: 16 * 1024 * 1024 });
     check('doc-lint.mjs exits 0 against the B2 fixture tree', d.status === 0,
@@ -394,6 +431,17 @@ try {
       check('split-attribute [source,cpp] block is caught by B2, not diverted into SHAPE',
         splitAttrShape.length === 0,
         `split-attr.adoc should have 0 SHAPE findings (B2 should catch it directly), got: ${JSON.stringify(splitAttrShape)}`);
+
+      // G1 review-round-2: a block anchor, an admonition style, or a quote
+      // attribution sitting directly above a [source,...,role=pseudocode/
+      // external] block (no blank line between) must NOT be merged into
+      // that block's attribute string -- only [source,...]/[role=...]
+      // continuation lines may merge. All three blocks here are otherwise
+      // properly exempt and must produce zero B2 findings.
+      const anchorHits = dOut.findings.B2.filter((f) => f.file === 'anchor-above-pseudocode.adoc');
+      check('a [[anchor]]/[NOTE]/[quote,...] line above an exempt [source,...] block does not defeat its exemption',
+        anchorHits.length === 0,
+        `anchor-above-pseudocode.adoc should have 0 B2 findings, got: ${JSON.stringify(anchorHits)}`);
     }
   } finally {
     fs.rmSync(DOCLINT_TMP, { recursive: true, force: true });
@@ -407,6 +455,6 @@ if (failures.length) {
 }
 console.log(JSON.stringify({
   ok: true,
-  assertions: 30,
+  assertions: 31,
   fixtureSummary: out.summary,
 }, null, 2));

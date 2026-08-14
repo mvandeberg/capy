@@ -26,13 +26,18 @@
 //        (AsciiDoc's own rule — `-----`/`....` are not `----`, and this is
 //        also how AsciiDoc nests a `----` inside a `-----`); a fixed
 //        4-character match let a 5-dash listing hide code from the gate.
-//        The attribute list read above the delimiter walks every consecutive
-//        `[...]` line, not just the nearest one — AsciiDoc permits a block's
-//        attribute list to be split across adjacent lines (e.g. `[source,cpp]`
-//        then `[role=output]` on the next line) and Asciidoctor merges them;
-//        reading only the nearest line missed `[source,...]` set on an
-//        earlier line and let a highlighted C++ block through as an
-//        exempt bare listing.
+//        The attribute list read above the delimiter walks consecutive
+//        `[source,...]`/`[role=...]` lines, not just the nearest one —
+//        AsciiDoc permits a block's attribute list to be split across
+//        adjacent lines (e.g. `[source,cpp]` then `[role=output]` on the
+//        next line) and Asciidoctor merges them; reading only the nearest
+//        line missed `[source,...]` set on an earlier line and let a
+//        highlighted C++ block through as an exempt bare listing. The walk
+//        deliberately stops at anything else `[...]`-shaped (a block anchor
+//        `[[id]]`, an admonition style `[NOTE]`, a quote attribution
+//        `[quote,...]`) — a first cut that merged any `[...]`-shaped line
+//        made one of those, sitting directly above an exempt
+//        `[source,...,role=pseudocode]` block, defeat that exemption.
 //   SHAPE — advisory only, NEVER gated (not in the summary the CI gate
 //        spec reads by rule prefix). A role=output/role=figure block is a
 //        permanent B2 exemption, so a block wrongly marked non-code would
@@ -139,11 +144,21 @@ function scanBlocks(lines, ch) {
     //   ----
     // which used to read attr as just `[role=output]`, miss isSource, and
     // fall into the bare-listing branch below instead of B2. Walk upward
-    // collecting every consecutive `[...]` line, not just the nearest one.
+    // collecting consecutive lines, but ONLY ones that look like a
+    // continuation of THIS block's attribute list -- `[source,...]` or
+    // `[role=...]`, the only two shapes isSource/hasClearingRole/
+    // hasNonCodeRole below ever inspect. A bare `/^\[.*\]$/` walk is too
+    // wide: a block anchor (`[[id]]`), an admonition style (`[NOTE]`), or a
+    // quote attribution (`[quote,...]`) can legitimately sit directly above
+    // a block with no blank line between, and merging one of those ahead of
+    // a real `[source,cpp,role=pseudocode]` line made the joined string no
+    // longer start with `[source`, wrongly flagging an exempt block as B2.
+    // Stopping the walk at the first non-source/non-role line excludes them.
+    const ATTR_CONTINUATION = /^\[(?:source\b|role=)/i;
     let a = openerLine - 1;
     while (a >= 0 && lines[a].trim() === '') a--;
     const attrLineIdxs = [];
-    while (a >= 0 && /^\[.*\]$/.test(lines[a].trim())) {
+    while (a >= 0 && ATTR_CONTINUATION.test(lines[a].trim())) {
       attrLineIdxs.unshift(a);
       a--;
     }

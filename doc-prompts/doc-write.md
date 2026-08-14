@@ -45,7 +45,7 @@ compiled source authored in Step 4, never hand-typed. Every signature mentioned 
 Runs in main context. Deterministic.
 
 **Input:** `{ target, mode, audience, target_file }` — the symbol/feature/topic, the intended
-Diátaxis mode (`tutorial`|`how_to`|`reference`|`explanation`), the reader assumed, and an
+Diátaxis mode (`tutorial`|`how-to`|`reference`|`explanation`), the reader assumed, and an
 optional `target_file`.
 
 **Actions:** resolve `target` to its set of public symbols; determine the nav location and
@@ -84,7 +84,7 @@ One sub-agent. Produces a mode-appropriate outline; each section maps to `facts[
 **Return:** `Outline`
 
 - `sections[]`: each `{ heading, purpose_one_sentence, fact_ids[], needs_runnable_example }`
-- Mode contract: `tutorial`/`how_to` are goal-oriented (open with the use case, not the
+- Mode contract: `tutorial`/`how-to` are goal-oriented (open with the use case, not the
   syntax; style guide D1) and every concept section sets `needs_runnable_example=true`;
   `reference` is complete and dry; `explanation` is argued and may carry rationale. **A
   docstring write (`target_file` set) has exactly one section — the declaration itself — and
