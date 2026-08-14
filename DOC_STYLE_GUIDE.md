@@ -59,7 +59,22 @@ The Antora pipeline provides two mechanisms; use them instead of hand-authoring:
   regions, not typed into the page.
 - **B3. Intentionally-non-compiling blocks are tagged**, not silently pasted: use a
   pseudocode role for sketches/rejected designs and an external role for other-library
-  comparisons, so the compile gate knows to skip them.
+  comparisons, so the compile gate knows to skip them. These two apply to a `[source,*]`
+  block only — role=pseudocode/external on a bare listing does nothing (B2 doesn't look for
+  them there).
+  A bare listing (`----` with no `[source,*]` attribute, or `....`) that holds literal
+  program output or a hand-drawn figure — never code — is tagged `[role=output]` or
+  `[role=figure]` respectively, so B2 does not mistake it for an unmarked code block. This is
+  the one constraint that makes the design safe, and it is load-bearing: **role=output/
+  role=figure exempt only a bare listing, never a `[source,*]` block** — a block that
+  actually compiles is tagged `[source,*]` and cleared through pseudocode/external, full
+  stop, however output-shaped its content looks. Confusing the two would let `role=output`
+  launder real code past B2. `doc-lint.mjs`'s SHAPE check runs a content heuristic over every
+  role=output/role=figure block and reports (non-gated, advisory) any whose content looks
+  like code, so a wrong tag is not silently permanent — see the check's header comment.
+  Note `role=` on a bare listing emits a real CSS class (`class="listingblock output"` /
+  `...figure`) with no stylesheet rule behind it today; a future UI bundle that styles
+  `.output`/`.figure` will change how every such block renders, project-wide, in one step.
 - **B4. A brief describes behavior, not identity — classes included.** A reference brief
   says what the entity *does*, not what it *is*, and never restates its declaration or claims
   parameters it does not take. This binds class briefs as much as function briefs. *(Reversal:

@@ -109,6 +109,7 @@ Cobalt defines stream abstractions (`write_stream`, `read_stream`, `stream`) as 
 
 The wrappers compose. cpp:any_stream[] satisfies both cpp:any_read_stream[] and cpp:any_write_stream[] by inheriting from each, giving callers a single wrapper for bidirectional streams while keeping `read_some` and `write_some` on independent flat vtables. You pick the abstraction level you need.
 
+[role=figure]
 ....
   Concept              Type-Erased Wrapper
   --------------------+------------------------

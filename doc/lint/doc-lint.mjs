@@ -12,14 +12,29 @@
 //        through and silently fell out of D2's scope (see below). Bite-test
 //        per style-guide F4: plant an invalid value, confirm A1 fails.
 //   A6 — quick-start is within the first 3 top-level nav.adoc entries
-//   B2 — no [source,<any-lang>] block, and no bare `----` listing, holds
-//        raw code (must start with include::example$... or carry
-//        role=pseudocode/role=external). A bare listing whose attribute
-//        line carries role=output/role=diagram is exempt outright — it is
-//        not code. Originally scoped to [source,cpp]/[source,c++] only,
-//        which left [source,cmake]/[source,c]/[source,bash] and bare
-//        `----` C++ invisible to the gate; widened once every such block
-//        in the corpus was classified (see git history for the audit).
+//   B2 — no [source,<any-lang>] block, and no bare listing (`----` or
+//        `....`), holds raw code (must start with include::example$... or
+//        carry role=pseudocode/role=external — DOC_STYLE_GUIDE.md B3). A
+//        bare listing whose attribute line carries role=output/role=figure
+//        is exempt from B2 outright — it is not code, but see SHAPE below,
+//        which still looks at it. Originally scoped to [source,cpp]/
+//        [source,c++] only, which left [source,cmake]/[source,c]/
+//        [source,bash] and bare listings holding real C++ invisible to the
+//        gate; widened once every such block in the corpus was classified
+//        (see git history for the audit). Delimiters are matched 4-or-more
+//        repeats of the character, closer length must equal opener length
+//        (AsciiDoc's own rule — `-----`/`....` are not `----`, and this is
+//        also how AsciiDoc nests a `----` inside a `-----`); a fixed
+//        4-character match let a 5-dash listing hide code from the gate.
+//   SHAPE — advisory only, NEVER gated (not in the summary the CI gate
+//        spec reads by rule prefix). A role=output/role=figure block is a
+//        permanent B2 exemption, so a block wrongly marked non-code would
+//        be permanently invisible; SHAPE runs a content heuristic
+//        (`#include`, `co_await`, `template<`, a brace-opened struct/class,
+//        a `;`-terminated line, `Name::member(`) over exactly the blocks B2
+//        just exempted, and flags ones that look like code. The exemption
+//        stops being permanent invisibility: the gate still looks, it just
+//        doesn't block.
 //   D2 — every page in a CONCEPT_DIRS chapter (or quick-start.adoc) has
 //        >=1 include::example$. D2's "concept page" is a pedagogical
 //        category, not a Diátaxis mode — deliberately independent of
@@ -72,7 +87,97 @@ function isConceptOrTutorial(relPath) {
   return TUTORIAL_FILES.has(relPath) || CONCEPT_DIRS.includes(top);
 }
 
-const findings = { A1: [], A6: [], B2: [], D2: [] };
+// SHAPE's content heuristic (see the header comment). Deliberately narrow —
+// this only needs to catch a block that is CLEARLY code, not judge style.
+const CODE_SHAPE_PATTERNS = [
+  /#include\b/,
+  /\bco_await\b/,
+  /\btemplate\s*</,
+  /\b(?:struct|class)\s+\w+\s*\{/,
+  /;\s*$/,
+  /\w+::\w+\s*\(/,
+];
+function looksLikeCode(bodyLines) {
+  return bodyLines.some((l) => CODE_SHAPE_PATTERNS.some((re) => re.test(l)));
+}
+
+// Walk every block delimited by 4-or-more repeats of `ch` (`-` for
+// listing/source blocks, `.` for literal blocks). Returns B2 and SHAPE
+// findings (kind-tagged; the caller routes them to the right bucket).
+function scanBlocks(lines, ch) {
+  const delim = new RegExp(`^\\${ch}{4,}$`);
+  const out = [];
+  let openLen = null;
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    if (!delim.test(trimmed)) continue;
+    if (openLen !== null) {
+      // The closer must repeat `ch` exactly as many times as the opener did;
+      // a mismatched length is content (or a nested delimiter of a
+      // different length) and does not close this block.
+      if (trimmed.length === openLen) openLen = null;
+      continue;
+    }
+    openLen = trimmed.length;
+    const openerLine = i;
+
+    // The attribute line immediately above (skipping blank lines), if any.
+    // Only a real `[...]` block attribute list counts — prose or a heading
+    // sitting directly above a bare listing is not an attribute line, and
+    // must not be mistaken for one (it can't carry role=, and reporting a
+    // finding against it would point at the wrong line).
+    let a = openerLine - 1;
+    while (a >= 0 && lines[a].trim() === '') a--;
+    const prevLine = a >= 0 ? lines[a].trim() : '';
+    const attr = /^\[.*\]$/.test(prevLine) ? prevLine : '';
+    const isSource = /^\[source\s*,\s*[^,\]]+/i.test(attr);
+    const hasClearingRole = /role=(pseudocode|external)\b/.test(attr);
+    const hasNonCodeRole = /role=(output|figure)\b/.test(attr);
+
+    // A [source,<lang>,role=pseudocode|external] block: not a B2 candidate.
+    // NB this is deliberately isSource-gated — role=output/role=figure must
+    // NOT clear a [source,*] block (that would make role=output a blanket
+    // exemption for real code); only pseudocode/external do that, and only
+    // on a [source,*] block.
+    if (isSource && hasClearingRole) continue;
+
+    if (!isSource && hasNonCodeRole) {
+      // Bare listing explicitly marked as program output / a figure: not a
+      // B2 candidate, but SHAPE still looks at its content (advisory).
+      const body = [];
+      for (let m = openerLine + 1; m < lines.length; m++) {
+        const t = lines[m].trim();
+        if (delim.test(t) && t.length === openLen) break;
+        body.push(lines[m]);
+      }
+      if (looksLikeCode(body)) {
+        out.push({
+          kind: 'SHAPE',
+          line: openerLine + 1,
+          message: `role=output/role=figure block's content looks like code, not literal output/a figure (advisory, not gated)`,
+        });
+      }
+      continue;
+    }
+
+    // Everything else — any [source,<lang>] block without a clearing role,
+    // and any bare listing without a role=output/role=figure marker — must
+    // open on a compiled include, or it is raw code pasted into the page.
+    let k = openerLine + 1;
+    while (k < lines.length && lines[k].trim() === '') k++;
+    const first = (lines[k] || '').trim();
+    if (!first.startsWith('include::example$')) {
+      const line = attr !== '' ? a + 1 : openerLine + 1;
+      const message = isSource
+        ? 'raw code, not include::example$/role=pseudocode/role=external'
+        : 'raw code in a bare listing, not include::example$/role=output/role=figure — this block must not contain code';
+      out.push({ kind: 'B2', line, message });
+    }
+  }
+  return out;
+}
+
+const findings = { A1: [], A6: [], B2: [], SHAPE: [], D2: [] };
 const files = walk(PAGES_DIR);
 
 for (const file of files) {
@@ -86,46 +191,11 @@ for (const file of files) {
     findings.A1.push({ file: rel, message: `invalid :page-mode: value '${mode}' (must be one of ${[...VALID_MODES].join(', ')})` });
   }
 
-  // Walk every `----` delimited block (source or bare listing). `open` tracks
-  // whether we are between an opener and its closer so the closer is never
-  // mistaken for the next block's opener.
+  // Walk every listing (`----`) and literal (`....`) delimited block —
+  // source or bare — for B2 and its SHAPE advisory sidecar.
   const lines = text.split('\n');
-  let open = false;
-  for (let i = 0; i < lines.length; i++) {
-    if (lines[i].trim() !== '----') continue;
-    if (open) { open = false; continue; }
-    open = true;
-
-    // The attribute line immediately above (skipping blank lines), if any.
-    // Only a real `[...]` block attribute list counts — prose or a heading
-    // sitting directly above a bare `----` is not an attribute line, and
-    // must not be mistaken for one (it can't carry role=, and reporting a
-    // finding against it would point at the wrong line).
-    let a = i - 1;
-    while (a >= 0 && lines[a].trim() === '') a--;
-    const prevLine = a >= 0 ? lines[a].trim() : '';
-    const attr = /^\[.*\]$/.test(prevLine) ? prevLine : '';
-    const isSource = /^\[source\s*,\s*[^,\]]+/i.test(attr);
-    const hasClearingRole = /role=(pseudocode|external)\b/.test(attr);
-    const hasNonCodeRole = /role=(output|diagram)\b/.test(attr);
-
-    // A [source,<lang>,role=pseudocode|external] block, or a bare listing
-    // explicitly marked as program output / an ASCII diagram: not a B2
-    // candidate at all.
-    if (isSource && hasClearingRole) continue;
-    if (!isSource && hasNonCodeRole) continue;
-
-    // Everything else — any [source,<lang>] block without a clearing role,
-    // and any bare `----` listing without a role=output/role=diagram marker
-    // — must open on a compiled include, or it is raw code pasted into the
-    // page.
-    let k = i + 1;
-    while (k < lines.length && lines[k].trim() === '') k++;
-    const first = (lines[k] || '').trim();
-    if (!first.startsWith('include::example$')) {
-      const line = attr !== '' ? a + 1 : i + 1;
-      findings.B2.push({ file: rel, line, message: 'raw code, not include::example$/role=pseudocode/role=external/role=output/role=diagram' });
-    }
+  for (const b of [...scanBlocks(lines, '-'), ...scanBlocks(lines, '.')]) {
+    findings[b.kind].push({ file: rel, line: b.line, message: b.message });
   }
 
   if (isConceptOrTutorial(rel) && !text.includes('include::example$')) {

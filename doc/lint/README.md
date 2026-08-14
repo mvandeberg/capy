@@ -18,7 +18,7 @@ site build. Node built-ins only, no dependencies of their own.
 | `extract-docstrings.mjs` | Extracts header docstrings into `.docstrings/*.adoc` so Vale can lint them. |
 | `sentence-length.mjs` | **The authority for C2** (no sentence over 25 words), over both corpora. JSON on stdout. |
 | ↳ | Emits `C2` (hard slice), `advisory-C2` (design essays) and `BACKTICK` (unbalanced code span). |
-| `selftest.mjs` | Asserts `sentence-length.mjs` still detects what it claims, against `fixtures/`. Exit 1 on regression. |
+| `selftest.mjs` | Asserts `sentence-length.mjs` and `doc-lint.mjs`'s B2 check still detect what they claim. Exit 1 on regression. |
 | `mrdocs-warnings.mjs` | Runs the pinned MrDocs 0.8.0 directly and parses its reference-surface warnings. |
 | `run-a11y.mjs` | pa11y-ci contrast/a11y scan over the built site (`doc/build/site`). |
 | `baseline.mjs` | Runs every check and snapshots their findings to `baseline.json`. |
@@ -48,6 +48,13 @@ Fingerprints are built by `baseline.mjs` and their shape is load-bearing:
 text above a finding does not rename it. It sits mid-key on purpose: the gate spec
 `vale_adoc:Capy\.PartHeadings$` is anchored on the tail, and anything appended after the check
 name would make that gate match nothing while still exiting 0.
+
+`doc-lint.mjs` also emits a `SHAPE` rule alongside `A1`/`A6`/`B2`/`D2` — deliberately outside the
+gate spec's `^(A1|A6|B2|D2):` alternation, the same way `advisory-C2` sits outside
+`sentence_length`'s `^C2:`. SHAPE is a content-shape heuristic over every `role=output`/
+`role=figure` bare listing (DOC_STYLE_GUIDE.md B3): those roles are a permanent B2 exemption, so a
+block wrongly tagged non-code would otherwise be permanently invisible. A SHAPE finding never
+blocks a merge — it is a signal for a human to re-check the tag, not a defect in itself.
 
 **A Vale gate spec must never carry a leading `^`.** The regex is tested against the whole
 fingerprint, and for the Vale checks the check name is at the **tail**, so `^Capy\.NoFluff$`
@@ -79,10 +86,10 @@ findings are keyed `advisory-C2` (`DOC_STYLE_GUIDE.md` Part C2 makes the limit s
 that key deliberately does not begin with `C2` so a mis-written `^C2` cannot reach them. Verified:
 the gated slice contains 0 `advisory-C2` fingerprints.
 
-### Run `selftest.mjs` after touching `sentence-length.mjs`
+### Run `selftest.mjs` after touching `sentence-length.mjs` or `doc-lint.mjs`
 
 ```
-node lint/selftest.mjs      # exit 0 = 17 assertions hold; exit 1 names what broke
+node lint/selftest.mjs      # exit 0 = 27 assertions hold; exit 1 names what broke
 ```
 
 It exercises the properties whose failure is **silent**, because nothing in the real corpus
@@ -99,6 +106,16 @@ same class of silent failure: `///` runs went unextracted until 2026-08, so 86 p
 were outside every gate, and losing that branch again would just make the corpus smaller and every
 count lower. The expectation is derived from the header tree rather than written down — the headers
 whose *only* doc comments are `///` runs must each produce an output file — so it cannot go stale.
+
+It also covers `doc-lint.mjs`'s B2 check, against a throwaway fixture tree built at run time (not
+`lint/fixtures/`, which only `sentence-length.mjs` reads): every language token B2 must reach (not
+just `cpp`/`c++`), a bare `----`/`....` listing holding real code with no role marker, a 5-dash
+(`-----`) listing (closer length must match opener length, not just be `>=4`), and — load-bearing —
+that `role=output`/`role=figure` clears only a *bare* listing and never a `[source,*]` block. A
+mutation that ORs the clearing-role and non-code-role checks together, ignoring which kind of block
+it is, makes `role=output` a blanket exemption for real C++; this file catches it. It also asserts
+the SHAPE advisory sidecar (DOC_STYLE_GUIDE.md B3) fires on a role=output/role=figure block whose
+content looks like code and stays silent on a genuine one.
 
 ### `sentence_length` has no baseline entry — so the C2 gate is RED, on purpose
 

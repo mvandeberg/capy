@@ -22,6 +22,7 @@ Each section below examines one design choice and its technical consequences.
 
 Capy formally defines what makes a task type conforming. Two {cpp}20 concepts form a refinement hierarchy:
 
+[role=figure]
 ....
 IoAwaitable
     |

@@ -157,13 +157,27 @@ try {
 // 9. doc-lint.mjs's B2 check ("no code block holds raw code") must reach
 //    every [source,<lang>] block, not just [source,cpp]/[source,c++] — that
 //    was the whole gap a prior widening closed — and must also reach bare
-//    `----` listings, while leaving role=pseudocode/external/output/diagram
-//    and include::example$ blocks alone. There was previously no self-test
-//    coverage for doc-lint.mjs at all, so a regex narrowed back to one
-//    language, or a bare-listing branch that stopped firing, would pass
-//    every corpus-level check silently. Exercised against a throwaway
+//    `----`/`....` listings, while leaving role=pseudocode/external/
+//    output/figure and include::example$ blocks alone. There was previously
+//    no self-test coverage for doc-lint.mjs at all, so a regex narrowed back
+//    to one language, or a bare-listing branch that stopped firing, would
+//    pass every corpus-level check silently. Exercised against a throwaway
 //    fixture tree (not lint/fixtures/, which only sentence-length.mjs reads)
 //    so a real corpus edit can't perturb these counts.
+//
+//    flagged.adoc's `[source,cmake]` case is a weaker property than its name
+//    suggests: narrowing isSource back to cpp/c++-only does NOT clear that
+//    finding, because a de-recognized [source,cmake] block still falls into
+//    the bare-listing branch and gets flagged there instead (same result,
+//    different code path). The real proof that isSource covers every
+//    language lives on the CLEARING side, in clear.adoc: a
+//    [source,cmake,role=pseudocode] block is invisible to B2 only if
+//    isSource recognizes cmake — if it doesn't, that block falls into the
+//    bare-listing branch too, where role=pseudocode is NOT a recognized
+//    non-code role, and it lights up clear.adoc instead. That is where an
+//    isSource regression actually surfaces; flagged.adoc's cmake case is
+//    kept only because catching the "still gets flagged, for the wrong
+//    reason" case is itself worth asserting.
 {
   const DOCLINT_TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'capy-selftest-doclint-'));
   try {
@@ -172,10 +186,15 @@ try {
       fs.mkdirSync(path.dirname(fp), { recursive: true });
       fs.writeFileSync(fp, body);
     };
-    // One [source,cmake] block with no clearing role (the original escape:
-    // the old regex only matched cpp/c++) and one bare `----` block with no
-    // role=output/role=diagram marker and real code in it (the other
-    // escape: bare listings were invisible to any [source,...] regex).
+    // One [source,cmake] block with no clearing role (see the comment
+    // above — flagged via isSource OR the bare-listing fallback, either
+    // way); one bare `----` block with no role=output/role=figure marker
+    // and real code in it (bare listings were invisible to any
+    // [source,...] regex before B2 was widened); and one [source,cpp,
+    // role=output] block — role=output/role=figure must clear ONLY a bare
+    // listing, never a [source,*] block. A mutation that ORs hasClearingRole
+    // and hasNonCodeRole together (ignoring isSource) makes role=output a
+    // blanket exemption for real C++ and this block stops being flagged.
     write('flagged.adoc', [
       ':page-mode: how-to',
       '',
@@ -188,6 +207,11 @@ try {
       '',
       '----',
       'int x = 1;',
+      '----',
+      '',
+      '[source,cpp,role=output]',
+      '----',
+      'int y = 2;',
       '----',
       '',
     ].join('\n'));
@@ -208,7 +232,7 @@ try {
       'build succeeded',
       '----',
       '',
-      '[role=diagram]',
+      '[role=figure]',
       '----',
       '[A] --> [B]',
       '----',
@@ -217,6 +241,43 @@ try {
       '----',
       'include::example$foo.cpp[tag=bar]',
       '----',
+      '',
+    ].join('\n'));
+    // SHAPE: a role=output block whose content looks like code is a
+    // permanent B2 blind spot by design (that is what role=output is FOR),
+    // so SHAPE must still flag it — advisory, not gated. A genuine output
+    // block (no code-shaped line) must not trip SHAPE at all.
+    write('shape.adoc', [
+      ':page-mode: how-to',
+      '',
+      '= Shape',
+      '',
+      '[role=output]',
+      '----',
+      'int z = 3;',
+      '----',
+      '',
+      '[role=output]',
+      '----',
+      'Hello from Capy!',
+      '----',
+      '',
+    ].join('\n'));
+    // I1/I2: a 5-dash listing must not hide code from B2 (closer length
+    // must match opener length, not just be >=4), and a `....` literal
+    // block is a second bare-listing syntax B2 must also reach.
+    write('delimiters.adoc', [
+      ':page-mode: how-to',
+      '',
+      '= Delimiters',
+      '',
+      '-----',
+      'int five_dash = 1;',
+      '-----',
+      '',
+      '....',
+      'int four_dot = 1;',
+      '....',
       '',
     ].join('\n'));
 
@@ -229,14 +290,36 @@ try {
     check('doc-lint.mjs prints parseable JSON', dOut !== null, `stdout: ${d.stdout.slice(0, 200)}`);
     if (dOut) {
       const flaggedHits = dOut.findings.B2.filter((f) => f.file === 'flagged.adoc');
-      check('B2 catches a raw [source,cmake] block, not just [source,cpp]/[source,c++]',
-        flaggedHits.length === 2, `flagged.adoc B2 findings: ${JSON.stringify(flaggedHits)}`);
+      check('B2 catches an unmarked [source,cmake] block (directly, or via the bare-listing fallback)',
+        flaggedHits.length === 3, `flagged.adoc B2 findings: ${JSON.stringify(flaggedHits)}`);
       check('B2 catches a bare `----` block holding real code with no role marker',
         flaggedHits.some((f) => f.line === 10),
         `expected a finding at flagged.adoc:10 (the bare block); got: ${JSON.stringify(flaggedHits)}`);
+      check('role=output does NOT clear a [source,cpp] block holding real code',
+        flaggedHits.some((f) => f.line === 14),
+        `expected a finding at flagged.adoc:14 ([source,cpp,role=output]); got: ${JSON.stringify(flaggedHits)}`);
       const clearHits = dOut.findings.B2.filter((f) => f.file === 'clear.adoc');
-      check('B2 leaves role=pseudocode/external/output/diagram and include::example$ alone',
+      check('B2 leaves role=pseudocode/external/output/figure and include::example$ alone',
         clearHits.length === 0, `clear.adoc should have 0 B2 findings, got: ${JSON.stringify(clearHits)}`);
+
+      const shapeB2 = dOut.findings.B2.filter((f) => f.file === 'shape.adoc');
+      check('SHAPE-worthy blocks stay OUT of B2 (role=output is a real exemption, just not a silent one)',
+        shapeB2.length === 0, `shape.adoc should have 0 B2 findings, got: ${JSON.stringify(shapeB2)}`);
+      const shapeHits = dOut.findings.SHAPE.filter((f) => f.file === 'shape.adoc');
+      check('SHAPE flags a role=output block whose content looks like code',
+        shapeHits.some((f) => f.line === 6),
+        `expected a SHAPE finding at shape.adoc:6; got: ${JSON.stringify(shapeHits)}`);
+      check('SHAPE leaves a genuine role=output block alone',
+        !shapeHits.some((f) => f.line === 11),
+        `shape.adoc:11 is real output text, should not be SHAPE-flagged; got: ${JSON.stringify(shapeHits)}`);
+
+      const delimHits = dOut.findings.B2.filter((f) => f.file === 'delimiters.adoc');
+      check('B2 reaches a 5-dash (`-----`) listing, not just exactly `----`',
+        delimHits.some((f) => f.line === 5),
+        `expected a finding at delimiters.adoc:5 (the ----- block); got: ${JSON.stringify(delimHits)}`);
+      check('B2 reaches a `....` literal block, not just `----`',
+        delimHits.some((f) => f.line === 9),
+        `expected a finding at delimiters.adoc:9 (the .... block); got: ${JSON.stringify(delimHits)}`);
     }
   } finally {
     fs.rmSync(DOCLINT_TMP, { recursive: true, force: true });
@@ -250,6 +333,6 @@ if (failures.length) {
 }
 console.log(JSON.stringify({
   ok: true,
-  assertions: 22,
+  assertions: 27,
   fixtureSummary: out.summary,
 }, null, 2));

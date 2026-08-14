@@ -268,7 +268,7 @@ start(op);
 
 In the _IoAwaitable_ model, context flows _forward_ from launcher to task:
 
-[role=diagram]
+[role=figure]
 ----
 1. Set TLS allocator     -->  2. Call task()
                                3. operator new (uses TLS)
