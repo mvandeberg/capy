@@ -216,7 +216,12 @@ try {
       '',
     ].join('\n'));
     // Every exemption B2 recognizes, one of each, all in a single page that
-    // must produce zero findings.
+    // must produce zero findings. role=pseudocode and role=external are
+    // BOTH tested here deliberately: they are two different alternatives in
+    // the same regex, and dropping either one independently keeps this
+    // fixture passing for the OTHER unless both are exercised (dropping
+    // `external` alone was a measured miss — the corpus is cleared mostly
+    // by `external`, not `pseudocode`, e.g. 9k/9l/9n/9o/5d).
     write('clear.adoc', [
       ':page-mode: how-to',
       '',
@@ -225,6 +230,11 @@ try {
       '[source,cmake,role=pseudocode]',
       '----',
       'add_executable(x x.cpp)',
+      '----',
+      '',
+      '[source,cpp,role=external]',
+      '----',
+      'task<int> async_work();',
       '----',
       '',
       '[role=output]',
@@ -265,7 +275,19 @@ try {
     ].join('\n'));
     // I1/I2: a 5-dash listing must not hide code from B2 (closer length
     // must match opener length, not just be >=4), and a `....` literal
-    // block is a second bare-listing syntax B2 must also reach.
+    // block is a second bare-listing syntax B2 must also reach. The
+    // 5-dash case above pairs a matching 5-dash closer with its 5-dash
+    // opener, which does NOT exercise the closer-length check at all — a
+    // mutation loosening it from `===` to `>=` still passes that case.
+    // The role=figure block below is the real regression this fixture was
+    // missing (measured against the real corpus, 9b.Separation.adoc's CCD
+    // diagram): its body contains a dash-only line LONGER than its own
+    // 4-dash opener. Under `===` this is correctly just content, and the
+    // real closer below it ends the block with zero findings. Under `>=`
+    // the long dash-only line is wrongly accepted as an early closer, and
+    // the real closing `----` is then misread as a brand-new, attribute-less
+    // opener with nothing after it — a false B2 finding on a block that
+    // never contained code.
     write('delimiters.adoc', [
       ':page-mode: how-to',
       '',
@@ -278,6 +300,12 @@ try {
       '....',
       'int four_dot = 1;',
       '....',
+      '',
+      '[role=figure]',
+      '----',
+      '-------------------',
+      'CCD = 5',
+      '----',
       '',
     ].join('\n'));
 
@@ -320,6 +348,15 @@ try {
       check('B2 reaches a `....` literal block, not just `----`',
         delimHits.some((f) => f.line === 9),
         `expected a finding at delimiters.adoc:9 (the .... block); got: ${JSON.stringify(delimHits)}`);
+      // The closer-length check is `===`, not `>=`: a role=figure block
+      // whose body contains a dash-only line LONGER than its own 4-dash
+      // opener must not be misread as closing early there (measured
+      // against 9b.Separation.adoc's real CCD diagram, which does exactly
+      // this). Exactly 2 findings total (the two above) — a third means
+      // the mismatched-length body line either got flagged directly or
+      // caused the real closer below it to be misread as a new opener.
+      check('B2 does not misfire on a body dash-run whose length differs from its own delimiter\'s',
+        delimHits.length === 2, `expected exactly 2 delimiters.adoc findings (5-dash, dot), got: ${JSON.stringify(delimHits)}`);
     }
   } finally {
     fs.rmSync(DOCLINT_TMP, { recursive: true, force: true });
@@ -333,6 +370,6 @@ if (failures.length) {
 }
 console.log(JSON.stringify({
   ok: true,
-  assertions: 27,
+  assertions: 28,
   fixtureSummary: out.summary,
 }, null, 2));
