@@ -54,7 +54,7 @@ I/O errors are reported through the `ec` field of the cpp:io_result[io_result]. 
 
 1. Stop is requested for sibling tasks
 2. All tasks complete (or respond to stop)
-3. The first `ec` (in completion order, not input order) is propagated in the outer `io_result`
+3. The first `ec` (in completion order, not input order) is propagated in the outer cpp:io_result[io_result]
 
 [source,cpp]
 ----
