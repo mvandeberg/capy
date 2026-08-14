@@ -32,7 +32,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
-const PAGES_DIR = path.join(ROOT, 'modules/ROOT/pages');
+// An optional CLI arg overrides which pages tree gets walked, so a self-test
+// can point this at a throwaway fixture tree instead of the real corpus.
+// A6/D2's nav.adoc is unaffected — those checks are orthogonal to what a
+// pages-tree override is for (exercising B2 in isolation).
+const PAGES_DIR = process.argv[2] ? path.resolve(process.argv[2]) : path.join(ROOT, 'modules/ROOT/pages');
 const NAV_FILE = path.join(ROOT, 'modules/ROOT/nav.adoc');
 
 // The four Diátaxis modes DOC_STYLE_GUIDE.md Part A defines. A1 rejects
@@ -93,9 +97,14 @@ for (const file of files) {
     open = true;
 
     // The attribute line immediately above (skipping blank lines), if any.
+    // Only a real `[...]` block attribute list counts — prose or a heading
+    // sitting directly above a bare `----` is not an attribute line, and
+    // must not be mistaken for one (it can't carry role=, and reporting a
+    // finding against it would point at the wrong line).
     let a = i - 1;
     while (a >= 0 && lines[a].trim() === '') a--;
-    const attr = a >= 0 ? lines[a].trim() : '';
+    const prevLine = a >= 0 ? lines[a].trim() : '';
+    const attr = /^\[.*\]$/.test(prevLine) ? prevLine : '';
     const isSource = /^\[source\s*,\s*[^,\]]+/i.test(attr);
     const hasClearingRole = /role=(pseudocode|external)\b/.test(attr);
     const hasNonCodeRole = /role=(output|diagram)\b/.test(attr);

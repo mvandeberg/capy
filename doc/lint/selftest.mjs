@@ -7,10 +7,12 @@
 //
 // Official repository: https://github.com/cppalliance/capy
 //
-// selftest.mjs — asserts that sentence-length.mjs still detects what it claims
-// to, against the checked-in corpus in lint/fixtures/. Node built-ins only.
-// Exit 0 = all assertions hold; exit 1 = at least one broke, with the failure
-// named. Run it after any edit to sentence-length.mjs.
+// selftest.mjs — asserts that sentence-length.mjs and doc-lint.mjs's B2 check
+// still detect what they claim to, against the checked-in corpus in
+// lint/fixtures/ (sentence-length.mjs) or a throwaway fixture tree built at
+// run time (doc-lint.mjs's B2 section). Node built-ins only. Exit 0 = all
+// assertions hold; exit 1 = at least one broke, with the failure named. Run
+// it after any edit to sentence-length.mjs or doc-lint.mjs.
 //
 // Why this exists. The C2 checker is on its way to becoming a merge-blocking
 // gate, and the properties below are exactly the ones whose failure is SILENT:
@@ -152,6 +154,95 @@ try {
   fs.rmSync(TMP_OUT, { recursive: true, force: true });
 }
 
+// 9. doc-lint.mjs's B2 check ("no code block holds raw code") must reach
+//    every [source,<lang>] block, not just [source,cpp]/[source,c++] — that
+//    was the whole gap a prior widening closed — and must also reach bare
+//    `----` listings, while leaving role=pseudocode/external/output/diagram
+//    and include::example$ blocks alone. There was previously no self-test
+//    coverage for doc-lint.mjs at all, so a regex narrowed back to one
+//    language, or a bare-listing branch that stopped firing, would pass
+//    every corpus-level check silently. Exercised against a throwaway
+//    fixture tree (not lint/fixtures/, which only sentence-length.mjs reads)
+//    so a real corpus edit can't perturb these counts.
+{
+  const DOCLINT_TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'capy-selftest-doclint-'));
+  try {
+    const write = (rel, body) => {
+      const fp = path.join(DOCLINT_TMP, rel);
+      fs.mkdirSync(path.dirname(fp), { recursive: true });
+      fs.writeFileSync(fp, body);
+    };
+    // One [source,cmake] block with no clearing role (the original escape:
+    // the old regex only matched cpp/c++) and one bare `----` block with no
+    // role=output/role=diagram marker and real code in it (the other
+    // escape: bare listings were invisible to any [source,...] regex).
+    write('flagged.adoc', [
+      ':page-mode: how-to',
+      '',
+      '= Flagged',
+      '',
+      '[source,cmake]',
+      '----',
+      'add_executable(x x.cpp)',
+      '----',
+      '',
+      '----',
+      'int x = 1;',
+      '----',
+      '',
+    ].join('\n'));
+    // Every exemption B2 recognizes, one of each, all in a single page that
+    // must produce zero findings.
+    write('clear.adoc', [
+      ':page-mode: how-to',
+      '',
+      '= Clear',
+      '',
+      '[source,cmake,role=pseudocode]',
+      '----',
+      'add_executable(x x.cpp)',
+      '----',
+      '',
+      '[role=output]',
+      '----',
+      'build succeeded',
+      '----',
+      '',
+      '[role=diagram]',
+      '----',
+      '[A] --> [B]',
+      '----',
+      '',
+      '[source,cpp]',
+      '----',
+      'include::example$foo.cpp[tag=bar]',
+      '----',
+      '',
+    ].join('\n'));
+
+    const d = spawnSync('node', [path.join(SCRIPT_DIR, 'doc-lint.mjs'), DOCLINT_TMP],
+      { encoding: 'utf8', cwd: DOC_DIR, maxBuffer: 16 * 1024 * 1024 });
+    check('doc-lint.mjs exits 0 against the B2 fixture tree', d.status === 0,
+      `exited ${d.status}: ${(d.stderr || '').trim().slice(-200)}`);
+    let dOut = null;
+    try { dOut = JSON.parse(d.stdout); } catch { /* reported below */ }
+    check('doc-lint.mjs prints parseable JSON', dOut !== null, `stdout: ${d.stdout.slice(0, 200)}`);
+    if (dOut) {
+      const flaggedHits = dOut.findings.B2.filter((f) => f.file === 'flagged.adoc');
+      check('B2 catches a raw [source,cmake] block, not just [source,cpp]/[source,c++]',
+        flaggedHits.length === 2, `flagged.adoc B2 findings: ${JSON.stringify(flaggedHits)}`);
+      check('B2 catches a bare `----` block holding real code with no role marker',
+        flaggedHits.some((f) => f.line === 10),
+        `expected a finding at flagged.adoc:10 (the bare block); got: ${JSON.stringify(flaggedHits)}`);
+      const clearHits = dOut.findings.B2.filter((f) => f.file === 'clear.adoc');
+      check('B2 leaves role=pseudocode/external/output/diagram and include::example$ alone',
+        clearHits.length === 0, `clear.adoc should have 0 B2 findings, got: ${JSON.stringify(clearHits)}`);
+    }
+  } finally {
+    fs.rmSync(DOCLINT_TMP, { recursive: true, force: true });
+  }
+}
+
 if (failures.length) {
   console.error(`selftest: ${failures.length} assertion(s) FAILED`);
   for (const f of failures) console.error(`  - ${f}`);
@@ -159,6 +250,6 @@ if (failures.length) {
 }
 console.log(JSON.stringify({
   ok: true,
-  assertions: 17,
+  assertions: 22,
   fixtureSummary: out.summary,
 }, null, 2));
