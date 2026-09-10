@@ -89,6 +89,12 @@ const LIST_ITEM = /^@li\b\s*/;
 // So the title is emitted as its own paragraph. A bare `@par` with no title is
 // Doxygen's plain paragraph break and contributes nothing.
 const PAR_TITLE = /^@par\b\s*/;
+// `@par !example <tag>` is a marker, not prose: reference-snippets.lua owns the
+// `!example` sentinel and replaces the whole `@par` with the compiled example
+// when MrDocs builds the reference. Left in, the marker lints as text -- the 43
+// headers tagged `example` alert Vale.Repetition on "example example", and a tag
+// like `work_guard` alerts Vale.Spelling -- so it is dropped the way @code is.
+const SENTINEL_PAR = /^!example\b/;
 const INLINE_REFS = /@(ref|p|c)\s+(\S+)/g;
 
 // A Doxygen `@li` item is a sentence, and the extractor used to hand Vale a run
@@ -132,7 +138,7 @@ function cleanBlock(raw) {
       flush();
       separate();
       const title = line.slice(par[0].length).replace(INLINE_REFS, '$2').trim();
-      if (title) prose.push(title, '');
+      if (title && !SENTINEL_PAR.test(title)) prose.push(title, '');
       continue;
     }
     // A non-blank, non-tag line under an open item is its continuation.

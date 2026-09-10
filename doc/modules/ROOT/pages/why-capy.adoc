@@ -2,6 +2,7 @@
 :page-mode: explanation
 
 Capy makes `co_await` the only way to do asynchronous work. There are no callbacks, no futures, and no sender/receiver layer to reconcile.
+(xref:C.concurrency/Cd.patterns.adoc[Appendix C] covers the `std::future` and `std::async` model Capy leaves behind.)
 
 That restriction buys a guarantee the hybrid libraries cannot make: *a coroutine always resumes on the executor it was started with.* State you touch between two suspension points needs no mutex, because nothing else can run there. An awaitable that could resume you on any thread is rejected at compile time.
 

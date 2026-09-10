@@ -27,7 +27,7 @@ You also get the testing tools that allow you to test your asynchronous flows in
 
 While Capy offers algorithms and interfaces for dealing with I/O, 
 it does not itself provide any I/O backend (like a wrapper over `epoll` or `io_uring`).
-For that, you will need to use Capy in tandem with a Capy-conformant library. 
+For that, you need to use Capy in tandem with a Capy-conformant library. 
 This can be either your home-grown one or Corosio.
 
 
@@ -47,8 +47,13 @@ include::example$programs/index_page_echo.cpp[tag=full]
 == Next Steps
 
 * xref:quick-start.adoc[Quick Start] — Set up your first Capy project
-* xref:2.cpp20-coroutines/2a.foundations.adoc[{cpp}20 Coroutines Tutorial] — Learn coroutines from the ground up
-* xref:3.concurrency/3a.foundations.adoc[Concurrency Tutorial] — Understand threads, mutexes, and synchronization
 * xref:4.coroutines/4a.tasks.adoc[Coroutines in Capy] — Deep dive into cpp:task[task<T>] and the IoAwaitable protocol
 * xref:5.buffers/5a.buffers.adoc[Buffer Sequences] — Buffer types, sequences, system I/O, and the algorithms over them
 * xref:6.streams/6a.overview.adoc[Stream Concepts] — Understand the three stream concepts
+* xref:7.testing/7a.drivers.adoc[Testing] — Drive asynchronous flows deterministically
+* xref:8.examples/8.intro.adoc[Example Programs] — Complete programs the build compiles and runs
+
+New to {cpp}20 coroutines, or to threads and mutexes?
+xref:B.cpp20-coroutines/B.intro.adoc[Appendix B] teaches coroutines from first principles, and
+xref:C.concurrency/C.intro.adoc[Appendix C] does the same for concurrency.
+Neither is required to use Capy.

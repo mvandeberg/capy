@@ -96,7 +96,7 @@ add_dependencies(tests boost_capy_doc_tests)
 # Programs demonstrating bugs (data races, deadlocks) are built but
 # never executed: running them would hang CI or trip sanitizers.
 set(COMPILE_ONLY_PROGRAMS
-    3b_synchronization_race)
+    Cb_synchronization_race)
 
 # Programs register through a POST_BUILD-generated ctest include file
 # (the DiscoverTests.cmake scheme) so the test carries the concrete

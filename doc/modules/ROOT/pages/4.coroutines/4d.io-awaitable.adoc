@@ -60,7 +60,7 @@ Following the convention of awaiters in C++, the return type of the function has
 * `std::coroutine_handle<P>` for any type `P`.
 
 Many types modelling cpp:IoAwaitable[] return `std::coroutine_handle<>` to enable
-xref:2.cpp20-coroutines/2d.advanced.adoc#_symmetric_transfer[symmetric transfer].
+xref:B.cpp20-coroutines/Bd.advanced.adoc#_symmetric_transfer[symmetric transfer].
 
 == IoAwaitable Concept
 
@@ -92,7 +92,7 @@ Capy's cpp:task[task<T>] satisfies this concept.
 
 When you write `co_await child_task()` inside a cpp:task[task<T>]:
 
-1. Member function `await_transform` of the ``task``'s `promise_type` transforms the awaitable into an awaiter (see xref:2.cpp20-coroutines/2b.syntax.adoc#awaitables_and_awaiters[Awaitables and Awaiters]).
+1. Member function `await_transform` of the ``task``'s `promise_type` transforms the awaitable into an awaiter (see xref:B.cpp20-coroutines/Bb.syntax.adoc#awaitables_and_awaiters[Awaitables and Awaiters]).
 2. The resulting awaiter's `await_suspend` passes context:
 
 [source,cpp]

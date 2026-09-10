@@ -49,7 +49,17 @@ function emit(payload) {
 // before any `+build` metadata) matches this pin; if none matches we error
 // loudly rather than silently scan with an unexpected version. Override via
 // MRDOCS_VERSION for a deliberate bump.
-const PINNED_VERSION = process.env.MRDOCS_VERSION || '0.8.0';
+//
+// The pin tracks the rolling `develop-release` tag that build_antora.sh
+// fetches, because the reference-snippets extension API postdates v0.8.0 and
+// no tagged release carries it yet. That tag's version string moves: builds
+// that once reported 0.8.0 now report 2026.9.5. The stale pin matched nothing
+// in CI, which skipped this check entirely -- and because a skipped check
+// reports zero findings, the baseline candidate generated there would have
+// wiped this check's grandfathered backlog. Bump this line when the tag moves
+// again, and drop back to a plain semantic version once a release ships the
+// extension API.
+const PINNED_VERSION = process.env.MRDOCS_VERSION || '2026.9.5';
 
 function findOnPath(names) {
   return findAllOnPath(names)[0] || null;

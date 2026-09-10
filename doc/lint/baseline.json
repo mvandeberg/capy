@@ -1,15 +1,11 @@
 {
   "generatedAt": "2026-08-25T20:12:33.624Z",
-  "note": "Snapshot of current violations (Task 2, Style Guide Part F.0). Non-blocking: this records the backlog so a future comparator can flag NEW findings without failing on the ones already known about. Fingerprints are line-insensitive: the `#N` component is the Nth occurrence of that (file, message) pair, NOT a line number, so inserting text above a finding does not rename it.",
+  "note": "Snapshot of current violations (Task 2, Style Guide Part F.0). Non-blocking: this records the backlog so a future comparator can flag NEW findings without failing on the ones already known about. Fingerprints are line-insensitive: the `#N` component is the Nth occurrence of that (file, message) pair, NOT a line number, so inserting text above a finding does not rename it. Grandfathered on top of that snapshot: seven findings introduced by #397 (docs: make intro page follow Robert Ramey's guidelines) in index.adoc and quick-start.adoc -- three C2 sentence-length and two vale_adoc (the other two, Capy.SimpleTense and Google.Will, were fixed in the prose instead of grandfathered). They predate the appendix move and are recorded here rather than absorbed silently by a wholesale reseed. The a11y set is a clean regeneration from CI for this branch, not a local run: a local chromium reports 65 color-contrast findings against CI's 6, so a locally generated a11y set would match no CI run.",
   "checks": {
     "vale_adoc": {
-      "count": 89,
+      "count": 91,
       "skipped": false,
       "fingerprints": [
-        "modules/ROOT/pages/2.cpp20-coroutines/2a.foundations.adoc:#1:Google.OxfordComma",
-        "modules/ROOT/pages/2.cpp20-coroutines/2d.advanced.adoc:#1:Vale.Spelling",
-        "modules/ROOT/pages/3.concurrency/3b.synchronization.adoc:#1:Google.Colons",
-        "modules/ROOT/pages/3.concurrency/3c.advanced.adoc:#1:Vale.Spelling",
         "modules/ROOT/pages/4.coroutines/4.intro.adoc:#1:Google.OxfordComma",
         "modules/ROOT/pages/4.coroutines/4a.tasks.adoc:#1:Vale.Spelling",
         "modules/ROOT/pages/4.coroutines/4a.tasks.adoc:#2:Vale.Spelling",
@@ -94,7 +90,13 @@
         "modules/ROOT/pages/9.design/9o.WhyNotTMC.adoc:#6:Vale.Spelling",
         "modules/ROOT/pages/9.design/9o.WhyNotTMC.adoc:#7:Vale.Spelling",
         "modules/ROOT/pages/9.design/9o.WhyNotTMC.adoc:#8:Vale.Spelling",
-        "modules/ROOT/pages/9.design/9o.WhyNotTMC.adoc:#9:Vale.Spelling"
+        "modules/ROOT/pages/9.design/9o.WhyNotTMC.adoc:#9:Vale.Spelling",
+        "modules/ROOT/pages/B.cpp20-coroutines/Ba.foundations.adoc:#1:Google.OxfordComma",
+        "modules/ROOT/pages/B.cpp20-coroutines/Bd.advanced.adoc:#1:Vale.Spelling",
+        "modules/ROOT/pages/C.concurrency/Cb.synchronization.adoc:#1:Google.Colons",
+        "modules/ROOT/pages/C.concurrency/Cc.advanced.adoc:#1:Vale.Spelling",
+        "modules/ROOT/pages/quick-start.adoc:#1:Vale.Spelling",
+        "modules/ROOT/pages/quick-start.adoc:#2:Vale.Spelling"
       ]
     },
     "vale_docstrings": {
@@ -379,7 +381,7 @@
       ]
     },
     "sentence_length": {
-      "count": 65,
+      "count": 68,
       "skipped": false,
       "byRule": {
         "hard": 7,
@@ -400,9 +402,12 @@
         "C2:lint/.docstrings/concept/io_awaitable.hpp.adoc:#2:sentence over 25 words",
         "C2:lint/.docstrings/concept/io_awaitable.hpp.adoc:#3:sentence over 25 words",
         "C2:lint/.docstrings/concept/io_awaitable.hpp.adoc:#4:sentence over 25 words",
-        "C2:modules/ROOT/pages/2.cpp20-coroutines/2b.syntax.adoc:#1:sentence over 25 words",
-        "C2:modules/ROOT/pages/2.cpp20-coroutines/2b.syntax.adoc:#2:sentence over 25 words",
         "C2:modules/ROOT/pages/4.coroutines/4d.io-awaitable.adoc:#1:sentence over 25 words",
+        "C2:modules/ROOT/pages/B.cpp20-coroutines/Bb.syntax.adoc:#1:sentence over 25 words",
+        "C2:modules/ROOT/pages/B.cpp20-coroutines/Bb.syntax.adoc:#2:sentence over 25 words",
+        "C2:modules/ROOT/pages/index.adoc:#1:sentence over 25 words",
+        "C2:modules/ROOT/pages/index.adoc:#2:sentence over 25 words",
+        "C2:modules/ROOT/pages/index.adoc:#3:sentence over 25 words",
         "advisory-C2:modules/ROOT/pages/9.design/9a.CapyLayering.adoc:#1:sentence over 25 words",
         "advisory-C2:modules/ROOT/pages/9.design/9a.CapyLayering.adoc:#2:sentence over 25 words",
         "advisory-C2:modules/ROOT/pages/9.design/9a.CapyLayering.adoc:#3:sentence over 25 words",
@@ -475,11 +480,11 @@
         "D2": 5
       },
       "fingerprints": [
-        "D2:2.cpp20-coroutines/2.intro.adoc:#1:tutorial/concept page has no include::example$",
-        "D2:3.concurrency/3.intro.adoc:#1:tutorial/concept page has no include::example$",
         "D2:4.coroutines/4.intro.adoc:#1:tutorial/concept page has no include::example$",
         "D2:6.streams/6.intro.adoc:#1:tutorial/concept page has no include::example$",
-        "D2:7.testing/7.intro.adoc:#1:tutorial/concept page has no include::example$"
+        "D2:7.testing/7.intro.adoc:#1:tutorial/concept page has no include::example$",
+        "D2:B.cpp20-coroutines/B.intro.adoc:#1:tutorial/concept page has no include::example$",
+        "D2:C.concurrency/C.intro.adoc:#1:tutorial/concept page has no include::example$"
       ]
     },
     "mrdocs_warnings": {
@@ -510,7 +515,7 @@
       ]
     },
     "a11y": {
-      "count": 80,
+      "count": 74,
       "skipped": false,
       "contrastCount": 6,
       "fingerprints": [
@@ -533,30 +538,23 @@
         "/capy/4.coroutines/4a.tasks.html:scrollable-region-focusable:#content > article > div:nth-child(12) > div > div:nth-child(2) > div > pre",
         "/capy/4.coroutines/4a.tasks.html:scrollable-region-focusable:#content > article > div:nth-child(7) > div > div:nth-child(3) > div > pre",
         "/capy/4.coroutines/4a.tasks.html:scrollable-region-focusable:#content > article > div:nth-child(8) > div > div:nth-child(2) > div > pre",
-        "/capy/index.html:color-contrast:#content > article > div:nth-child(1) > nav > ul > li:nth-child(2) > a",
-        "/capy/index.html:link-name:#_assumed_knowledge > a",
-        "/capy/index.html:link-name:#_code_convention > a",
-        "/capy/index.html:link-name:#_compiler_support > a",
-        "/capy/index.html:link-name:#_dependencies > a",
-        "/capy/index.html:link-name:#_design_philosophy > a",
-        "/capy/index.html:link-name:#_linking > a",
+        "/capy/index.html:color-contrast:#content > article > div:nth-child(5) > div > div:nth-child(1) > div > pre > code > span:nth-child(1)",
         "/capy/index.html:link-name:#_next_steps > a",
         "/capy/index.html:link-name:#_quick_example > a",
-        "/capy/index.html:link-name:#_requirements > a",
-        "/capy/index.html:link-name:#_target_audience > a",
-        "/capy/index.html:link-name:#_the_library_family > a",
-        "/capy/index.html:link-name:#_what_capy_is > a",
         "/capy/index.html:link-name:#_what_capy_is_not > a",
-        "/capy/index.html:link-name:#_what_this_library_does > a",
-        "/capy/index.html:link-name:#_what_this_library_does_not_do > a",
         "/capy/index.html:list:#toc > aside > div > div > nav > ul",
         "/capy/index.html:list:#toc > aside > div > div > nav > ul > ul",
+        "/capy/index.html:scrollable-region-focusable:#content > article > div:nth-child(5) > div > div:nth-child(1) > div > pre",
         "/capy/quick-start.html:color-contrast:#content > article > div:nth-child(1) > nav > ul > li:nth-child(2) > a",
+        "/capy/quick-start.html:link-name:#_assumed_knowledge > a",
         "/capy/quick-start.html:link-name:#_build_and_run > a",
+        "/capy/quick-start.html:link-name:#_compiler_support > a",
+        "/capy/quick-start.html:link-name:#_dependencies > a",
         "/capy/quick-start.html:link-name:#_handling_errors > a",
         "/capy/quick-start.html:link-name:#_handling_results > a",
         "/capy/quick-start.html:link-name:#_minimal_example > a",
         "/capy/quick-start.html:link-name:#_next_steps > a",
+        "/capy/quick-start.html:link-name:#_requirements > a",
         "/capy/quick-start.html:link-name:#_what_just_happened > a",
         "/capy/quick-start.html:list:#toc > aside > div > div > nav > ul",
         "/capy/quick-start.html:list:#toc > aside > div > div > nav > ul > ul",
@@ -571,6 +569,7 @@
         "/capy/reference/boost/capy.html:list:#toc > aside > div > div > nav > ul",
         "/capy/reference/boost/capy.html:list:#toc > aside > div > div > nav > ul > ul",
         "/capy/why-capy.html:color-contrast:#content > article > div:nth-child(1) > nav > ul > li:nth-child(2) > a",
+        "/capy/why-capy.html:link-in-text-block:#preamble > div > div:nth-child(1) > p > a",
         "/capy/why-capy.html:link-name:#_buffer_sequences > a",
         "/capy/why-capy.html:link-name:#_comparison > a",
         "/capy/why-capy.html:link-name:#_comparison_2 > a",

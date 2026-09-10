@@ -1,0 +1,90 @@
+= Coroutine Foundations
+:page-mode: tutorial
+
+== Functions and the Call Stack
+
+Calling a regular function allocates a *stack frame*: space on the *call stack* for its local variables and parameters, reclaimed when the function returns. The function's state exists only during the call.
+
+Consider this function:
+
+[source,cpp]
+----
+include::example$snippets/Ba_foundations.cpp[tag=compute,indent=0]
+----
+
+This model has a fundamental constraint: *run-to-completion*. Once a function starts, it must finish before control returns to the caller. The function cannot pause midway, let other code run, and resume later.
+
+== What Is a Coroutine?
+
+A *coroutine* is a function that can suspend its execution and resume later from exactly where it left off.
+
+When a coroutine suspends:
+
+* Its local variables are preserved
+* The instruction pointer (where you are in the code) is saved
+* Control returns to the caller or some other code
+
+When a coroutine resumes:
+
+* Local variables are restored to their previous values
+* Execution continues from the suspension point
+
+This capability is implemented through a *coroutine frame*—a block of memory, typically heap-allocated, that stores the coroutine's state. Unlike stack frames, coroutine frames persist across suspension points. xref:B.cpp20-coroutines/Bd.advanced.adoc[Advanced Topics] covers when the compiler can place one elsewhere instead.
+
+.Conceptual illustration - not real syntax
+[source,cpp,role=pseudocode]
+----
+task<int> fetch_and_process()
+{
+    auto data = co_await fetch_from_network();  // suspends here
+    // When resumed, 'data' contains the fetched result
+    return process(data);
+}
+----
+
+== Why Coroutines?
+
+=== The Problem: Asynchronous Programming Without Coroutines
+
+Consider a server application that handles network requests. The server must read a request, query a database, compute a response, and send it back. Each step might take time to complete.
+
+In traditional synchronous code:
+
+[source,cpp]
+----
+include::example$snippets/Ba_foundations.cpp[tag=sync_request,indent=0]
+----
+
+This code reads naturally from top to bottom. But while waiting for the network or database, this function blocks the entire thread. If you have thousands of concurrent connections, you would need thousands of threads, each consuming memory and requiring operating system scheduling.
+
+=== The Callback Approach
+
+The traditional solution uses callbacks:
+
+[source,cpp]
+----
+include::example$snippets/Ba_foundations.cpp[tag=callback_request,indent=0]
+----
+
+This code does not block. Each operation starts, registers a callback, and returns immediately. When the operation completes, the callback runs.
+
+But look what has happened to the code: three levels of nesting and logic scattered across multiple lambda functions. Local variables cannot be shared between callbacks without careful lifetime management. A single logical operation becomes fragmented across multiple functions.
+
+=== The Coroutine Solution
+
+Coroutines restore linear code structure while maintaining asynchronous behavior:
+
+[source,cpp]
+----
+include::example$snippets/Ba_foundations.cpp[tag=coroutine_request,indent=0]
+----
+
+This code reads like the original blocking version. Local variables like `request`, `parsed`, and `data` exist naturally in their scope. Yet the function suspends at each `co_await` point, allowing other work to proceed while waiting.
+
+=== Beyond Asynchrony
+
+Coroutines also enable:
+
+* *Generators* — Functions that produce sequences of values on demand, computing each value only when requested
+* *State machines* — Complex control flow expressed as linear code with suspension points
+* *Cooperative multitasking* — Multiple logical tasks interleaved on a single thread
