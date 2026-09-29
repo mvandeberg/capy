@@ -1367,10 +1367,141 @@ struct task_test
         BOOST_TEST(completed);
     }
 
+    // ---- TEMPORARY ARM64 investigation probes - DO NOT MERGE ----
+    //
+    // Each probe removes exactly one ingredient from
+    // testCatchAfterDeferredResume, to find the minimal shape the MSVC
+    // 14.51 ARM64 release defect needs. On that configuration a probe
+    // that FAILS still carries the defect's requirements; one that
+    // PASSES rules its variation out. Everywhere else all of them pass.
+
+    // Is it required that the co_await sit inside the try? Here the
+    // co_await is outside it and only the throw is inside.
+    static task<void>
+    probe_await_outside_try(
+        std::coroutine_handle<>& slot,
+        bool& caught)
+    {
+        co_await parking_awaitable{slot};
+        try
+        {
+            throw_test_exception("await outside try");
+        }
+        catch(test_exception const&)
+        {
+            caught = true;
+        }
+    }
+
+    void
+    testProbeAwaitOutsideTry()
+    {
+        int dispatch_count = 0;
+        test_executor ex(dispatch_count);
+        std::coroutine_handle<> parked;
+        bool caught = false;
+        bool escaped = false;
+
+        run_async(ex, []() {},
+            [&](std::exception_ptr) { escaped = true; })(
+                probe_await_outside_try(parked, caught));
+
+        BOOST_TEST(static_cast<bool>(parked));
+        parked.resume();
+        BOOST_TEST(caught);
+        BOOST_TEST(!escaped);
+    }
+
+    // Is it required that the coroutine be the run_async top-level
+    // task? Here the try, co_await and throw sit in a nested task<>.
+    static task<void>
+    probe_nested_inner(
+        std::coroutine_handle<>& slot,
+        bool& caught)
+    {
+        try
+        {
+            if(co_await parking_awaitable{slot})
+                throw_test_exception("nested");
+        }
+        catch(test_exception const&)
+        {
+            caught = true;
+        }
+    }
+
+    static task<void>
+    probe_nested_outer(
+        std::coroutine_handle<>& slot,
+        bool& caught)
+    {
+        co_await probe_nested_inner(slot, caught);
+    }
+
+    void
+    testProbeNestedTask()
+    {
+        int dispatch_count = 0;
+        test_executor ex(dispatch_count);
+        std::coroutine_handle<> parked;
+        bool caught = false;
+        bool escaped = false;
+
+        run_async(ex, []() {},
+            [&](std::exception_ptr) { escaped = true; })(
+                probe_nested_outer(parked, caught));
+
+        BOOST_TEST(static_cast<bool>(parked));
+        parked.resume();
+        BOOST_TEST(caught);
+        BOOST_TEST(!escaped);
+    }
+
+    // Is the handler failing to match by type, or is the try region
+    // itself not being found? Identical to the real test except the
+    // handler is catch(...), which matches unconditionally.
+    static task<void>
+    probe_catch_ellipsis(
+        std::coroutine_handle<>& slot,
+        bool& caught)
+    {
+        try
+        {
+            if(co_await parking_awaitable{slot})
+                throw_test_exception("catch ellipsis");
+        }
+        catch(...)
+        {
+            caught = true;
+        }
+    }
+
+    void
+    testProbeCatchEllipsis()
+    {
+        int dispatch_count = 0;
+        test_executor ex(dispatch_count);
+        std::coroutine_handle<> parked;
+        bool caught = false;
+        bool escaped = false;
+
+        run_async(ex, []() {},
+            [&](std::exception_ptr) { escaped = true; })(
+                probe_catch_ellipsis(parked, caught));
+
+        BOOST_TEST(static_cast<bool>(parked));
+        parked.resume();
+        BOOST_TEST(caught);
+        BOOST_TEST(!escaped);
+    }
+
     void
     run()
     {
         testCatchAfterDeferredResume();
+        testProbeAwaitOutsideTry();
+        testProbeNestedTask();
+        testProbeCatchEllipsis();
         testBoolSuspendAwaitable();
         testReturnValue();
         testException();
