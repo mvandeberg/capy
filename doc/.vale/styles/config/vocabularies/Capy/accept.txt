@@ -46,6 +46,8 @@
 (?i)ousterhout
 (?i)parnas
 (?i)stepanov
+(?i)ville
+(?i)voutilainen
 (?i)yaknyam
 
 # --- Coroutine and asynchrony vocabulary (style guide C.1) ----------------------

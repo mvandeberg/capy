@@ -1,0 +1,87 @@
+//
+// Copyright (c) 2026 Michael Vandeberg
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+// Official repository: https://github.com/cppalliance/capy
+//
+
+= More Examples
+:page-mode: explanation
+
+These examples have no walkthrough page.
+Most of them check a design claim against the real API, so they need extra libraries or hardware.
+Each entry says what the example needs and whether it runs or only has to compile.
+The build conditions come from `example/CMakeLists.txt`.
+
+== Asio Integration
+
+=== `any_stream` and `asio_callbacks`
+
+https://github.com/cppalliance/capy/tree/develop/example/asio[`example/asio`] holds three programs.
+`any_stream.cpp` writes stream algorithms that never name Asio.
+`asio_callbacks.cpp` adapts a Capy stream to Asio's universal async model, so Asio callbacks can drive it.
+The third program, `use_capy_example.cpp`, has its own page, xref:8.examples/8p.asio-use-capy.adoc[Calling Asio from a Capy Coroutine].
+The directory is built only when a `Boost::asio` target exists.
+All three programs run to completion when started.
+
+== P2300 Senders
+
+=== awaitable-sender
+
+https://github.com/cppalliance/capy/tree/develop/example/awaitable-sender[`example/awaitable-sender`] turns a Capy awaitable into a P2300 sender, which is the reverse of xref:8.examples/8o.sender-bridge.adoc[Bridging a P2300 Sender].
+It needs `BOOST_CAPY_BUILD_P2300_EXAMPLES=ON`, which requires C++23, and it fetches `stdexec`.
+It builds a demo program and a test program.
+Both run, and the test program is registered with `ctest`.
+
+=== any-sender-size
+
+https://github.com/cppalliance/capy/tree/develop/example/any-sender-size[`example/any-sender-size`] measures the operation state of `exec::any_sender` and the heap allocation its `connect` makes.
+It compares both against the concrete operation state for the same pipeline.
+It needs `BOOST_CAPY_BUILD_P2300_EXAMPLES=ON` and fetches `stdexec`.
+It runs, and it is registered with `ctest`.
+
+== Hardware and Fabric Transports
+
+=== fabrics
+
+https://github.com/cppalliance/capy/tree/develop/example/fabrics[`example/fabrics`] checks the transport-neutral listings from P4251R0 against the real Capy API.
+It needs only a C++20 compiler.
+The `libibverbs`, `libfabric` and UCX checks are built when those libraries are installed.
+Nothing in it is executed: a clean build is the pass condition.
+The directory is always part of the example build.
+
+=== cuda/batched-write
+
+https://github.com/cppalliance/capy/tree/develop/example/cuda/batched-write[`example/cuda/batched-write`] gathers three host buffers through `any_write_stream` in one `write_some`.
+It checks that the byte count is the sum of the buffers and that the device holds their concatenation.
+It needs `BOOST_CAPY_BUILD_CUDA_EXAMPLES=ON` and a CUDA device.
+It runs, it is registered with `ctest`, and it exits non-zero on a mismatch.
+
+=== cuda/datamovement
+
+https://github.com/cppalliance/capy/tree/develop/example/cuda/datamovement[`example/cuda/datamovement`] checks that the CUDA data-movement listings from P4251R0 are type-correct against Capy and CUDA.
+It needs `BOOST_CAPY_BUILD_CUDA_EXAMPLES=ON` and a CUDA compiler; the NCCL part is built only when NCCL is found.
+Nothing in it is executed: a clean build with every `static_assert` holding is the pass condition.
+The `batched-write` example above is the one that runs.
+
+=== cuda/notification-strategies
+
+https://github.com/cppalliance/capy/tree/develop/example/cuda/notification-strategies[`example/cuda/notification-strategies`] awaits one GPU completion through three notification mechanisms.
+Each mechanism is a `ContextAwaitable` and all three give the same result.
+It needs `BOOST_CAPY_BUILD_CUDA_EXAMPLES=ON` and a CUDA device.
+It runs.
+Its `--fault` option probes how each mechanism reports a stream fault.
+
+=== cuda/pipeline
+
+https://github.com/cppalliance/capy/tree/develop/example/cuda/pipeline[`example/cuda/pipeline`] composes `await_sender` and `as_sender` with NVIDIA's `nvexec::stream_scheduler`.
+It needs a CUDA device, `stdexec` with `nvexec`, and C++23.
+Its README gives the configure flags.
+Two of its three scenes run.
+The third scene, a request handler, is built but never called, so it only has to compile.
+
+== Corosio
+
+The Corosio echo server is documented with Corosio, at https://github.com/cppalliance/corosio.

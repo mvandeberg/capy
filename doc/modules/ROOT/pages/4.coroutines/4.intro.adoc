@@ -29,8 +29,12 @@ Capy's coroutine model is built around a single principle: asynchronous code sho
   stop token propagate through a chain of awaited coroutines.
 * xref:4.coroutines/4f.cancellation.adoc[Stop Tokens and Cancellation] -- Cooperative
   cancellation with `std::stop_token`, and how Capy tasks observe it.
+* xref:4.coroutines/4l.quitter.adoc[The quitter Type] -- A coroutine type that a
+  stop request unwinds, so the body needs no cancellation checks.
 * xref:4.coroutines/4g.composition.adoc[Concurrent Composition] -- Running tasks
   concurrently with cpp:when_all[] and cpp:when_any[].
+* xref:4.coroutines/4m.synchronization.adoc[Coroutine Synchronization] -- Events, mutexes
+  and wakers that suspend a coroutine instead of a thread.
 * xref:4.coroutines/4h.allocators.adoc[Frame Allocators] -- How coroutine frames are
   allocated, and how to customize the allocator.
 * xref:4.coroutines/4i.lambda-captures.adoc[Lambda Coroutine Captures] -- A critical

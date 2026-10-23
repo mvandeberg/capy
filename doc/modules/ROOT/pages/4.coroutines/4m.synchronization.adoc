@@ -1,0 +1,134 @@
+//
+// Copyright (c) 2026 Michael Vandeberg
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+// Official repository: https://github.com/cppalliance/capy
+//
+
+= Coroutine Synchronization
+:page-mode: explanation
+
+Capy has three primitives that let coroutines wait for each other: cpp:async_event[], cpp:async_mutex[] and cpp:async_waker[].
+Each one suspends the waiting coroutine, not the thread, so other coroutines keep running while it waits.
+Their headers are `<boost/capy/ex/async_event.hpp>`, `<boost/capy/ex/async_mutex.hpp>` and `<boost/capy/ex/async_waker.hpp>`.
+
+You often need none of them.
+A strand serializes work without any locking, as xref:8.examples/8k.strand-serialization.adoc[Strand Serialization] shows.
+A single coroutine that owns the data and receives requests is another alternative.
+Use a primitive when coroutines must wait on a condition or hold a resource across a `co_await`.
+
+== Choosing a Primitive
+
+[cols="1a,2a,2a,3a",options="header"]
+|===
+| Primitive | Wakes | Who may signal | Typical use
+
+| cpp:async_event[]
+| Every waiter, when `set()` runs
+| Code on the same executor as the waiters
+| A "ready" broadcast, such as data that has arrived
+
+| cpp:async_mutex[]
+| One waiter, in FIFO order, when `unlock()` runs or the guard is destroyed
+| Code on the same executor as the waiters
+| A critical section that spans a `co_await`
+
+| cpp:async_waker[]
+| Its single waiter
+| Any thread, through cpp:async_waker::wake[wake]
+| Timers and events from outside Capy
+|===
+
+== `async_event`
+
+An event is a manual-reset flag.
+Waiters suspend while it is clear.
+`set()` resumes all of them and leaves the event set, so later waits complete at once.
+`clear()` resets the flag, and `is_set()` reads it.
+
+
+[source,cpp]
+----
+include::example$snippets/4m_synchronization.cpp[tag=event,indent=0]
+----
+
+`set()` posts each resumption through the waiter's executor.
+It never resumes a waiter inline.
+
+xref:8.examples/8b.producer-consumer.adoc[Producer-Consumer] uses an event to signal that data is ready.
+
+== `async_mutex`
+
+A mutex gives one coroutine at a time access to a resource.
+Waiting coroutines queue in FIFO order, and each gets the lock in the order it asked.
+The lock stays held while the owner suspends at a `co_await`.
+
+Prefer `scoped_lock()`.
+It returns a cpp:results[] holding an error code and a guard, which unlocks the mutex when it is destroyed:
+
+[source,cpp]
+----
+include::example$snippets/4m_synchronization.cpp[tag=mutex,indent=0]
+----
+
+Check `ec` before you use the resource.
+A canceled wait returns a guard that holds no lock.
+The `lock()` call and `unlock()` are also available, but a guard releases the lock on every path out of the scope.
+
+xref:8.examples/8l.async-mutex.adoc[Async Mutex] compares a mutex to a strand.
+
+== `async_waker`
+
+A waker has one waiter at a time.
+Any thread calls `wake()`, and the waiter resumes on its own executor.
+It suits timers and events that come from outside Capy, where you provide the thread and the clock.
+
+[source,cpp]
+----
+include::example$snippets/4m_synchronization.cpp[tag=waker,indent=0]
+----
+
+Any thread may call `wake()`:
+
+[source,cpp]
+----
+include::example$snippets/4m_synchronization.cpp[tag=waker_cross_thread,indent=0]
+----
+
+A wake with no waiter is latched as one pending token, and the next `wait()` consumes it at once.
+The wake-before-wait race is therefore harmless.
+Wakes collapse instead of counting.
+Two wakes with no waiter give one immediate `wait()`, and a second `wait()` suspends until a third wake.
+
+A wake that loses a race against cancellation is kept for the next `wait()` instead of being dropped.
+Only one coroutine may wait at a time.
+A coroutine that was woken but has not resumed yet still counts as waiting.
+
+xref:8.examples/8f.timeout-cancellation.adoc[Timeout with Cancellation] uses a waker as the clock for a timeout.
+When a stop request cancels the wait, a cpp:quitter[] needs no error check, as xref:4.coroutines/4l.quitter.adoc[The quitter Type] shows.
+
+== Rules Common to All Three
+
+Run the waiters of a primitive on one single-threaded executor, or on a strand over a pool.
+Only cpp:async_waker::wake[wake] is safe to call from another thread.
+Every other operation must stay on the waiters' executor.
+
+A stop request cancels a waiter only while it is queued.
+The wait then completes with an error that compares equal to cpp:cond::canceled[cond::canceled].
+The stop token is the one in the waiter's environment, which xref:4.coroutines/4f.cancellation.adoc[the cancellation page] describes.
+
+If the primitive is already available, the operation succeeds even when a stop is already requested.
+A set event completes its wait, and a free mutex grants its lock.
+A waker with a latched token completes its wait.
+
+Waiting allocates nothing.
+They are neither copyable nor movable, because queued waiters point into them.
+
+Always `co_await` the call expression directly, as in `co_await ready.wait()`.
+Do not store, move, or construct an awaiter yourself.
+
+Destroying an event or a mutex cancels every waiter still queued, and destroying a waker cancels its waiter.
+Destroy a mutex only when no coroutine holds the lock.
+xref:4.coroutines/4j.lifetimes.adoc[Lifetime and Ownership] covers keeping an object alive for as long as the coroutines that use it.

@@ -79,7 +79,8 @@ include::example$snippets/4c_launching.cpp[tag=handlers,indent=0]
 
 When no result handler is provided, the result is discarded. An exception
 that goes unhandled (no error handler was supplied, or a handler let one
-escape) calls `std::terminate`. To react to an error, pass an error handler;
+escape) calls `std::terminate`. A stopped quitter is the exception: see
+xref:4.coroutines/4l.quitter.adoc#shutdown[The Shutdown Pattern]. To react to an error, pass an error handler;
 it receives the `std::exception_ptr` and should handle it in place rather
 than rethrowing. To catch an error, `co_await` the work inside a coroutine
 and use `try`/`catch` rather than starting it fire-and-forget.

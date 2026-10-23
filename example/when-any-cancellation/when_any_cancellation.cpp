@@ -11,30 +11,30 @@
    when_any cancellation example
 
    Demonstrates how when_any automatically cancels sibling tasks
-   after the first task completes. The key points:
+   after the first child succeeds. The key points:
 
-   1. when_any races N tasks and returns when the first completes
-   2. It immediately requests stop for all remaining siblings
+   1. when_any races N tasks; the first child to succeed wins
+   2. It then requests stop for all remaining siblings
    3. Tasks must cooperatively check their stop token to exit early
-   4. All tasks finish (cancelled or not) before when_any returns
+   4. when_any returns only after every child has finished
 
    The example simulates three data sources with different latencies.
    The fastest source wins, and the slower ones observe the stop
    signal and bail out early.
 */
 
+// tag::full[]
 #include <boost/capy.hpp>
 #include <boost/capy/ex/this_coro.hpp>
-#include <boost/capy/test/run_blocking.hpp>
 #include <chrono>
 #include <iostream>
 #include <latch>
 #include <string>
 #include <thread>
-#include <vector>
 
 namespace capy = boost::capy;
 
+// tag::fetch[]
 // Simulates a data source that takes `steps` iterations to produce a result.
 // Each step checks the stop token so the task exits promptly when cancelled.
 capy::task<capy::results<std::string>> fetch_from_source(
@@ -48,7 +48,8 @@ capy::task<capy::results<std::string>> fetch_from_source(
         {
             std::cout << "  [" << name << "] cancelled at step "
                       << i << "/" << steps << "\n";
-            co_return capy::results<std::string>{std::error_code(), name + ": cancelled"};
+            co_return capy::results<std::string>{
+                capy::make_error_code(capy::error::canceled), {}};
         }
 
         // Simulate work
@@ -61,7 +62,9 @@ capy::task<capy::results<std::string>> fetch_from_source(
 
     co_return capy::results<std::string>{std::error_code(), name + ": done"};
 }
+// end::fetch[]
 
+// tag::race[]
 // Race three sources — the fastest one wins, the rest get cancelled.
 capy::task<> race_data_sources()
 {
@@ -84,38 +87,10 @@ capy::task<> race_data_sources()
         }, result);
     }
 }
+// end::race[]
 
-// A void task that loops until stopped.
-// Useful for background workers that run indefinitely.
-capy::task<capy::results<>> background_worker(std::string name, int step_ms)
-{
-    auto token = co_await capy::this_coro::stop_token;
-    int iteration = 0;
-
-    while (!token.stop_requested())
-    {
-        std::this_thread::sleep_for(
-            std::chrono::milliseconds(step_ms));
-        ++iteration;
-        std::cout << "  [" << name << "] tick " << iteration << "\n";
-    }
-
-    std::cout << "  [" << name << "] stopped after "
-              << iteration << " iterations\n";
-    co_return capy::results<>{};
-}
-
-// A task that finishes after a fixed delay (acts as a timeout).
-capy::task<capy::results<>> timeout(int ms)
-{
-    std::this_thread::sleep_for(
-        std::chrono::milliseconds(ms));
-    std::cout << "  [timeout] expired after " << ms << "ms\n";
-    co_return capy::results<>{};
-}
-
-// Race three replicas using variadic overload.
-capy::task<> race_vector_of_sources()
+// Race three replicas using the variadic overload.
+capy::task<> race_replicas()
 {
     std::cout << "\n=== Racing three replicas ===\n\n";
 
@@ -138,7 +113,7 @@ capy::task<> race_vector_of_sources()
 capy::task<> run_demos()
 {
     co_await race_data_sources();
-    co_await race_vector_of_sources();
+    co_await race_replicas();
 }
 
 int main()
@@ -160,3 +135,4 @@ int main()
     done.wait();
     return 0;
 }
+// end::full[]
