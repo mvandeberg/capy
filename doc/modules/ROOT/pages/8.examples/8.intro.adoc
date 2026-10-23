@@ -48,3 +48,9 @@ It lists what to read next for application developers, framework authors, and I/
   Boost.Asio operations directly through a `use_capy` completion token.
 * xref:8.examples/8q.gui-integration.adoc[GUI Integration] -- Running a Capy coroutine on
   a GUI event loop, resuming on the GUI thread to update widgets.
+* xref:8.examples/8r.quitter-shutdown.adoc[Quitter Shutdown] -- Stopping worker
+  coroutines on Ctrl+C with `quitter`, using a signal handler that only sets a flag.
+* xref:8.examples/8s.when-any-cancellation.adoc[When-Any Cancellation] -- Racing tasks
+  with `when_any` and stopping the losers by polling their stop token.
+* xref:8.examples/8t.more-examples.adoc[More Examples] -- The asio, P2300, fabric and CUDA
+  examples that have no walkthrough page, and what each one needs.

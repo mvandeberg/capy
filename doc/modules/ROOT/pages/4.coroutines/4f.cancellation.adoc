@@ -193,6 +193,8 @@ When cancellation causes an operation to fail, the conventional error code is cp
 include::example$snippets/4f_cancellation.cpp[tag=canceled_convention,indent=0]
 ----
 
+When the only response to a stop is to exit, xref:4.coroutines/4l.quitter.adoc[The quitter Type] removes these checks from the body.
+
 == OS Integration
 
 When Capy's I/O is provided by Corosio, requesting stop cancels work in progress rather than waiting for the operation to finish on its own. Corosio cancels the pending operation through whatever backend is active for the platform, and it resolves promptly with `std::errc::operation_canceled`.

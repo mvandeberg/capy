@@ -32,7 +32,9 @@
    and throws a sentinel exception that unwinds through RAII destructors
    to final_suspend.  The parent sees a "stopped" completion.
 
-   See doc/quitter.md for the full design rationale. */
+   See "The quitter Type" in the manual
+   (doc/modules/ROOT/pages/4.coroutines/4l.quitter.adoc) for the design
+   rationale. */
 
 namespace boost {
 namespace capy {

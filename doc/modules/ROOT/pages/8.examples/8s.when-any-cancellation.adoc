@@ -1,0 +1,112 @@
+//
+// Copyright (c) 2026 Michael Vandeberg
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+// Official repository: https://github.com/cppalliance/capy
+//
+
+= When-Any Cancellation
+:page-mode: how-to
+
+Racing tasks with cpp:when_any[] and letting the losers stop early by polling their stop token.
+
+== What This Example Shows
+
+* Racing several tasks and taking the first one that succeeds
+* Reading `this_coro::stop_token` and polling it between steps
+* Reporting a cancelled loser as `error::canceled`
+* Waiting for every child before `when_any` returns
+
+== Source Code
+
+[source,cpp]
+----
+include::example$when-any-cancellation/when_any_cancellation.cpp[tag=full]
+----
+
+== Build
+
+[source,cmake,role=external]
+----
+add_executable(capy_example_when_any_cancellation when_any_cancellation.cpp)
+target_link_libraries(capy_example_when_any_cancellation PRIVATE Boost::capy)
+----
+
+== Walkthrough
+
+=== The Source
+
+[source,cpp]
+----
+include::example$when-any-cancellation/when_any_cancellation.cpp[tag=fetch,indent=0]
+----
+
+Each source reads its stop token once with `co_await capy::this_coro::stop_token`. It then polls the token before every step. A task that never polls cannot stop early, so it runs to the end even after another task has won.
+
+The cancelled branch returns `error::canceled` with an empty payload, so a canceled result is never mistaken for a success. Only a child that returns a zero `ec` can win the race. Here the stop comes from `when_any` itself, after the winner exists, so the winner is already fixed. If something outside stopped the whole `when_any` before any child finished, a canceled child that returned a zero `ec` could win.
+
+NOTE: The `sleep_for` call blocks a pool thread. It only stands in for work. With fewer pool threads than sources, the sources run one after another and the race is no longer a race. For real waits, use an awaitable such as cpp:async_waker[]. See xref:4.coroutines/4m.synchronization.adoc[Coroutine Synchronization].
+
+=== The Race
+
+[source,cpp]
+----
+include::example$when-any-cancellation/when_any_cancellation.cpp[tag=race,indent=0]
+----
+
+cpp:when_any[] starts all three sources. When `source_a` returns a zero `ec`, it wins. `when_any` then requests stop for the other two. Errors and exceptions never claim the win.
+
+`when_any` does not return when the winner finishes. It returns after every child has finished. The losers see the stop request at their next poll, log a cancellation, and return. The call therefore takes as long as the slowest poll, not the slowest source.
+
+The result is a variant. Index 0 holds an `error_code` when no child won. Any other index holds the winner's payload. See xref:4.coroutines/4g.composition.adoc[Concurrent Composition] for the full rules.
+
+The second race, `race_replicas`, uses the same variadic overload with three replicas. The fastest replica wins.
+
+== Output
+
+Output order depends on thread scheduling. This is a representative run. Lines from different sources can interleave in the middle of a line, because the example writes to `std::cout` without a lock.
+
+[role=output]
+----
+=== Racing three data sources ===
+
+  [source_a] completed step 1/2
+  [source_b] completed step 1/5
+  [source_c] completed step 1/8
+  [source_a] completed step 2/2
+  [source_b] completed step 2/5
+  [source_c] completed step 2/8
+  [source_b] completed step 3/5
+  [source_b] cancelled at step 3/5
+  [source_c] completed step 3/8
+  [source_c] cancelled at step 3/8
+
+Winner: "source_a: done"
+
+=== Racing three replicas ===
+
+  [replica_1] completed step 1/6
+  [replica_2] completed step 1/3
+  [replica_3] completed step 1/5
+  ...
+  [replica_2] completed step 3/3
+  [replica_3] completed step 3/5
+  [replica_3] cancelled at step 3/5
+  [replica_1] completed step 4/6
+  [replica_1] cancelled at step 4/6
+
+Fastest replica: "replica_2: done"
+----
+
+== Exercises
+
+1. Change `source_b` to run 1 step and confirm that it wins and the others cancel.
+2. Remove the stop check from `source_c` and observe how long the race takes.
+
+== Next Steps
+
+* xref:4.coroutines/4g.composition.adoc[Concurrent Composition] -- `when_all` and `when_any`
+* xref:8.examples/8f.timeout-cancellation.adoc[Timeout with Cancellation] -- Cancelling work with a timer
+* xref:4.coroutines/4m.synchronization.adoc[Coroutine Synchronization] -- Events, mutexes, and wakers

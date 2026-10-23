@@ -1,0 +1,130 @@
+//
+// Copyright (c) 2026 Michael Vandeberg
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+// Official repository: https://github.com/cppalliance/capy
+//
+
+= Quitter Shutdown
+:page-mode: how-to
+
+Shutting down worker coroutines on Ctrl+C with cpp:quitter[], with a signal handler that is safe to run.
+
+== What This Example Shows
+
+* Writing workers as cpp:quitter[] coroutines with no cancellation checks
+* Releasing resources through RAII when a stop request arrives
+* Turning a signal into a stop request without calling unsafe functions in the handler
+* Giving each cpp:async_waker[] its own cpp:strand[]
+
+== Source Code
+
+[source,cpp]
+----
+include::example$quitter-shutdown/quitter_shutdown.cpp[tag=full]
+----
+
+== Build
+
+[source,cmake,role=external]
+----
+add_executable(capy_example_quitter_shutdown quitter_shutdown.cpp)
+target_link_libraries(capy_example_quitter_shutdown PRIVATE Boost::capy)
+----
+
+== Walkthrough
+
+=== The Signal Handler
+
+[source,cpp]
+----
+include::example$quitter-shutdown/quitter_shutdown.cpp[tag=signal,indent=0]
+----
+
+A signal handler may interrupt any instruction, including one that holds a lock. `std::stop_source::request_stop()` runs stop callbacks. Those callbacks post work to the thread pool under a lock, so calling `request_stop()` from the handler can deadlock.
+
+The handler therefore stores to a lock-free `std::atomic<bool>` and does nothing else. A plain or `volatile` flag would be a data race with the ticker thread. It does not read the clock either. The ticker thread turns the flag into a stop request, as shown below.
+
+=== The Resource Guard
+
+[source,cpp]
+----
+include::example$quitter-shutdown/quitter_shutdown.cpp[tag=guard,indent=0]
+----
+
+The guard stands in for a file handle or socket. Its destructor logs and counts the cleanup, so the output proves that every worker released its resources.
+
+=== The Worker
+
+[source,cpp]
+----
+include::example$quitter-shutdown/quitter_shutdown.cpp[tag=worker,indent=0]
+----
+
+The worker has no `ec` checks. When a stop is requested, the next `co_await` does not resume the body. The coroutine unwinds instead, and the guard's destructor runs.
+
+With cpp:task[], each `co_await` would need an `if(ec) co_return;` after it. See xref:4.coroutines/4l.quitter.adoc[The quitter Type] for when to prefer each type.
+
+=== Starting the Workers
+
+[source,cpp]
+----
+include::example$quitter-shutdown/quitter_shutdown.cpp[tag=launch,indent=0]
+----
+
+Each worker runs on its own strand and shares the global stop token. Both handlers count down the latch.
+
+A stopped quitter reaches the error handler of cpp:run_async[], not the value handler. If only the value handler counted down, the program would hang on shutdown. See xref:4.coroutines/4l.quitter.adoc#shutdown[The Shutdown Pattern] for the full rules. To tell a shutdown from a real failure, check your stop token inside the error handler.
+
+=== The Ticker
+
+[source,cpp]
+----
+include::example$quitter-shutdown/quitter_shutdown.cpp[tag=ticker,indent=0]
+----
+
+The ticker thread plays the clock. Every 50 ms it wakes each worker's waker. It also polls the signal flag. On first sight of the flag it records the time and calls `request_stop()`, outside any signal context.
+
+Each worker has one waker, and each waker has one waiter at a time. Each worker also runs on its own strand, so the resumptions of one waker never overlap. See xref:4.coroutines/4m.synchronization.adoc[Coroutine Synchronization] for the waker rules.
+
+== Output
+
+Output order depends on thread scheduling. The latency runs from the call to `request_stop()` until every worker has finished. The ticker notices the signal within one 50 ms pass, but that delay is not part of the figure.
+
+[role=output]
+----
+Starting 4 workers.  Press Ctrl+C to quit.
+
+  [worker 3] acquired resources
+  [worker 0] acquired resources
+  [worker 1] acquired resources
+  [worker 2] acquired resources
+  [worker 0] processing item 0
+  [worker 1] processing item 0
+  [worker 2] processing item 0
+  [worker 3] processing item 0
+  ...
+  [worker 3] released resources (cleanup)
+  [worker 0] released resources (cleanup)
+  [worker 1] released resources (cleanup)
+  [worker 2] released resources (cleanup)
+
+Shutdown complete.
+  Items processed: 36
+  Workers cleaned up: 4/4
+  Shutdown latency: 233 us
+----
+
+== Exercises
+
+1. Add a third `co_await` to the worker and confirm that the cleanup count stays at 4.
+2. Wrap a `co_await` in `try`/`catch(...)` and observe what the stop does. See the pitfall in xref:4.coroutines/4l.quitter.adoc[The quitter Type].
+3. In the error handler, check `g_stop.stop_requested()` and log only real failures.
+
+== Next Steps
+
+* xref:4.coroutines/4l.quitter.adoc[The quitter Type] -- The type, its stop behavior, and its design notes
+* xref:4.coroutines/4m.synchronization.adoc[Coroutine Synchronization] -- Events, mutexes, and wakers
+* xref:8.examples/8l.async-mutex.adoc[Async Mutex] -- FIFO locking between coroutines

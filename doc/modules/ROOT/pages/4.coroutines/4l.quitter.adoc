@@ -1,0 +1,166 @@
+//
+// Copyright (c) 2026 Michael Vandeberg
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+// Official repository: https://github.com/cppalliance/capy
+//
+
+= The quitter Type
+:page-mode: explanation
+
+A cpp:quitter[quitter<T>] works like a cpp:task[task<T>], with one difference.
+A stop request unwinds the body of a quitter, instead of handing the body an error code to check.
+The type is declared in:
+
+[source,cpp]
+----
+include::example$snippets/4l_quitter.cpp[tag=include_quitter]
+----
+
+Everything else matches xref:4.coroutines/4b.tasks.adoc[The task Type].
+That includes frame allocation and the propagation of the environment.
+The same launchers start a quitter, such as cpp:run_async[] and cpp:run[].
+
+== When to Prefer quitter Over task
+
+[cols="1a,1a",options="header"]
+|===
+| Choose a task when the body must see cancellation
+| Choose a quitter when the only response to a stop is to exit
+
+|
+* The body keeps partial results.
+* The body retries the operation.
+* The body returns a value that reports cpp:cond::canceled[cond::canceled].
+* The cleanup itself must `co_await`.
+|
+* A server shuts down.
+* A worker loop exits.
+* A GUI closes all of its windows.
+|===
+
+Stopping costs a few internal throws and catches, once for each quitter that stops, not for each operation.
+A quitter also reads its stop token after each awaited operation.
+
+== What a Stop Request Does
+
+A quitter checks its stop token before the first statement of its body.
+It checks again each time an awaited operation resumes the body.
+The check also runs when the operation was already complete, and the body did not suspend.
+
+If a stop is requested, the body does not resume.
+An internal sentinel exception unwinds it instead, so the destructors of its local objects run.
+The stop request stays in effect, so every later `co_await` in the body stops it again.
+Cleanup that must `co_await` after a stop therefore cannot run in the body of a quitter.
+
+The `co_await this_coro::...` queries, such as cpp:this_coro::stop_token[this_coro::stop_token], are the exception.
+They never suspend and never check the stop token, so the body continues past them.
+
+The worker below loops until a stop request ends it.
+It has no exit condition, and it does not check an `ec` after its `co_await`:
+
+[source,cpp]
+----
+include::example$snippets/4l_quitter.cpp[tag=worker,indent=0]
+----
+
+When a stop arrives during the wait, the body never resumes after the `co_await`.
+The destructor of `conn` still runs.
+
+[#shutdown]
+== The Shutdown Pattern
+
+Start the quitter with the stop token of a `std::stop_source` that you own.
+To shut down, call `request_stop()` on that source:
+
+[source,cpp]
+----
+include::example$snippets/4l_quitter.cpp[tag=launch,indent=0]
+----
+
+A stopped quitter does not reach the value handler.
+cpp:run_async[] calls the error handler instead (given two handlers), with an `exception_ptr` to an internal sentinel exception.
+With no handlers, cpp:run_async[] discards the stop silently and nothing terminates.
+A single handler that cannot take an `exception_ptr` never runs, and the stop is discarded.
+A single handler that accepts an `exception_ptr`, such as `[](auto&&...)`, receives the sentinel.
+Capy has no public type that identifies this exception.
+To tell a shutdown from a failure, check your own stop token, as `on_error` does.
+An error handler that logs every `exception_ptr` as a failure also logs every shutdown as a failure.
+
+xref:8.examples/8r.quitter-shutdown.adoc[Quitter Shutdown] shows the pattern in a complete program.
+
+== Mixing quitter and task
+
+A quitter that awaits a stopped quitter stops too.
+A task that awaits a stopped quitter sees an exception, thrown from its `co_await`:
+
+[source,cpp]
+----
+include::example$snippets/4l_quitter.cpp[tag=mixing,indent=0]
+----
+
+A catch handler cannot `co_await`, so `supervisor` reads its stop token before the `try`.
+
+cpp:when_all[] handles a stopped quitter child like any child that throws.
+After every child finishes, it rethrows the first child exception to its awaiter.
+
+cpp:when_any[] never lets an exception claim the win, so a quitter that stops cannot win.
+If every child is a quitter that stops, each failure is an exception, and the awaiter sees one of them rethrown.
+If the failed children mix exceptions with error codes, the awaiter gets one of the failures.
+It is either an `error_code` at variant index 0 or a rethrown exception, and which one is unspecified.
+
+== Pitfall: catch(...) in the Body
+
+A catch-all handler around a `co_await` catches the stop:
+
+[source,cpp]
+----
+include::example$snippets/4l_quitter.cpp[tag=catch_all,indent=0]
+----
+
+The sentinel exception is thrown inside the body, so the body's own `catch(...)` catches it.
+The body then runs on to its next `co_await`, which stops it again.
+Rethrow from the handler, or keep `catch(...)` out of any scope that contains a `co_await`.
+
+[#design-notes]
+== Design Notes
+
+Ville Voutilainen identified the case behind quitter: an application that shuts down must end every coroutine without an `ec` check after each `co_await`.
+The sender model handles that case with `set_stopped`, and the coroutine never resumes.
+A task resumes with an error code instead, and its body must handle it.
+
+=== Why a Separate Type
+
+The coroutine type is a policy point.
+A body that wants explicit error handling uses a task.
+A body that wants a stop request to end it uses a quitter.
+The ContextAwaitable protocol does not require a particular coroutine type, so both types work with the same I/O awaitables and combinators.
+
+=== Why It Throws
+
+An exception is the only way for an awaiter to end the body, run its destructors, and still reach the final suspend point.
+The promise's `unhandled_exception` catches the sentinel and records a stopped completion.
+The promise keeps the sentinel as its stored exception, so cpp:run_async[] passes it to the error handler.
+The cost is a few internal throws and catches, once for each quitter that stops, not for each operation.
+
+Destroying the coroutine handle from outside also runs the destructors.
+The parent then loses the completion signal.
+The internal throw keeps the completion structured: the parent resumes and sees a stopped completion.
+
+=== Why the Check Runs in `await_resume`
+
+The awaiter's `await_suspend` starts the awaited operation, and a stop can arrive at any time after that.
+A check in `await_suspend` would miss a stop that arrives while the coroutine is suspended.
+So the check must run when the body resumes, in `await_resume`.
+`await_resume` runs whether or not the coroutine suspended.
+It therefore also catches a stop requested before an operation that was already complete.
+The check runs before the body sees the result of the operation.
+
+=== Why `initial_suspend` Checks Too
+
+A quitter can start after a stop is already requested.
+Without a check at the start, the body would run until its first `co_await`.
+So the `await_resume` of the `initial_suspend` awaiter checks the stop token too, and the first statement never runs.
+That `await_resume` can throw, and `unhandled_exception` records the stop as for any other resume.
