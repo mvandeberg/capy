@@ -13,6 +13,7 @@
 #include <boost/capy/buffers/make_buffer.hpp>
 #include <boost/capy/error.hpp>
 #include <boost/capy/ex/abandon.hpp>
+#include <boost/capy/ex/async_mutex.hpp>
 #include <boost/capy/ex/async_waker.hpp>
 #include <boost/capy/ex/await_context.hpp>
 #include <boost/capy/ex/run_async.hpp>
@@ -39,6 +40,12 @@
 #include <thread>
 #include <type_traits>
 #include <variant>
+
+// GCC gives false positive -Wmaybe-uninitialized on structured bindings
+// via the tuple protocol inside coroutine frames.
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
 
 namespace boost {
 namespace capy {
@@ -999,6 +1006,100 @@ struct quitter_test
     }
 
     //----------------------------------------------------------
+    // 16. A stop never discards what the inner await_ready acquired
+    //
+    //    async_mutex's await_ready takes the lock when the mutex is
+    //    free. A stop pending at the co_await must leave the inner
+    //    awaitable untouched, and once the inner awaitable reports
+    //    ready, its await_resume must run so that what it acquired is
+    //    handed over.
+    //----------------------------------------------------------
+
+    static quitter<>
+    lock_after_stop(async_mutex& mtx, std::stop_source& source)
+    {
+        source.request_stop();
+        auto [ec, guard] = co_await mtx.scoped_lock();
+        (void)ec;
+    }
+
+    // The stop is already pending when the body reaches the co_await.
+    void
+    testStopPendingLeavesMutexUntouched()
+    {
+        int dispatch_count = 0;
+        test_executor ex(dispatch_count);
+
+        async_mutex mtx;
+        std::stop_source source;
+        bool completed = false;
+        int stopped = 0;
+
+        run_async(ex, source.get_token(),
+            [&]() { completed = true; },
+            [&](std::exception_ptr) { ++stopped; })(
+                lock_after_stop(mtx, source));
+
+        BOOST_TEST(!mtx.is_locked());
+        BOOST_TEST(!completed);
+        BOOST_TEST_EQ(stopped, 1);
+    }
+
+    // Reports ready, and requests the stop from inside await_ready, so
+    // the stop arrives after the inner awaitable has completed.
+    struct stop_while_ready_awaitable
+    {
+        std::stop_source& source;
+        bool& resumed;
+
+        bool await_ready() noexcept
+        {
+            source.request_stop();
+            return true;
+        }
+
+        std::coroutine_handle<>
+        await_suspend(
+            std::coroutine_handle<> h, await_context const*) noexcept
+        {
+            return h; // LCOV_EXCL_LINE never called: await_ready is true
+        }
+
+        void await_resume() noexcept
+        {
+            resumed = true;
+        }
+    };
+
+    static quitter<>
+    ready_then_stop(std::stop_source& source, bool& resumed)
+    {
+        co_await stop_while_ready_awaitable{source, resumed};
+    }
+
+    void
+    testReadyThenStopRunsAwaitResume()
+    {
+        int dispatch_count = 0;
+        test_executor ex(dispatch_count);
+
+        std::stop_source source;
+        bool resumed = false;
+        bool completed = false;
+        int stopped = 0;
+
+        run_async(ex, source.get_token(),
+            [&]() { completed = true; },
+            [&](std::exception_ptr) { ++stopped; })(
+                ready_then_stop(source, resumed));
+
+        BOOST_TEST(resumed);
+        // Nothing suspends after the co_await, so the body finishes.
+        BOOST_TEST(completed);
+        BOOST_TEST_EQ(stopped, 0);
+    }
+
+    //----------------------------------------------------------
     // 13. Echo server with shutdown
     //
     //    A quitter echo loop over a mock stream pair.
@@ -1123,6 +1224,8 @@ struct quitter_test
         testWakerCancellation();
         testCatchAfterRmwAwaitReady();
         testCatchStopAfterRmwAwaitReady();
+        testStopPendingLeavesMutexUntouched();
+        testReadyThenStopRunsAwaitResume();
         testEchoWithShutdown();
     }
 };

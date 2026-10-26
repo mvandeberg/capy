@@ -330,9 +330,12 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
             Forwards the environment to the inner awaitable's
             environment-taking `await_suspend` and restores the
             thread-local frame allocator before the body resumes. Unlike
-            `task`'s, it also checks the stop token on resumption. A
-            pending stop request throws the internal sentinel, so the body
-            unwinds before it observes the I/O result.
+            `task`'s, it also checks the stop token. A stop pending before
+            the wrapped awaitable is touched, or on resumption after an
+            asynchronous completion, throws the internal sentinel. The
+            body then unwinds before it observes the operation's result.
+            A synchronous completion is always handed over through the
+            wrapped awaitable's `await_resume`.
 
             @tparam Awaitable The awaitable being transformed.
         */
@@ -345,27 +348,44 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
             /// The promise of the coroutine performing the `co_await`.
             promise_type* p_;
 
-            /** Report whether the wrapped awaitable is already complete.
+            /// True when a stop was pending at the `co_await`, so the
+            /// wrapped awaitable was never touched.
+            bool skipped_ = false;
 
-                The stop token is not checked here. A stop request that
-                arrives before an already-complete operation is observed by
-                @ref await_resume, which runs in either case.
+            /// True when the wrapped awaitable completed synchronously, so
+            /// its `await_resume` must run to hand over what it acquired.
+            bool completed_ = false;
+
+            /** Report whether the `co_await` can continue without
+                suspending.
+
+                The stop token is checked first. If a stop is pending, the
+                wrapped awaitable is never touched: this returns `true`, and
+                @ref await_resume throws. Otherwise the wrapped awaitable's
+                own `await_ready` decides. A `true` result there means it
+                completed synchronously, so @ref await_resume calls its
+                `await_resume` even if a stop arrives afterwards. That hands
+                over anything it acquired, such as `async_mutex`'s lock.
 
                 Where `BOOST_CAPY_SYMMETRIC_TRANSFER_WORKAROUND` is on,
-                this always returns `false`, and @ref await_suspend asks
-                the wrapped awaitable instead. See
-                `detail::await_ready_then_suspend`.
+                this always returns `false`, and @ref await_suspend does both
+                steps instead. See `detail::await_ready_then_suspend`.
 
-                @return The wrapped awaitable's own `await_ready` result:
-                `true` if no suspension is needed. Always `false` where
-                the workaround is on.
+                @return `true` if no suspension is needed. Always `false`
+                where the workaround is on.
             */
             bool await_ready() noexcept
             {
 #if BOOST_CAPY_SYMMETRIC_TRANSFER_WORKAROUND
                 return false;
 #else
-                return a_.await_ready();
+                if(p_->environment()->stop_token.stop_requested())
+                {
+                    skipped_ = true;
+                    return true;
+                }
+                completed_ = a_.await_ready();
+                return completed_;
 #endif
             }
 
@@ -373,29 +393,33 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
                 wrapped awaitable.
 
                 Reinstalls the thread-local frame allocator from the stored
-                environment, then reads the environment's stop token. If a
-                stop request is pending, the internal sentinel exception is
-                thrown from here. The body therefore never observes the
-                operation's result. It unwinds through its RAII destructors
-                to a stopped completion. This is the one place `quitter`
-                differs from @ref task::promise_type::transform_awaiter.
+                environment. The internal sentinel exception is then thrown
+                in two cases: a stop was pending before the wrapped
+                awaitable was touched, or a stop is pending now and the
+                wrapped awaitable completed asynchronously. The body
+                therefore never observes that operation's result, and
+                unwinds through its RAII destructors to a stopped
+                completion. A wrapped awaitable that completed
+                synchronously always has its `await_resume` called, and the
+                stop takes effect at the next `co_await`. This is the one
+                place `quitter` differs from
+                @ref task::promise_type::transform_awaiter.
 
                 @return The wrapped awaitable's await-result, forwarded
-                unchanged, when no stop request is pending.
+                unchanged, when no sentinel is thrown.
 
                 @par Exception Safety
-                Throws the library's internal stop sentinel if the
-                environment's stop token has a stop request pending. The
-                wrapped awaitable's `await_resume` is not called in that
-                case.
+                Throws the library's internal stop sentinel in the two cases
+                above. The wrapped awaitable's `await_resume` is not called
+                in either of them.
             */
-            // Check the stop token BEFORE the coroutine body
-            // sees the result of the I/O operation.
             decltype(auto) await_resume()
             {
                 set_current_frame_allocator(
                     p_->environment()->frame_allocator);
-                if(p_->environment()->stop_token.stop_requested())
+                if(skipped_ ||
+                    (!completed_ &&
+                     p_->environment()->stop_token.stop_requested()))
                     throw detail::stop_requested_exception{};
                 return a_.await_resume();
             }
@@ -406,11 +430,11 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
                 This is the plain `await_suspend` the compiler calls for the
                 nested `co_await`. It forwards to the wrapped awaitable's
                 @ref ContextAwaitable overload, supplying the promise's stored
-                environment as the second argument. It then hands back
-                that call's result unchanged, so the wrapped awaitable's
-                suspension decision, whatever form it takes, is preserved.
-                The stop token is not checked here; @ref await_resume checks
-                it on the way back out.
+                environment as the second argument. It keeps the wrapped
+                awaitable's suspension decision, whatever form it takes.
+                When that decision is to continue without suspending, the
+                wrapped awaitable completed synchronously, and
+                @ref await_resume will call its `await_resume`.
 
                 @param h The coroutine performing the `co_await`.
 
@@ -418,12 +442,11 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
                 returns. When that is a `std::coroutine_handle<>`, the
                 handle is routed through `detail::symmetric_transfer`.
                 Where `BOOST_CAPY_SYMMETRIC_TRANSFER_WORKAROUND` is on,
-                this function instead returns `bool` from
-                `detail::await_ready_then_suspend`. It first asks the
-                wrapped awaitable's `await_ready`. When that reports
-                ready, it returns `false` to continue without
-                suspending. Otherwise it resumes any returned handle on
-                the current stack and returns `true`. Where the
+                this function instead returns `bool`. It first checks the
+                stop token, as @ref await_ready does where the workaround is
+                off, and returns `false` without touching the wrapped
+                awaitable if a stop is pending. Otherwise it returns the
+                result of `detail::await_ready_then_suspend`. Where the
                 workaround is off, a returned handle is passed back
                 unchanged for symmetric transfer.
             */
@@ -431,19 +454,45 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
             auto await_suspend(
                 std::coroutine_handle<Promise> h) noexcept
             {
+                // completed_ is written only where nothing else can have
+                // resumed this frame: a frame that really suspended may
+                // already be running, or gone, on another thread.
 #if BOOST_CAPY_SYMMETRIC_TRANSFER_WORKAROUND
-                return detail::await_ready_then_suspend(
-                    a_, h, p_->environment());
+                if(p_->environment()->stop_token.stop_requested())
+                {
+                    skipped_ = true;
+                    return false;
+                }
+                if(!detail::await_ready_then_suspend(
+                    a_, h, p_->environment()))
+                {
+                    completed_ = true;
+                    return false;
+                }
+                return true;
 #else
                 using R = decltype(
                     a_.await_suspend(h, p_->environment()));
                 if constexpr (std::is_same_v<
                     R, std::coroutine_handle<>>)
+                {
                     return detail::symmetric_transfer(
                         a_.await_suspend(h, p_->environment()));
+                }
+                else if constexpr (std::is_same_v<R, bool>)
+                {
+                    if(!a_.await_suspend(h, p_->environment()))
+                    {
+                        completed_ = true;
+                        return false;
+                    }
+                    return true;
+                }
                 else
+                {
                     return a_.await_suspend(
                         h, p_->environment());
+                }
 #endif
             }
         };
