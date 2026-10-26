@@ -116,13 +116,18 @@ struct quitter_base
 
 struct segment
 {
-    struct promise_type : capy::frame_alloc_mixin
+    // Not the chain's frame allocator: after a teardown this frame is freed
+    // once the parent has been abandoned, when that allocator may be gone
+    // (spec §3.7). This is what run's boundary_trampoline uses.
+    struct promise_type : capy::detail::process_frame_mixin
     {
         capy::chain_owner owner_;
         capy::await_context env_;
         capy::continuation parent_;
         std::coroutine_handle<> target_;
         quitter_base* q_ = nullptr;
+        // The quitter's handle to this frame.
+        segment* holder_ = nullptr;
         bool stopped_ = false;
         // An unwind is still owed. Cleared before the parent is resumed
         // or abandoned, and by the quitter when it destroys the segment.
@@ -135,6 +140,9 @@ struct segment
             if(active_)
             {
                 active_ = false;
+                // This frame is going away: the quitter must not destroy it
+                // again when the parent's unwind reaches it.
+                holder_->h_ = nullptr;
                 destroy_top();
                 auto parent = parent_;
                 capy::abandon(parent);
@@ -488,6 +496,7 @@ struct [[nodiscard]] quitter : detail::quitter_base
         sp.parent_.h = cont;
         sp.parent_.owner = env->owner;
         sp.q_ = this;
+        sp.holder_ = &seg_;
         sp.active_ = true;
         auto& p = promise();
         p.seg_ = &sp;

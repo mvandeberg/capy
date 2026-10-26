@@ -16,6 +16,7 @@
 #include <boost/capy/ex/await_context.hpp>
 #include <boost/capy/ex/execution_context.hpp>
 #include <boost/capy/ex/run_async.hpp>
+#include <boost/capy/ex/this_coro.hpp>
 #include <boost/capy/quitter.hpp>
 #include <boost/capy/results.hpp>
 #include <boost/capy/task.hpp>
@@ -23,8 +24,10 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdio>
+#include <cstdlib>
 #include <iomanip>
 #include <iostream>
+#include <memory_resource>
 #include <stop_token>
 #include <system_error>
 #include <tuple>
@@ -315,10 +318,13 @@ task<> parent(Q q, seen& s)
 }
 
 // Runs `t` until nothing is queued, requests the stop, and drains again.
+// Frames come from new_delete_resource, not the recycling allocator, so
+// that ASan sees a frame used after it was freed.
 void
 run_then_stop(queue_context& ctx, std::stop_source& ss, task<> t)
 {
-    run_async(ctx.get_executor(), ss.get_token())(std::move(t));
+    run_async(ctx.get_executor(), ss.get_token(),
+        std::pmr::new_delete_resource())(std::move(t));
     ctx.run();
     ss.request_stop();
     ctx.run();
@@ -528,6 +534,133 @@ check_ready_then_stop_runs_await_resume()
     return s.resumed && s.ec == cond::canceled && resumed && !reached;
 }
 
+struct counted_guard
+{
+    int* live;
+
+    ~counted_guard()
+    {
+        --*live;
+    }
+};
+
+// A quitter -> quitter -> ... chain, so every frame below the top joins
+// its segment. The leaf parks on `w`, or, without one, in the queue.
+quitter<>
+joined_chain(int depth, int& live, async_waker* w, bool* parked)
+{
+    ++live;
+    counted_guard g{&live};
+    if(depth == 1)
+    {
+        if(w)
+        {
+            auto [ec] = co_await w->wait();
+            (void)ec;
+        }
+        else
+        {
+            *parked = true;
+            co_await yield_awaitable{};
+        }
+        co_return results<>{};
+    }
+    (void)co_await joined_chain(depth - 1, live, w, parked);
+    co_return results<>{};
+}
+
+bool
+check_joined_chain_stop()
+{
+    queue_context ctx;
+    async_waker w;
+    std::stop_source ss;
+    seen s;
+    int live = 0;
+    run_then_stop(ctx, ss, parent(joined_chain(64, live, &w, nullptr), s));
+    return s.resumed && s.ec == cond::canceled && live == 0;
+}
+
+// Destroys the context while the chain's gate continuation is queued in
+// it, with no stop requested: a silent unwind.
+bool
+teardown_with_parked_chain(int depth)
+{
+    seen s;
+    int live = 0;
+    bool parked = false;
+    {
+        queue_context ctx;
+        run_async(ctx.get_executor(), std::pmr::new_delete_resource())(
+            parent(joined_chain(depth, live, nullptr, &parked), s));
+        while(!parked && ctx.run_one())
+        {
+        }
+    }
+    return parked && !s.resumed && live == 0;
+}
+
+bool
+check_teardown_is_silent()
+{
+    return teardown_with_parked_chain(1);
+}
+
+bool
+check_joined_chain_teardown()
+{
+    return teardown_with_parked_chain(64);
+}
+
+struct counting_resource : std::pmr::memory_resource
+{
+    std::size_t allocations = 0;
+
+    void* do_allocate(std::size_t n, std::size_t align) override
+    {
+        ++allocations;
+        return std::pmr::new_delete_resource()->allocate(n, align);
+    }
+
+    void do_deallocate(void* p, std::size_t n, std::size_t align) override
+    {
+        std::pmr::new_delete_resource()->deallocate(p, n, align);
+    }
+
+    bool do_is_equal(memory_resource const& o) const noexcept override
+    {
+        return this == &o;
+    }
+};
+
+template<class Coro>
+Coro one_yield()
+{
+    co_await yield_awaitable{};
+    co_return results<>{};
+}
+
+template<class Coro>
+std::size_t
+chain_allocations()
+{
+    counting_resource mr;
+    queue_context ctx;
+    seen s;
+    run_async(ctx.get_executor(), &mr)(parent(one_yield<Coro>(), s));
+    ctx.run();
+    return s.resumed ? mr.allocations : 0;
+}
+
+// spec §3.7: the segment's frame must not come from the chain's frame
+// allocator, which may be gone by the time the segment is freed.
+bool
+check_segment_not_on_chain_allocator()
+{
+    auto const t = chain_allocations<task<results<>>>();
+    return t != 0 && chain_allocations<quitter<>>() == t;
+}
+
 } // namespace
 
 bool
@@ -547,12 +680,17 @@ self_check()
         {"stop_pending_skips_inner", check_stop_pending_skips_inner},
         {"ready_then_stop_runs_await_resume",
             check_ready_then_stop_runs_await_resume},
+        {"joined_chain_stop", check_joined_chain_stop},
+        {"teardown_is_silent", check_teardown_is_silent},
+        {"joined_chain_teardown", check_joined_chain_teardown},
+        {"segment_not_on_chain_allocator",
+            check_segment_not_on_chain_allocator},
     };
     bool all = true;
     for(auto const& c : checks)
     {
         bool const ok = c.fn();
-        std::cout << "PROTO " << c.name << (ok ? " ok\n" : " FAIL\n");
+        std::cout << "PROTO " << c.name << (ok ? " ok\n" : " FAIL\n") << std::flush;
         all = all && ok;
     }
     return all;
@@ -570,9 +708,15 @@ self_check()
 //
 //-----------------------------------------------
 
+// Set when a loop body runs with a token that can be stopped, as a
+// real quitter always does; bench_loop refuses to report otherwise.
+bool loop_saw_stop_token = false;
+
 template<class Coro>
 Coro loop_body(std::size_t n)
 {
+    auto st = co_await this_coro::stop_token;
+    loop_saw_stop_token = st.stop_possible();
     for(std::size_t i = 0; i < n; ++i)
         co_await yield_awaitable{};
     co_return results<>{};
@@ -638,10 +782,17 @@ void bench_loop(queue_context& ctx, char const* variant)
     char name[64];
     std::snprintf(name, sizeof(name), "loop %s N=%zu", variant, loop_n);
     auto ex = ctx.get_executor();
+    std::stop_source ss;
+    loop_saw_stop_token = false;
     run_benchmark(name, 20000, [&]{
-        run_async(ex)(drive(loop_body<Coro>(loop_n)));
+        run_async(ex, ss.get_token())(drive(loop_body<Coro>(loop_n)));
         ctx.run();
     });
+    if(!loop_saw_stop_token)
+    {
+        std::cout << "FAIL " << name << ": ran without a stop token\n";
+        std::exit(1);
+    }
 }
 
 template<class Coro>
