@@ -9,6 +9,9 @@
 
 #include <boost/capy/concept/execution_context.hpp>
 #include <boost/capy/ex/abandon.hpp>
+#include <boost/capy/cond.hpp>
+#include <boost/capy/error.hpp>
+#include <boost/capy/ex/async_mutex.hpp>
 #include <boost/capy/ex/async_waker.hpp>
 #include <boost/capy/ex/await_context.hpp>
 #include <boost/capy/ex/execution_context.hpp>
@@ -23,6 +26,10 @@
 #include <iomanip>
 #include <iostream>
 #include <stop_token>
+#include <system_error>
+#include <tuple>
+
+#include "quitter_proto.hpp"
 
 /* Benchmarks for the quitter-on-abandonment proposal
    (docs/superpowers/specs/2026-10-26-quitter-abandonment-design.md, §6.3).
@@ -254,6 +261,307 @@ void run_timed_benchmark(
 
 //-----------------------------------------------
 //
+// Prototype self-checks
+//
+// Run before any timing: numbers for a
+// prototype that does not do what the spec says
+// are worthless.
+//
+//-----------------------------------------------
+
+namespace proto {
+
+namespace {
+
+struct guard
+{
+    bool* destroyed;
+
+    ~guard()
+    {
+        *destroyed = true;
+    }
+};
+
+// What the parent of the quitter saw when it resumed.
+struct seen
+{
+    bool resumed = false;
+    std::error_code ec;
+};
+
+// Awaits `q` and records what it delivered, then runs `at_resume`. A
+// stop that arrives as an exception, as from today's quitter, leaves
+// `ec` empty, so the checks that expect `canceled` fail on it.
+template<class Q, class F>
+task<> parent(Q q, seen& s, F at_resume)
+{
+    try
+    {
+        auto r = co_await std::move(q);
+        s.ec = std::get<0>(r);
+    }
+    catch(...)
+    {
+    }
+    s.resumed = true;
+    at_resume();
+}
+
+template<class Q>
+task<> parent(Q q, seen& s)
+{
+    return parent(std::move(q), s, []{});
+}
+
+// Runs `t` until nothing is queued, requests the stop, and drains again.
+void
+run_then_stop(queue_context& ctx, std::stop_source& ss, task<> t)
+{
+    run_async(ctx.get_executor(), ss.get_token())(std::move(t));
+    ctx.run();
+    ss.request_stop();
+    ctx.run();
+}
+
+quitter<results<std::size_t>>
+three_yields()
+{
+    co_await yield_awaitable{};
+    co_await yield_awaitable{};
+    co_await yield_awaitable{};
+    co_return results<std::size_t>{std::error_code{}, 42};
+}
+
+task<>
+unstopped_parent(seen& s, std::size_t& n)
+{
+    auto [ec, v] = co_await three_yields();
+    s.ec = ec;
+    n = v;
+    s.resumed = true;
+}
+
+bool
+check_unstopped_value()
+{
+    queue_context ctx;
+    std::stop_source ss;
+    seen s;
+    std::size_t n = 0;
+    s.ec = make_error_code(error::canceled);
+    run_then_stop(ctx, ss, unstopped_parent(s, n));
+    return s.resumed && !s.ec && n == 42;
+}
+
+quitter<>
+wait_on(async_waker& w)
+{
+    auto [ec] = co_await w.wait();
+    co_return results<>{ec};
+}
+
+bool
+check_stop_delivers_canceled()
+{
+    queue_context ctx;
+    async_waker w;
+    std::stop_source ss;
+    seen s;
+    run_then_stop(ctx, ss, parent(wait_on(w), s));
+    return s.resumed && s.ec == cond::canceled;
+}
+
+quitter<>
+guarded_wait(async_waker& w, bool& destroyed, bool& reached)
+{
+    guard g{&destroyed};
+    auto [ec] = co_await w.wait();
+    (void)ec;
+    reached = true;
+    co_return results<>{};
+}
+
+bool
+check_frames_not_resumed()
+{
+    queue_context ctx;
+    async_waker w;
+    std::stop_source ss;
+    seen s;
+    bool destroyed = false;
+    bool reached = false;
+    bool destroyed_at_resume = false;
+    run_then_stop(ctx, ss, parent(guarded_wait(w, destroyed, reached), s,
+        [&]{ destroyed_at_resume = destroyed; }));
+    return s.resumed && !reached && destroyed_at_resume;
+}
+
+quitter<>
+catch_all_wait(async_waker& w, bool& hit)
+{
+    try
+    {
+        auto [ec] = co_await w.wait();
+        (void)ec;
+    }
+    catch(...)
+    {
+        hit = true;
+    }
+    co_return results<>{};
+}
+
+bool
+check_catch_all_never_runs()
+{
+    queue_context ctx;
+    async_waker w;
+    std::stop_source ss;
+    seen s;
+    bool hit = false;
+    run_then_stop(ctx, ss, parent(catch_all_wait(w, hit), s));
+    return s.resumed && !hit && s.ec == cond::canceled;
+}
+
+struct coop_state
+{
+    bool task_finished = false;
+    bool quitter_alive_then = false;
+    bool quitter_destroyed = false;
+};
+
+task<results<>>
+coop_task(async_waker& w, coop_state& st)
+{
+    auto [ec] = co_await w.wait();
+    st.task_finished = true;
+    st.quitter_alive_then = !st.quitter_destroyed;
+    co_return results<>{ec};
+}
+
+quitter<>
+coop_quitter(async_waker& w, coop_state& st)
+{
+    guard g{&st.quitter_destroyed};
+    auto [ec] = co_await coop_task(w, st);
+    (void)ec;
+    co_return results<>{};
+}
+
+bool
+check_task_below_cooperates()
+{
+    queue_context ctx;
+    async_waker w;
+    std::stop_source ss;
+    seen s;
+    coop_state st;
+    run_then_stop(ctx, ss, parent(coop_quitter(w, st), s));
+    return s.resumed && s.ec == cond::canceled &&
+        st.task_finished && st.quitter_alive_then && st.quitter_destroyed;
+}
+
+quitter<>
+lock_after_stop(async_mutex& mtx, std::stop_source& ss)
+{
+    ss.request_stop();
+    auto [ec, g] = co_await mtx.scoped_lock();
+    (void)ec;
+    co_return results<>{};
+}
+
+bool
+check_stop_pending_skips_inner()
+{
+    queue_context ctx;
+    async_mutex mtx;
+    std::stop_source ss;
+    seen s;
+    run_then_stop(ctx, ss, parent(lock_after_stop(mtx, ss), s));
+    return s.resumed && s.ec == cond::canceled && !mtx.is_locked();
+}
+
+// Reports ready, and requests the stop from inside await_ready, so the
+// stop arrives after the inner awaitable has completed.
+struct stop_while_ready_awaitable
+{
+    std::stop_source& ss;
+    bool& resumed;
+
+    bool await_ready() noexcept
+    {
+        ss.request_stop();
+        return true;
+    }
+
+    std::coroutine_handle<>
+    await_suspend(std::coroutine_handle<> h, await_context const*) noexcept
+    {
+        return h;
+    }
+
+    void await_resume() noexcept
+    {
+        resumed = true;
+    }
+};
+
+quitter<>
+ready_then_stop(std::stop_source& ss, bool& resumed, bool& reached)
+{
+    co_await stop_while_ready_awaitable{ss, resumed};
+    co_await yield_awaitable{};
+    reached = true;
+    co_return results<>{};
+}
+
+bool
+check_ready_then_stop_runs_await_resume()
+{
+    queue_context ctx;
+    std::stop_source ss;
+    seen s;
+    bool resumed = false;
+    bool reached = false;
+    run_then_stop(ctx, ss, parent(ready_then_stop(ss, resumed, reached), s));
+    return s.resumed && s.ec == cond::canceled && resumed && !reached;
+}
+
+} // namespace
+
+bool
+self_check()
+{
+    struct entry
+    {
+        char const* name;
+        bool (*fn)();
+    };
+    entry const checks[] = {
+        {"unstopped_value", check_unstopped_value},
+        {"stop_delivers_canceled", check_stop_delivers_canceled},
+        {"frames_not_resumed", check_frames_not_resumed},
+        {"catch_all_never_runs", check_catch_all_never_runs},
+        {"task_below_cooperates", check_task_below_cooperates},
+        {"stop_pending_skips_inner", check_stop_pending_skips_inner},
+        {"ready_then_stop_runs_await_resume",
+            check_ready_then_stop_runs_await_resume},
+    };
+    bool all = true;
+    for(auto const& c : checks)
+    {
+        bool const ok = c.fn();
+        std::cout << "PROTO " << c.name << (ok ? " ok\n" : " FAIL\n");
+        all = all && ok;
+    }
+    return all;
+}
+
+} // namespace proto
+
+//-----------------------------------------------
+//
 // Coroutines under test
 //
 // Each body is a template on its own return
@@ -371,6 +679,9 @@ void bench_stop(queue_context& ctx, char const* variant)
 
 int main()
 {
+    if(!proto::self_check())
+        return 1;
+
     queue_context ctx;
 
     for(int rep = 0; rep < 5; ++rep)
