@@ -690,12 +690,15 @@ int main()
 
         bench_loop<task<results<>>>(ctx, "task");
         bench_loop<quitter<results<>>>(ctx, "quitter-exc");
+        bench_loop<proto::quitter<results<>>>(ctx, "quitter-abandon");
 
         bench_entry<task<results<>>>(ctx, "task");
         bench_entry<quitter<results<>>>(ctx, "quitter-exc");
+        bench_entry<proto::quitter<results<>>>(ctx, "quitter-abandon");
 
         bench_stop<task<results<>>>(ctx, "task-ec");
         bench_stop<quitter<results<>>>(ctx, "quitter-exc");
+        bench_stop<proto::quitter<results<>>>(ctx, "quitter-abandon");
     }
     return 0;
 }
