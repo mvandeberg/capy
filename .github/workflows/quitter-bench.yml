@@ -1,0 +1,76 @@
+#
+# Copyright (c) 2026 Michael Vandeberg
+#
+# Distributed under the Boost Software License, Version 1.0. (See accompanying
+# file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+#
+# Official repository: https://github.com/cppalliance/capy/
+#
+
+# Throwaway probe: MSVC numbers for the quitter benchmark
+# (docs/superpowers/plans/2026-10-26-quitter-abandonment.md, Task 4).
+# Never merged.
+
+name: quitter-bench
+
+on:
+  push:
+    branches:
+      - probe/quitter-bench
+  workflow_dispatch:
+
+jobs:
+  bench:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: msvc-14.51-x64
+            runs-on: windows-2025-vs2026
+            arch: x64
+            vcvars: ''
+            expect: 'Version 19.51.'
+          - name: msvc-14.44-x64
+            runs-on: windows-2022
+            arch: x64
+            vcvars: ''
+            expect: 'Version 19.44.'
+          - name: msvc-14.44-arm64
+            runs-on: windows-11-vs2026-arm
+            arch: arm64
+            vcvars: '-vcvars_ver=14.44'
+            expect: 'Version 19.44.'
+          - name: msvc-14.51-arm64
+            runs-on: windows-11-vs2026-arm
+            arch: arm64
+            vcvars: ''
+            expect: 'Version 19.51.'
+
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and run
+        shell: cmd
+        run: |
+          for /f "usebackq tokens=*" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -property installationPath`) do set "VSINSTALL=%%i"
+          call "%VSINSTALL%\VC\Auxiliary\Build\vcvarsall.bat" ${{ matrix.arch }} ${{ matrix.vcvars }} || exit /b 1
+          mkdir out
+          cl 2> out\compiler.txt
+          type out\compiler.txt
+          findstr /C:"${{ matrix.expect }}" out\compiler.txt || exit /b 1
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBOOST_CAPY_BUILD_TESTS=OFF -DBOOST_CAPY_BUILD_EXAMPLES=OFF -DBOOST_CAPY_BUILD_BENCH=ON || exit /b 1
+          cmake --build build --target boost_capy_bench_quitter || exit /b 1
+          for %%r in (1 2 3 4 5) do (
+            build\bench\boost_capy_bench_quitter.exe > out\run%%r.txt || exit /b 1
+          )
+          type out\run1.txt
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ matrix.name }}
+          path: out/
