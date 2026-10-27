@@ -29,6 +29,7 @@
 #include <exception>
 #include <memory_resource>
 #include <new>
+#include <optional>
 #include <stop_token>
 #include <type_traits>
 
@@ -51,6 +52,39 @@ concept RunAsyncHandler =
 
 /// Function pointer type for type-erased frame deallocation.
 using dealloc_fn = void(*)(void*, std::size_t);
+
+// Report a stopped quitter to the handlers: its stopped value to the
+// value handler, or what computing that value threw to the error
+// handler. A handler that throws is not caught here.
+template<class Task, class Handlers>
+void invoke_stopped(Handlers& h)
+{
+    using P = typename Task::promise_type;
+    using R = decltype(std::declval<Task&>().await_resume());
+    if constexpr(std::is_void_v<R>)
+    {
+        P::stopped_result();
+        h();
+    }
+    else
+    {
+        std::optional<R> v;
+#if defined(__cpp_exceptions)
+        try
+        {
+            v.emplace(P::stopped_result());
+        }
+        catch(...)
+        {
+            h(std::current_exception());
+            return;
+        }
+#else
+        v.emplace(P::stopped_result());
+#endif
+        h(std::move(*v));
+    }
+}
 
 /// Type-erased deallocator implementation for trampoline frames.
 template<class Alloc>
@@ -100,7 +134,7 @@ struct get_promise_awaiter
 template<class Ex, class Handlers, class Alloc>
 struct run_async_trampoline
 {
-    using invoke_fn = void(*)(void*, Handlers&);
+    using invoke_fn = void(*)(void*, Handlers&, bool);
 
     struct promise_type
     {
@@ -205,8 +239,17 @@ struct run_async_trampoline
     std::coroutine_handle<promise_type> h_;
 
     template<ContextRunnable Task>
-    static void invoke_impl(void* p, Handlers& h)
+    static void invoke_impl(void* p, Handlers& h, bool stopped)
     {
+        if constexpr(stops_by_abandonment<Task>)
+        {
+            if(stopped)
+            {
+                invoke_stopped<Task>(h);
+                return;
+            }
+        }
+        (void)stopped;
         using R = decltype(std::declval<Task&>().await_resume());
         auto& promise = *static_cast<typename Task::promise_type*>(p);
         if(promise.exception())
@@ -225,7 +268,7 @@ struct run_async_trampoline
 template<class Ex, class Handlers>
 struct run_async_trampoline<Ex, Handlers, std::pmr::memory_resource*>
 {
-    using invoke_fn = void(*)(void*, Handlers&);
+    using invoke_fn = void(*)(void*, Handlers&, bool);
 
     struct promise_type
     {
@@ -310,8 +353,17 @@ struct run_async_trampoline<Ex, Handlers, std::pmr::memory_resource*>
     std::coroutine_handle<promise_type> h_;
 
     template<ContextRunnable Task>
-    static void invoke_impl(void* p, Handlers& h)
+    static void invoke_impl(void* p, Handlers& h, bool stopped)
     {
+        if constexpr(stops_by_abandonment<Task>)
+        {
+            if(stopped)
+            {
+                invoke_stopped<Task>(h);
+                return;
+            }
+        }
+        (void)stopped;
         using R = decltype(std::declval<Task&>().await_resume());
         auto& promise = *static_cast<typename Task::promise_type*>(p);
         if(promise.exception())
@@ -337,13 +389,23 @@ make_trampoline(Ex, Handlers, Alloc)
     struct frame_guard
     {
         std::coroutine_handle<>& h;
-        ~frame_guard() { std::exchange(h, nullptr).destroy(); }
+        ~frame_guard()
+        {
+            if(h)
+                std::exchange(h, nullptr).destroy();
+        }
     } guard{p.task_h_};
 
-    // Resumed with the task unfinished: the segment was abandoned, and
-    // destroying the task unwinds it without calling a handler.
-    if(!p.owner_.abandoned())
-        p.invoke_(p.task_promise_, p.handlers_);
+    // Resumed with the task unfinished: the segment was abandoned. A
+    // teardown destroys the task without calling a handler; a quitter's
+    // stop reports its stopped value.
+    // A stopped quitter's frames are destroyed before its handler runs,
+    // as a finished task's destructors have run by then.
+    bool const stopped = p.owner_.stopped();
+    if(stopped)
+        std::exchange(p.task_h_, nullptr).destroy();
+    if(!p.owner_.abandoned() || stopped)
+        p.invoke_(p.task_promise_, p.handlers_, stopped);
 }
 
 } // namespace detail
@@ -539,6 +601,20 @@ public:
         // constructor (saved_tls_) and restored in the destructor.
         p.task_cont_.h = task_h;
         p.task_cont_.owner = &p.owner_;
+
+        // A quitter whose stop is already requested is never started:
+        // its segment is abandoned for the stop, and the trampoline
+        // reports the stopped value.
+        if constexpr(detail::stops_by_abandonment<Task>)
+        {
+            if(st_.stop_requested())
+            {
+                tr_.h_ = nullptr;
+                p.owner_.abandon_for_stop();
+                return;
+            }
+        }
+
         // If dispatch throws, the destructor destroys the trampoline
         // and the unstarted task with it.
         auto next = p.wg_.executor().dispatch(p.task_cont_);

@@ -145,10 +145,13 @@ symmetric_transfer(std::coroutine_handle<> h) noexcept
 
     The awaiting coroutine continues without suspending when the
     wrapped awaitable is ready, or when its `await_suspend` returns
-    `false`. When the wrapped `await_suspend` returns a handle, that
-    handle is resumed through `symmetric_transfer` and the awaiting
-    coroutine stays suspended. Returning `false` instead of resuming
-    inline keeps immediate completions from growing the stack.
+    `false` or returns `h` itself. When the wrapped `await_suspend`
+    returns any other handle, that handle is resumed through
+    `symmetric_transfer` and the awaiting coroutine stays suspended.
+    Returning `false` instead of resuming inline keeps immediate
+    completions from growing the stack. `quitter` passes its gate as
+    `h`, so a wrapped awaitable that completes by returning the gate is
+    a synchronous completion, not a pass through the gate.
 
     @param a The wrapped awaitable.
 
@@ -181,7 +184,10 @@ await_ready_then_suspend(
     }
     else
     {
-        symmetric_transfer(a.await_suspend(h, env));
+        std::coroutine_handle<> r = a.await_suspend(h, env);
+        if(r == h)
+            return false;
+        symmetric_transfer(r);
         return true;
     }
 }

@@ -125,12 +125,18 @@ struct boundary_trampoline
                 {
                     // Nothing here touches p_ after the post or the
                     // unwind: either can destroy this frame.
-                    if(p_->segment_.abandoned())
+                    auto& segment = p_->segment_;
+                    if(segment.abandoned() && !segment.stopped())
                     {
                         p_->unwind();
                     }
                     else
                     {
+                        // A quitter's stop: its frames are destroyed
+                        // here, and the parent resumes to receive the
+                        // stopped value.
+                        if(segment.abandoned())
+                            p_->destroy_inner_(p_->awaitable_);
                         p_->owner_ = nullptr;
                         auto ex = p_->caller_ex_;
                         ex.post(p_->parent_);
@@ -291,6 +297,11 @@ struct [[nodiscard]] run_awaitable_ex
     {
         if(std::exchange(holds_work_, false))
             caller_ex_.on_work_finished();
+        if constexpr(stops_by_abandonment<Task>)
+        {
+            if(tr_.h_ && tr_.h_.promise().segment_.stopped())
+                return Task::promise_type::stopped_result();
+        }
         return inner_.await_resume();
     }
 
@@ -329,6 +340,19 @@ struct [[nodiscard]] run_awaitable_ex
             env_.frame_allocator = caller_env->frame_allocator;
 
         p.set_environment(&env_);
+
+        // A quitter whose stop is already requested is never started:
+        // its segment is abandoned for the stop, and the parent
+        // receives the stopped value.
+        if constexpr(stops_by_abandonment<Task>)
+        {
+            if(env_.stop_token.stop_requested())
+            {
+                tp.segment_.abandon_for_stop();
+                return std::noop_coroutine();
+            }
+        }
+
         task_cont_.h = h;
         task_cont_.owner = &tp.segment_;
         try
@@ -437,9 +461,6 @@ struct [[nodiscard]] run_awaitable
 
     std::coroutine_handle<> await_suspend(std::coroutine_handle<> cont, await_context const* caller_env)
     {
-        auto h = inner_.handle();
-        auto& p = h.promise();
-        p.set_continuation(cont);
         lent_ = true;
 
         env_.owner = caller_env->owner;
@@ -454,6 +475,14 @@ struct [[nodiscard]] run_awaitable
         else
             env_.frame_allocator = caller_env->frame_allocator;
 
+        // A quitter opens a segment of its own, so a stop on this run's
+        // token never abandons the caller's segment.
+        if constexpr(stops_by_abandonment<Task>)
+            return inner_.await_suspend(cont, &env_);
+
+        auto h = inner_.handle();
+        auto& p = h.promise();
+        p.set_continuation(cont);
         p.set_environment(&env_);
         return h;
     }

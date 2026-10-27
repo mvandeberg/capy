@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2025 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2026 Michael Vandeberg
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -11,10 +12,11 @@
 #define BOOST_CAPY_DETAIL_RUN_CALLBACKS_HPP
 
 #include <boost/capy/detail/config.hpp>
-#include <boost/capy/detail/stop_requested_exception.hpp>
+#include <boost/capy/cond.hpp>
 
 #include <concepts>
 #include <exception>
+#include <system_error>
 #include <type_traits>
 #include <utility>
 
@@ -41,9 +43,12 @@ struct default_handler
         {
             std::rethrow_exception(ep);
         }
-        catch(stop_requested_exception const&)
+        catch(std::system_error const& e)
         {
-            // Cancellation is a normal completion, not an error.
+            // Cancellation is a normal completion, not an error: a
+            // stopped quitter<T> for a plain T reports it this way.
+            if(e.code() != cond::canceled)
+                throw;
         }
         // A real unhandled exception propagates to the trampoline's
         // unhandled_exception, which terminates.

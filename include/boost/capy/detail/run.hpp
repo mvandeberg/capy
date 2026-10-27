@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2025 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2026 Michael Vandeberg
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -21,6 +22,13 @@ namespace capy {
 namespace detail {
 
 /// Concept for standard Allocator types.
+// A runnable that a stop ends by abandonment (quitter): its promise
+// says what it delivers instead of its own result.
+template<class Task>
+concept stops_by_abandonment = requires {
+    Task::promise_type::stopped_result();
+};
+
 template<class A>
 concept Allocator = requires(A a, std::size_t n) {
     typename A::value_type;
