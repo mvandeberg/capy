@@ -634,9 +634,13 @@ public:
 
     Uses the default recycling frame allocator for coroutine frames.
     With no handlers, the result is discarded. An unhandled exception
-    thrown by the task calls `std::terminate`. To catch it instead, pass
-    an error handler that receives it as an `exception_ptr`, or `co_await`
-    the work inside a coroutine.
+    thrown by the task calls `std::terminate`. One exception is discarded
+    instead: a `std::system_error` whose `code()` compares equal to
+    `cond::canceled`, which is a normal cancellation. A stopped
+    @ref quitter whose `T` is not `results`, `std::error_code` or `void`
+    reports its stop that way. To handle exceptions instead, including
+    canceled, pass an error handler that receives them as an
+    `exception_ptr`, or `co_await` the work inside a coroutine.
 
     Construct the task as the direct argument of the two-call expression
     `run_async(ex)(task)`.
@@ -672,7 +676,9 @@ run_async(Ex ex)
 
     The handler `h1` is called with the task's result on success. If `h1`
     is also invocable with `std::exception_ptr`, it handles exceptions too.
-    Otherwise, an unhandled exception calls `std::terminate`.
+    Otherwise, an unhandled exception calls `std::terminate`, except a
+    `std::system_error` whose `code()` compares equal to `cond::canceled`,
+    which is discarded as a normal cancellation.
     If the task is abandoned before it completes, as a context's teardown
     does, no handler is called; the handlers are destroyed with it.
 
@@ -755,8 +761,11 @@ run_async(Ex ex, H1 h1, H2 h2)
 /** Bind an executor and a stop token to produce a launcher. Invoke the launcher with a task to start it.
 
     The stop token is propagated to the task, enabling cooperative
-    cancellation. With no handlers, the result is discarded and an
-    unhandled exception calls `std::terminate`.
+    cancellation. With no handlers, the result is discarded, and an
+    unhandled exception calls `std::terminate`. A `std::system_error`
+    whose `code()` compares equal to `cond::canceled` is discarded
+    instead, as a normal cancellation. A stopped @ref quitter
+    reports its stopped value to the handlers: see @ref quitter.
 
     Construct the task as the direct argument of the two-call expression
     `run_async(ex)(task)`.

@@ -727,18 +727,17 @@ struct quitter_test
     //    Two quitter<results<size_t>> children inside when_all.
     //    Both block on stop_only_awaitable.  when_all creates a
     //    child stop_source; when the parent stop fires, when_all
-    //    propagates it.  Each quitter child intercepts the stop
-    //    in transform_awaiter::await_resume and short-circuits
-    //    via stop_requested_exception — it never reaches the
-    //    co_return.  Verify both stop and when_all completes.
+    //    propagates it.  Each quitter child is abandoned by its
+    //    gate, so it never reaches the co_return, and delivers
+    //    canceled to its branch.  Verify both stop and when_all
+    //    completes.
     //----------------------------------------------------------
 
     static quitter<results<std::size_t>>
     quitter_pending_size(bool& reached_co_return)
     {
         co_await stop_only_awaitable{};
-        // If quitter's transform_awaiter intercepted the stop,
-        // we never reach here.
+        // A stopped quitter is abandoned, so we never reach here.
         reached_co_return = true;
         co_return results<std::size_t>{
             make_error_code(error::canceled), 0};
@@ -785,8 +784,8 @@ struct quitter_test
     // 8. Stop propagation with when_any
     //
     //    Two quitter children.  One succeeds immediately,
-    //    when_any stops the sibling.  The sibling quitter
-    //    intercepts the stop and exits cleanly.
+    //    when_any stops the sibling.  The sibling quitter is
+    //    abandoned and delivers canceled.
     //----------------------------------------------------------
 
     static quitter<results<std::size_t>>
@@ -799,9 +798,8 @@ struct quitter_test
     testWhenAnyWithStop()
     {
         // One child succeeds immediately.  when_any stops
-        // the pending sibling quitter.  The sibling must
-        // be intercepted by transform_awaiter (never reach
-        // co_return).
+        // the pending sibling quitter, which is abandoned
+        // and never reaches co_return.
         {
             thread_pool pool(2);
             std::latch done(1);
@@ -909,7 +907,7 @@ struct quitter_test
         auto elapsed = std::chrono::steady_clock::now() - start;
         // Should complete promptly
         BOOST_TEST(elapsed < std::chrono::seconds(1));
-        // Quitter intercepted the stop — body did not continue
+        // The quitter was abandoned: the body did not continue
         BOOST_TEST(!reached_end);
     }
 
@@ -1145,8 +1143,8 @@ struct quitter_test
     //
     //    A quitter echo loop over a mock stream pair.
     //    The client exchanges data, then requests stop.
-    //    The echo quitter exits cleanly via stop interception,
-    //    RAII runs, and the echoed data was correct.
+    //    The echo quitter is abandoned on the stop, RAII runs,
+    //    and the echoed data was correct.
     //
     //    The mock stream's read_some is not stop-aware, so we
     //    wrap each read in when_any with a stop_only_awaitable
@@ -1160,8 +1158,8 @@ struct quitter_test
         // Echo server over a mock stream pair.  The server
         // reads pre-provided data, echoes it back, then
         // waits for shutdown via stop_only_awaitable.  When
-        // stop fires, the quitter intercepts at the co_await
-        // and exits cleanly.  All stream access is on the
+        // stop fires, the quitter is abandoned at that co_await
+        // and RAII runs.  All stream access is on the
         // jthread's synchronous executor — no cross-thread
         // stream use.
         test::fuse f;
@@ -1196,7 +1194,7 @@ struct quitter_test
             // fires.
             co_await armed_stop_only_awaitable(suspended);
 
-            // Should never reach here — quitter intercepts
+            // Never reached: the stop abandons the quitter
             reached_end = true;
         };
 

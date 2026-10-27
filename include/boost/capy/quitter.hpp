@@ -334,8 +334,8 @@ make_quitter_segment()
 
     At every `co_await` in the body, the stop token is checked before
     the awaited operation is started. An operation that completes
-    asynchronously does not resume the body directly: if a stop was
-    requested by the time it completes, the body is not resumed. In
+    asynchronously does not resume the body directly. If a stop was
+    requested by then, the body is not resumed. In
     either case the quitter's frames are destroyed on the executor, and
     the coroutine that awaited the quitter is resumed with the stopped
     value. An operation that completes without suspending always hands
@@ -362,11 +362,11 @@ make_quitter_segment()
         compares equal to `cond::canceled` is thrown. Such a `quitter<T>`
         cannot be used where exceptions are disabled.
 
-    A quitter started by `run_async` reports a stop the same way: the
-    value handler receives the stopped value, or is called with no
-    argument for `void`, and for any other `T` the error handler
-    receives the `std::system_error`. `run_async`'s default error
-    handler discards it.
+    A quitter started by `run_async` reports a stop the same way. The
+    value handler receives the stopped value, with no argument for
+    `void`. For any other `T`, the error handler receives the
+    `std::system_error`. `run_async`'s default error handler discards
+    it.
 
     @par Await-postcondition
     The quitter's coroutine has completed, or has been destroyed by a
@@ -395,8 +395,8 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
         requirements and participates in the I/O awaitable protocol via
         @ref context_awaitable_promise_base. Unlike @ref task::promise_type,
         its `transform_awaitable` checks the stop token before each
-        awaited operation starts, and hands the operation the segment's
-        gate as the continuation instead of this coroutine. It is part of
+        awaited operation starts. It hands the operation the segment's
+        gate as the continuation, not this coroutine. It is part of
         the coroutine machinery and is not intended to be used directly
         by callers.
 
@@ -577,8 +577,8 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
             environment-taking `await_suspend`, and restores the
             thread-local frame allocator before the body resumes. Unlike
             `task`'s, it checks the stop token before the inner awaitable
-            is touched, and passes the inner awaitable the segment's gate
-            as the continuation instead of this coroutine.
+            is touched. It passes the inner awaitable the segment's gate
+            as the continuation, not this coroutine.
 
             @tparam Awaitable The awaitable being transformed.
         */
@@ -601,9 +601,10 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
                 The stop token is checked first. If a stop is pending, the
                 wrapped awaitable is never touched: this returns `false`,
                 and @ref await_suspend ends the quitter. Otherwise the
-                wrapped awaitable's own `await_ready` decides; `true` there
-                means it completed synchronously, and its `await_resume`
-                hands over its result even if a stop arrives afterwards.
+                wrapped awaitable's own `await_ready` decides. A `true`
+                result means it completed synchronously. Its
+                `await_resume` then hands over its result, even if a stop
+                arrives afterwards.
 
                 Where `BOOST_CAPY_SYMMETRIC_TRANSFER_WORKAROUND` is on,
                 this always returns `false`, and @ref await_suspend does both
@@ -866,12 +867,12 @@ struct [[nodiscard]] BOOST_CAPY_CORO_AWAIT_ELIDABLE
     /** Open a segment and start the quitter with the caller's context.
 
         If the stop token in `env` has already been triggered, the body
-        is not started, and `cont` is returned so that the caller
-        resumes at once and receives the stopped value.
+        is not started. `cont` is returned, so the caller resumes at once
+        with the stopped value.
 
-        Otherwise the quitter opens a segment of its own: an owner that
-        is resumed to destroy the quitter's frames if the segment is
-        abandoned, and the gate its awaits complete through. The body
+        Otherwise the quitter opens a segment of its own. The segment's
+        owner destroys the quitter's frames if the segment is abandoned.
+        Its gate is what the quitter's awaits complete through. The body
         runs with `env`'s executor, stop token and frame allocator, and
         the segment's owner. Control then transfers into the body.
 
