@@ -36,6 +36,7 @@
 
 #include <array>
 #include <atomic>
+#include <cstdio>
 #include <condition_variable>
 #include <latch>
 #include <memory_resource>
@@ -2674,79 +2675,79 @@ struct quitter_test
     void
     run()
     {
-        testMoveAssignDestroysHeldFrame();
+        std::fprintf(stderr, "> %s\n", "testMoveAssignDestroysHeldFrame"); std::fflush(stderr); testMoveAssignDestroysHeldFrame();
 #if !defined(_WIN32)
-        testDestroyLentTaskTerminates();
-        testMoveAssignOverLentTaskTerminates();
-        testDestroyUnstartedOrFinishedTaskIsFine();
+        std::fprintf(stderr, "> %s\n", "testDestroyLentTaskTerminates"); std::fflush(stderr); testDestroyLentTaskTerminates();
+        std::fprintf(stderr, "> %s\n", "testMoveAssignOverLentTaskTerminates"); std::fflush(stderr); testMoveAssignOverLentTaskTerminates();
+        std::fprintf(stderr, "> %s\n", "testDestroyUnstartedOrFinishedTaskIsFine"); std::fflush(stderr); testDestroyUnstartedOrFinishedTaskIsFine();
 #endif
-        testTeardownThroughQuitter();
-        testNormalCompletion();
-        testVoidCompletion();
-        testExceptionPropagation();
-        testStopBeforeFirstAwait();
-        testStopDuringIO();
-        testStopPropagationChain();
-        testMixingQuitterAndTask();
-        testNoStopRequested();
-        testRAIIVerification();
-        testMultipleCoAwait();
-        testMoveOperations();
-        testReturnString();
-        testExceptionInValueQuitter();
-        testBoolSuspendAwaitable();
-        testCoAwaitVoidQuitter();
-        testCoAwaitThrowingQuitter();
-        testWhenAllWithStop();
-        testWhenAnyWithStop();
-        testWakerCancellation();
-        testCatchAfterRmwAwaitReady();
-        testCatchStopAfterRmwAwaitReady();
-        testStopPendingLeavesMutexUntouched();
-        testReadyThenStopRunsAwaitResume();
-        testEchoWithShutdown();
-        testUnstoppedValue();
-        testStopDeliversCanceled();
-        testFramesNotResumed();
-        testCatchAllNeverRuns();
-        testTaskBelowCooperates();
-        testQuitterJoinsQuitterSegment();
-        testTaskBetweenQuittersCooperates();
-        testStopPendingAtAwaitAbandons();
-        testInlineCompletionContinues();
-        testBoolFalseCompletionContinues();
-        testStopBeforeFirstResume();
-        testWhenAllBranchStopNotLost();
-        testOwnerDestroyedByClosedExecutorIsTeardown();
-        testNoDoubleDestroyOnStop();
-        testStopRacesCompletion();
-        testDeepQuitterChainUnwinds();
-        testSegmentNotOnChainAllocator();
-        testStoppedResultsDelivered();
-        testStoppedErrorCodeDelivered();
-        testStoppedVoidReturns();
-        testStoppedPlainThrows();
-        testRunAsyncStoppedResults();
-        testRunAsyncStoppedVoidCallsValueHandler();
-        testRunAsyncStoppedPlainCallsErrorHandler();
-        testDefaultHandlerDiscardsCanceled();
+        std::fprintf(stderr, "> %s\n", "testTeardownThroughQuitter"); std::fflush(stderr); testTeardownThroughQuitter();
+        std::fprintf(stderr, "> %s\n", "testNormalCompletion"); std::fflush(stderr); testNormalCompletion();
+        std::fprintf(stderr, "> %s\n", "testVoidCompletion"); std::fflush(stderr); testVoidCompletion();
+        std::fprintf(stderr, "> %s\n", "testExceptionPropagation"); std::fflush(stderr); testExceptionPropagation();
+        std::fprintf(stderr, "> %s\n", "testStopBeforeFirstAwait"); std::fflush(stderr); testStopBeforeFirstAwait();
+        std::fprintf(stderr, "> %s\n", "testStopDuringIO"); std::fflush(stderr); testStopDuringIO();
+        std::fprintf(stderr, "> %s\n", "testStopPropagationChain"); std::fflush(stderr); testStopPropagationChain();
+        std::fprintf(stderr, "> %s\n", "testMixingQuitterAndTask"); std::fflush(stderr); testMixingQuitterAndTask();
+        std::fprintf(stderr, "> %s\n", "testNoStopRequested"); std::fflush(stderr); testNoStopRequested();
+        std::fprintf(stderr, "> %s\n", "testRAIIVerification"); std::fflush(stderr); testRAIIVerification();
+        std::fprintf(stderr, "> %s\n", "testMultipleCoAwait"); std::fflush(stderr); testMultipleCoAwait();
+        std::fprintf(stderr, "> %s\n", "testMoveOperations"); std::fflush(stderr); testMoveOperations();
+        std::fprintf(stderr, "> %s\n", "testReturnString"); std::fflush(stderr); testReturnString();
+        std::fprintf(stderr, "> %s\n", "testExceptionInValueQuitter"); std::fflush(stderr); testExceptionInValueQuitter();
+        std::fprintf(stderr, "> %s\n", "testBoolSuspendAwaitable"); std::fflush(stderr); testBoolSuspendAwaitable();
+        std::fprintf(stderr, "> %s\n", "testCoAwaitVoidQuitter"); std::fflush(stderr); testCoAwaitVoidQuitter();
+        std::fprintf(stderr, "> %s\n", "testCoAwaitThrowingQuitter"); std::fflush(stderr); testCoAwaitThrowingQuitter();
+        std::fprintf(stderr, "> %s\n", "testWhenAllWithStop"); std::fflush(stderr); testWhenAllWithStop();
+        std::fprintf(stderr, "> %s\n", "testWhenAnyWithStop"); std::fflush(stderr); testWhenAnyWithStop();
+        std::fprintf(stderr, "> %s\n", "testWakerCancellation"); std::fflush(stderr); testWakerCancellation();
+        std::fprintf(stderr, "> %s\n", "testCatchAfterRmwAwaitReady"); std::fflush(stderr); testCatchAfterRmwAwaitReady();
+        std::fprintf(stderr, "> %s\n", "testCatchStopAfterRmwAwaitReady"); std::fflush(stderr); testCatchStopAfterRmwAwaitReady();
+        std::fprintf(stderr, "> %s\n", "testStopPendingLeavesMutexUntouched"); std::fflush(stderr); testStopPendingLeavesMutexUntouched();
+        std::fprintf(stderr, "> %s\n", "testReadyThenStopRunsAwaitResume"); std::fflush(stderr); testReadyThenStopRunsAwaitResume();
+        std::fprintf(stderr, "> %s\n", "testEchoWithShutdown"); std::fflush(stderr); testEchoWithShutdown();
+        std::fprintf(stderr, "> %s\n", "testUnstoppedValue"); std::fflush(stderr); testUnstoppedValue();
+        std::fprintf(stderr, "> %s\n", "testStopDeliversCanceled"); std::fflush(stderr); testStopDeliversCanceled();
+        std::fprintf(stderr, "> %s\n", "testFramesNotResumed"); std::fflush(stderr); testFramesNotResumed();
+        std::fprintf(stderr, "> %s\n", "testCatchAllNeverRuns"); std::fflush(stderr); testCatchAllNeverRuns();
+        std::fprintf(stderr, "> %s\n", "testTaskBelowCooperates"); std::fflush(stderr); testTaskBelowCooperates();
+        std::fprintf(stderr, "> %s\n", "testQuitterJoinsQuitterSegment"); std::fflush(stderr); testQuitterJoinsQuitterSegment();
+        std::fprintf(stderr, "> %s\n", "testTaskBetweenQuittersCooperates"); std::fflush(stderr); testTaskBetweenQuittersCooperates();
+        std::fprintf(stderr, "> %s\n", "testStopPendingAtAwaitAbandons"); std::fflush(stderr); testStopPendingAtAwaitAbandons();
+        std::fprintf(stderr, "> %s\n", "testInlineCompletionContinues"); std::fflush(stderr); testInlineCompletionContinues();
+        std::fprintf(stderr, "> %s\n", "testBoolFalseCompletionContinues"); std::fflush(stderr); testBoolFalseCompletionContinues();
+        std::fprintf(stderr, "> %s\n", "testStopBeforeFirstResume"); std::fflush(stderr); testStopBeforeFirstResume();
+        std::fprintf(stderr, "> %s\n", "testWhenAllBranchStopNotLost"); std::fflush(stderr); testWhenAllBranchStopNotLost();
+        std::fprintf(stderr, "> %s\n", "testOwnerDestroyedByClosedExecutorIsTeardown"); std::fflush(stderr); testOwnerDestroyedByClosedExecutorIsTeardown();
+        std::fprintf(stderr, "> %s\n", "testNoDoubleDestroyOnStop"); std::fflush(stderr); testNoDoubleDestroyOnStop();
+        std::fprintf(stderr, "> %s\n", "testStopRacesCompletion"); std::fflush(stderr); testStopRacesCompletion();
+        std::fprintf(stderr, "> %s\n", "testDeepQuitterChainUnwinds"); std::fflush(stderr); testDeepQuitterChainUnwinds();
+        std::fprintf(stderr, "> %s\n", "testSegmentNotOnChainAllocator"); std::fflush(stderr); testSegmentNotOnChainAllocator();
+        std::fprintf(stderr, "> %s\n", "testStoppedResultsDelivered"); std::fflush(stderr); testStoppedResultsDelivered();
+        std::fprintf(stderr, "> %s\n", "testStoppedErrorCodeDelivered"); std::fflush(stderr); testStoppedErrorCodeDelivered();
+        std::fprintf(stderr, "> %s\n", "testStoppedVoidReturns"); std::fflush(stderr); testStoppedVoidReturns();
+        std::fprintf(stderr, "> %s\n", "testStoppedPlainThrows"); std::fflush(stderr); testStoppedPlainThrows();
+        std::fprintf(stderr, "> %s\n", "testRunAsyncStoppedResults"); std::fflush(stderr); testRunAsyncStoppedResults();
+        std::fprintf(stderr, "> %s\n", "testRunAsyncStoppedVoidCallsValueHandler"); std::fflush(stderr); testRunAsyncStoppedVoidCallsValueHandler();
+        std::fprintf(stderr, "> %s\n", "testRunAsyncStoppedPlainCallsErrorHandler"); std::fflush(stderr); testRunAsyncStoppedPlainCallsErrorHandler();
+        std::fprintf(stderr, "> %s\n", "testDefaultHandlerDiscardsCanceled"); std::fflush(stderr); testDefaultHandlerDiscardsCanceled();
 #if !defined(_WIN32)
-        testDefaultHandlerTerminatesOnOtherErrors();
+        std::fprintf(stderr, "> %s\n", "testDefaultHandlerTerminatesOnOtherErrors"); std::fflush(stderr); testDefaultHandlerTerminatesOnOtherErrors();
 #endif
-        testUserCanceledReachesErrorHandler();
-        testRunNoExecutorStopScoped();
-        testTeardownStaysSilent();
-        testRunStoppedPlainThrowsToParent();
-        testRunStopBeforeStart();
-        testQuitterShutdownExample();
-        testStopAcrossRunToTask();
-        testStopAcrossRunToQuitter();
-        testStopScopedToToken();
-        testStopWhileRunning();
-        testStopInTaskSegmentIsTeardownUnderRunAsync();
-        testStopInTaskSegmentIsTeardownUnderRun();
+        std::fprintf(stderr, "> %s\n", "testUserCanceledReachesErrorHandler"); std::fflush(stderr); testUserCanceledReachesErrorHandler();
+        std::fprintf(stderr, "> %s\n", "testRunNoExecutorStopScoped"); std::fflush(stderr); testRunNoExecutorStopScoped();
+        std::fprintf(stderr, "> %s\n", "testTeardownStaysSilent"); std::fflush(stderr); testTeardownStaysSilent();
+        std::fprintf(stderr, "> %s\n", "testRunStoppedPlainThrowsToParent"); std::fflush(stderr); testRunStoppedPlainThrowsToParent();
+        std::fprintf(stderr, "> %s\n", "testRunStopBeforeStart"); std::fflush(stderr); testRunStopBeforeStart();
+        std::fprintf(stderr, "> %s\n", "testQuitterShutdownExample"); std::fflush(stderr); testQuitterShutdownExample();
+        std::fprintf(stderr, "> %s\n", "testStopAcrossRunToTask"); std::fflush(stderr); testStopAcrossRunToTask();
+        std::fprintf(stderr, "> %s\n", "testStopAcrossRunToQuitter"); std::fflush(stderr); testStopAcrossRunToQuitter();
+        std::fprintf(stderr, "> %s\n", "testStopScopedToToken"); std::fflush(stderr); testStopScopedToToken();
+        std::fprintf(stderr, "> %s\n", "testStopWhileRunning"); std::fflush(stderr); testStopWhileRunning();
+        std::fprintf(stderr, "> %s\n", "testStopInTaskSegmentIsTeardownUnderRunAsync"); std::fflush(stderr); testStopInTaskSegmentIsTeardownUnderRunAsync();
+        std::fprintf(stderr, "> %s\n", "testStopInTaskSegmentIsTeardownUnderRun"); std::fflush(stderr); testStopInTaskSegmentIsTeardownUnderRun();
 #if !defined(_WIN32) && !defined(NDEBUG)
-        testOwnerlessStopAsserts();
+        std::fprintf(stderr, "> %s\n", "testOwnerlessStopAsserts"); std::fflush(stderr); testOwnerlessStopAsserts();
 #endif
     }
 };
