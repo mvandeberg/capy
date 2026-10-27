@@ -152,6 +152,9 @@ struct run_async_trampoline
         // Owns the task's segment: abandoning it resumes this
         // trampoline, or has it destroyed, to unwind the task.
         chain_owner owner_;
+        // The task reports a stop-caused abandon (a quitter). For any
+        // other task such an abandon is torn down like any other.
+        bool stoppable_ = false;
 
         ~promise_type()
         {
@@ -286,6 +289,9 @@ struct run_async_trampoline<Ex, Handlers, std::pmr::memory_resource*>
         // Owns the task's segment: abandoning it resumes this
         // trampoline, or has it destroyed, to unwind the task.
         chain_owner owner_;
+        // The task reports a stop-caused abandon (a quitter). For any
+        // other task such an abandon is torn down like any other.
+        bool stoppable_ = false;
 
         ~promise_type()
         {
@@ -401,7 +407,7 @@ make_trampoline(Ex, Handlers, Alloc)
     // stop reports its stopped value.
     // A stopped quitter's frames are destroyed before its handler runs,
     // as a finished task's destructors have run by then.
-    bool const stopped = p.owner_.stopped();
+    bool const stopped = p.stoppable_ && p.owner_.stopped();
     if(stopped)
         std::exchange(p.task_h_, nullptr).destroy();
     if(!p.owner_.abandoned() || stopped)
@@ -589,6 +595,7 @@ public:
         p.invoke_ = detail::run_async_trampoline<Ex, Handlers, Alloc>::template invoke_impl<Task>;
         p.task_promise_ = &task_promise;
         p.task_h_ = task_h;
+        p.stoppable_ = detail::stops_by_abandonment<Task>;
 
         // Setup task's continuation to return to run_async_trampoline
         task_promise.set_continuation(tr_.h_);

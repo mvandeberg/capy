@@ -76,6 +76,9 @@ struct boundary_trampoline
         executor_ref caller_ex_;
         continuation parent_;
         chain_owner segment_;
+        // The inner task reports a stop-caused abandon (a quitter). For
+        // any other task such an abandon is torn down like any other.
+        bool stoppable_ = false;
         // The awaitable's trampoline object until the inner task
         // completes or is unwound; null afterward.
         boundary_trampoline* owner_ = nullptr;
@@ -126,7 +129,8 @@ struct boundary_trampoline
                     // Nothing here touches p_ after the post or the
                     // unwind: either can destroy this frame.
                     auto& segment = p_->segment_;
-                    if(segment.abandoned() && !segment.stopped())
+                    if(segment.abandoned() &&
+                        !(p_->stoppable_ && segment.stopped()))
                     {
                         p_->unwind();
                     }
@@ -316,6 +320,7 @@ struct [[nodiscard]] run_awaitable_ex
         tp.destroy_inner_ = &run_awaitable_ex::destroy_inner;
         tp.awaitable_ = this;
         tp.segment_.bind(tr_.h_, ex_);
+        tp.stoppable_ = stops_by_abandonment<Task>;
         caller_ex_ = caller_env->executor;
         // Released once the parent resumes or is unwound. Not on the
         // post back: the parent's chain may own the executor object and

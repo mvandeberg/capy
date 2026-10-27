@@ -2551,6 +2551,119 @@ struct quitter_test
     }
 
     //----------------------------------------------------------
+    // 21. Misuse that must not corrupt memory
+    //----------------------------------------------------------
+
+    // Drives a quitter through its handle in the caller's own segment,
+    // as a user-written wrapper might: the quitter's gate then abandons
+    // the segment of a task.
+    template<class Q>
+    struct drive_in_callers_segment
+    {
+        Q q;
+
+        bool await_ready() const noexcept { return false; }
+
+        std::coroutine_handle<>
+        await_suspend(std::coroutine_handle<> cont, await_context const* env)
+        {
+            auto h = q.handle();
+            h.promise().set_continuation(cont);
+            h.promise().set_environment(env);
+            return h;
+        }
+
+        decltype(auto) await_resume() { return q.await_resume(); }
+    };
+
+    static task<>
+    task_driving_quitter(async_waker& w, int& down, bool& reached)
+    {
+        auto [ec] = co_await drive_in_callers_segment<quitter<results<>>>{
+            guarded_wait(w, down, reached)};
+        (void)ec;
+    }
+
+    // A task's segment abandoned for a stop is torn down: no handler
+    // reads the task's destroyed promise.
+    void
+    testStopInTaskSegmentIsTeardownUnderRunAsync()
+    {
+        std::queue<continuation> queue;
+        queuing_executor ex(queue);
+        async_waker w;
+        std::stop_source ss;
+        int down = 0;
+        bool reached = false;
+        int handlers = 0;
+        run_async(ex, ss.get_token(), std::pmr::new_delete_resource(),
+            [&]() { ++handlers; },
+            [&](std::exception_ptr) { ++handlers; })(
+                task_driving_quitter(w, down, reached));
+        pump(queue);
+        ss.request_stop();
+        pump(queue);
+        BOOST_TEST_EQ(handlers, 0);
+        BOOST_TEST_EQ(down, 1);
+        BOOST_TEST(!reached);
+    }
+
+    void
+    testStopInTaskSegmentIsTeardownUnderRun()
+    {
+        std::queue<continuation> queue;
+        queuing_executor ex(queue);
+        async_waker w;
+        std::stop_source ss;
+        int down = 0;
+        bool reached = false;
+        bool parent_resumed = false;
+        int handlers = 0;
+        auto parent = [&]() -> task<>
+        {
+            co_await capy::run(ex)(task_driving_quitter(w, down, reached));
+            parent_resumed = true;
+        };
+        run_async(ex, ss.get_token(), std::pmr::new_delete_resource(),
+            [&]() { ++handlers; },
+            [&](std::exception_ptr) { ++handlers; })(parent());
+        pump(queue);
+        ss.request_stop();
+        pump(queue);
+        BOOST_TEST(!parent_resumed);
+        BOOST_TEST_EQ(handlers, 0);
+        BOOST_TEST_EQ(down, 1);
+        BOOST_TEST(!reached);
+    }
+
+#if !defined(_WIN32) && !defined(NDEBUG)
+    static quitter<>
+    yields_once()
+    {
+        co_await yield_awaitable{};
+    }
+
+    // A quitter run with no chain_owner cannot be stopped; a debug
+    // build says so when a stop arrives instead of ignoring it.
+    void
+    testOwnerlessStopAsserts()
+    {
+        BOOST_TEST(aborts([] {
+            int n = 0;
+            test_executor ex(n);
+            std::stop_source ss;
+            await_context env{executor_ref(ex), ss.get_token(), nullptr};
+            auto q = yields_once();
+            auto h = q.handle();
+            q.release();
+            h.promise().set_environment(&env);
+            ss.request_stop();
+            h.resume();
+        }));
+    }
+#endif
+
+    //----------------------------------------------------------
     // run()
     //----------------------------------------------------------
 
@@ -2626,6 +2739,11 @@ struct quitter_test
         testStopAcrossRunToQuitter();
         testStopScopedToToken();
         testStopWhileRunning();
+        testStopInTaskSegmentIsTeardownUnderRunAsync();
+        testStopInTaskSegmentIsTeardownUnderRun();
+#if !defined(_WIN32) && !defined(NDEBUG)
+        testOwnerlessStopAsserts();
+#endif
     }
 };
 

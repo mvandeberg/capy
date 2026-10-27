@@ -72,7 +72,9 @@ struct await_context
         owner, @ref abandon destroys only the frame it is given, and any
         frame awaiting it is left holding a destroyed frame.
 
-        Such a launcher that runs a @ref quitter must also ask
+        Such a launcher that runs a @ref quitter must bind an owner,
+        since a quitter stops by abandoning its segment; with none, a
+        stop is not carried out. It must also ask
         @ref chain_owner::stopped when its segment is abandoned. A stopped
         quitter's segment is abandoned for the stop, and its result is
         then the quitter's stopped value, which the launcher reports.

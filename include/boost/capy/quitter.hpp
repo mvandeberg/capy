@@ -168,10 +168,16 @@ template<class T>
 struct is_quitter<quitter<T>> : std::true_type {};
 
 // A stop that can be carried out: requested, with an owner to abandon.
+// With no owner a quitter cannot stop, and runs on as a task would; a
+// launcher that runs quitters must bind a chain_owner.
 inline bool
 quitter_stop_pending(await_context const* env) noexcept
 {
-    return env->owner && env->stop_token.stop_requested();
+    if(!env->stop_token.stop_requested())
+        return false;
+    BOOST_CAPY_ASSERT(env->owner &&
+        "a quitter's environment needs an owner to stop");
+    return env->owner != nullptr;
 }
 
 struct quitter_opener;
@@ -373,7 +379,11 @@ make_quitter_segment()
     stop. A quitter must not be awaited twice.
 
     @par Remarks
-    Supports _ContextAwaitable cancellation_. A stop that arrives while
+    Supports _ContextAwaitable cancellation_. A quitter stops through the
+    owner of its segment (@ref await_context::owner). A launcher that
+    starts a quitter in an environment with no owner cannot stop it: a
+    debug build asserts, and otherwise the quitter runs on as a
+    @ref task would. A stop that arrives while
     the execution context is being shut down may end the quitter as a
     teardown instead, with nothing delivered. Stop the work, wait for it
     to finish, and only then destroy the context.
