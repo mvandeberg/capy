@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2026 Steve Gerbino
+// Copyright (c) 2026 Michael Vandeberg
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -37,16 +38,37 @@ namespace capy {
     posted continuation instead, as a closed one does, unwinds the
     segment the same way.
 
+    The owner also records why the segment was abandoned. Teardown
+    calls @ref abandon. A @ref quitter segment whose stop token fires
+    calls @ref abandon_for_stop instead, and its owner then reports the
+    stop to its parent rather than unwinding silently. An owner that
+    never asks @ref stopped treats a stop as teardown: it delivers
+    nothing. A launcher written by a user must therefore check
+    @ref stopped if it runs quitters and has to report their stops.
+
     @par Thread Safety
-    @ref abandon may be called from any thread. Only one holder can
-    abandon a segment, since it is suspended at one point; a repeated
-    call before the unwind runs does nothing.
+    @ref abandon and @ref abandon_for_stop may be called from any
+    thread. Only the first call takes effect, and decides the cause; a
+    later call of either before the unwind runs does nothing.
 */
 class chain_owner
 {
-    std::atomic<bool> abandoned_{false};
+    enum : unsigned char { not_abandoned, by_teardown, by_stop };
+
+    std::atomic<unsigned char> cause_{not_abandoned};
     continuation self_;
     executor_ref ex_;
+
+    void abandon_as(unsigned char cause) noexcept
+    {
+        unsigned char expected = not_abandoned;
+        if(!cause_.compare_exchange_strong(
+            expected, cause,
+            std::memory_order_acq_rel,
+            std::memory_order_acquire))
+            return;
+        ex_.post(self_);
+    }
 
 public:
     /** Bind the owner to its coroutine and executor.
@@ -67,7 +89,17 @@ public:
     /// Return true once the segment has been abandoned.
     bool abandoned() const noexcept
     {
-        return abandoned_.load(std::memory_order_acquire);
+        return cause_.load(std::memory_order_acquire) != not_abandoned;
+    }
+
+    /** Return true if the segment was abandoned because of a stop.
+
+        @return `true` only if the first abandon of the segment was
+            @ref abandon_for_stop.
+    */
+    bool stopped() const noexcept
+    {
+        return cause_.load(std::memory_order_acquire) == by_stop;
     }
 
     /** Unwind the segment on the owner's executor.
@@ -80,9 +112,20 @@ public:
     */
     void abandon() noexcept
     {
-        if(abandoned_.exchange(true, std::memory_order_acq_rel))
-            return;
-        ex_.post(self_);
+        abandon_as(by_teardown);
+    }
+
+    /** Unwind the segment on the owner's executor, as stopped.
+
+        The same as @ref abandon, but records the cause as a stop, so
+        @ref stopped returns `true` if this call was the first. Called
+        by a @ref quitter segment when its stop token fires.
+
+        @note A post that throws calls `std::terminate`.
+    */
+    void abandon_for_stop() noexcept
+    {
+        abandon_as(by_stop);
     }
 };
 
@@ -92,8 +135,10 @@ public:
     it, such as an execution context, strand or primitive being torn
     down. The coroutine's segment is unwound from its owner: on the
     owner's executor, from the top frame down to this coroutine, without
-    any frame delivering a result. Ordinary cancellation does not use
-    this; it resumes the coroutine with an error instead.
+    any frame delivering a result. Ordinary cancellation of a @ref task
+    does not use this; it resumes the coroutine with an error instead.
+    A @ref quitter's stop does use abandonment, through
+    @ref chain_owner::abandon_for_stop.
 
     A continuation with no owner, such as an owner's own continuation,
     is destroyed directly.

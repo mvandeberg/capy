@@ -71,6 +71,13 @@ struct await_context
         nothing awaits the coroutines that could be abandoned. With no
         owner, @ref abandon destroys only the frame it is given, and any
         frame awaiting it is left holding a destroyed frame.
+
+        Such a launcher that runs a @ref quitter must also ask
+        @ref chain_owner::stopped when its segment is abandoned. A stopped
+        quitter's segment is abandoned for the stop, and its result is
+        then the quitter's stopped value, which the launcher reports.
+        A launcher that does not ask treats the stop as teardown and
+        reports nothing.
     */
     chain_owner* owner = nullptr;
 
