@@ -17,6 +17,7 @@ on:
   push:
     branches:
       - probe/quitter-bench
+      - fix/quitter-bench
   workflow_dispatch:
 
 jobs:
