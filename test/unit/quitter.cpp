@@ -1057,8 +1057,11 @@ struct quitter_test
     lock_after_stop(async_mutex& mtx, std::stop_source& source)
     {
         source.request_stop();
-        auto [ec, guard] = co_await mtx.scoped_lock();
-        (void)ec;
+        // Not a structured binding: GCC 15 at -O0 destroys the never
+        // constructed binding when the frame is destroyed at this
+        // co_await (GCC PR c++/124584).
+        auto r = co_await mtx.scoped_lock();
+        (void)r;
     }
 
     // The stop is already pending when the body reaches the co_await.
@@ -1494,8 +1497,9 @@ struct quitter_test
         async_mutex& mtx, std::stop_source& ss, bool& reached)
     {
         ss.request_stop();
-        auto [ec, guard] = co_await mtx.scoped_lock();
-        (void)ec;
+        // Not a structured binding: see lock_after_stop.
+        auto r = co_await mtx.scoped_lock();
+        (void)r;
         reached = true;
         co_return results<>{};
     }
