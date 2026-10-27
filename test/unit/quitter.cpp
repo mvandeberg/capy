@@ -2284,6 +2284,275 @@ struct quitter_test
     }
 
     //----------------------------------------------------------
+    // 20. Stops across executors and threads
+    //----------------------------------------------------------
+
+    // Blocks until a handler reports, without std::latch, whose
+    // ordering TSan does not see.
+    struct completion
+    {
+        std::mutex m;
+        std::condition_variable cv;
+        bool done = false;
+
+        void signal()
+        {
+            std::lock_guard<std::mutex> lock(m);
+            done = true;
+            cv.notify_one();
+        }
+
+        void wait()
+        {
+            std::unique_lock<std::mutex> lock(m);
+            cv.wait(lock, [&] { return done; });
+        }
+    };
+
+    struct hop_state
+    {
+        bool task_finished = false;
+        bool task_on_inner = false;
+        int quitter_down = 0;
+        bool quitter_reached = false;
+        bool parent_on_outer = false;
+        seen s;
+    };
+
+    // Waits for the stop, then returns canceled through its own code.
+    static task<results<>>
+    task_until_stop(
+        std::binary_semaphore& armed,
+        thread_pool::executor_type inner,
+        hop_state& st)
+    {
+        co_await armed_stop_only_awaitable(armed);
+        st.task_finished = true;
+        st.task_on_inner =
+            (co_await this_coro::executor) == executor_ref(inner);
+        co_return results<>{make_error_code(error::canceled)};
+    }
+
+    static quitter<results<>>
+    quitter_over_run(
+        thread_pool& inner, std::binary_semaphore& armed, hop_state& st)
+    {
+        raii_counter g(st.quitter_down);
+        auto [ec] = co_await capy::run(inner.get_executor())(
+            task_until_stop(armed, inner.get_executor(), st));
+        (void)ec;
+        st.quitter_reached = true;
+        co_return results<>{};
+    }
+
+    // Records what it got, and whether it resumed on `outer`. The
+    // executor is held by value: an executor_ref does not own it.
+    template<class Q>
+    static task<>
+    await_on(Q q, thread_pool::executor_type outer, hop_state& st)
+    {
+        auto r = co_await std::move(q);
+        st.s.ec = std::get<0>(r);
+        st.s.resumed = true;
+        st.parent_on_outer =
+            (co_await this_coro::executor) == executor_ref(outer);
+    }
+
+    // quitter -> run(other executor) -> task: the task stops through
+    // its own code on the other executor, and the quitter's parent gets
+    // canceled back on its own.
+    void
+    testStopAcrossRunToTask()
+    {
+        thread_pool outer(1);
+        thread_pool inner(1);
+        std::binary_semaphore armed{0};
+        std::stop_source ss;
+        hop_state st;
+        completion c;
+        run_async(outer.get_executor(), ss.get_token(),
+            [&]() { c.signal(); },
+            [&](std::exception_ptr) { c.signal(); })(
+                await_on(quitter_over_run(inner, armed, st),
+                    outer.get_executor(), st));
+        armed.acquire();
+        ss.request_stop();
+        c.wait();
+        BOOST_TEST(st.task_finished);
+        BOOST_TEST(st.task_on_inner);
+        BOOST_TEST(st.s.resumed);
+        BOOST_TEST(st.s.ec == cond::canceled);
+        BOOST_TEST(st.parent_on_outer);
+        BOOST_TEST(!st.quitter_reached);
+        BOOST_TEST_EQ(st.quitter_down, 1);
+    }
+
+    static quitter<results<>>
+    inner_quitter_until_stop(
+        std::binary_semaphore& armed, int& down, bool& reached)
+    {
+        raii_counter g(down);
+        co_await armed_stop_only_awaitable(armed);
+        reached = true;
+        co_return results<>{};
+    }
+
+    static quitter<results<>>
+    quitter_over_run_quitter(
+        thread_pool& inner, std::binary_semaphore& armed, hop_state& st,
+        int& inner_down, bool& inner_reached)
+    {
+        raii_counter g(st.quitter_down);
+        auto [ec] = co_await capy::run(inner.get_executor())(
+            inner_quitter_until_stop(armed, inner_down, inner_reached));
+        (void)ec;
+        st.quitter_reached = true;
+        co_return results<>{};
+    }
+
+    // quitter -> run(other executor) -> quitter: two segments unwind,
+    // and the outer parent gets canceled.
+    void
+    testStopAcrossRunToQuitter()
+    {
+        thread_pool outer(1);
+        thread_pool inner(1);
+        std::binary_semaphore armed{0};
+        std::stop_source ss;
+        hop_state st;
+        int inner_down = 0;
+        bool inner_reached = false;
+        completion c;
+        run_async(outer.get_executor(), ss.get_token(),
+            [&]() { c.signal(); },
+            [&](std::exception_ptr) { c.signal(); })(
+                await_on(quitter_over_run_quitter(
+                    inner, armed, st, inner_down, inner_reached),
+                    outer.get_executor(), st));
+        armed.acquire();
+        ss.request_stop();
+        c.wait();
+        BOOST_TEST(st.s.resumed);
+        BOOST_TEST(st.s.ec == cond::canceled);
+        BOOST_TEST(st.parent_on_outer);
+        BOOST_TEST(!st.quitter_reached);
+        BOOST_TEST_EQ(st.quitter_down, 1);
+        BOOST_TEST(!inner_reached);
+        BOOST_TEST_EQ(inner_down, 1);
+    }
+
+    // Q1 -> run(ex, st2)(Q2): stopping st2 gives Q1 canceled, and Q1
+    // keeps running, because its own token was not stopped.
+    void
+    testStopScopedToToken()
+    {
+        std::queue<continuation> queue;
+        queuing_executor ex(queue);
+        async_waker w;
+        std::stop_source outer;
+        std::stop_source inner;
+        int down = 0;
+        bool reached = false;
+        int q1_down = 0;
+        bool q1_finished = false;
+        std::error_code inner_ec;
+        seen s;
+        auto q1 = [&]() -> quitter<results<>>
+        {
+            raii_counter g(q1_down);
+            auto [ec] = co_await capy::run(ex, inner.get_token())(
+                guarded_wait(w, down, reached));
+            inner_ec = ec;
+            q1_finished = true;
+            co_return results<>{};
+        };
+        run_async(ex, outer.get_token())(await_into(q1(), s));
+        pump(queue);
+        inner.request_stop();
+        pump(queue);
+        BOOST_TEST(inner_ec == cond::canceled);
+        BOOST_TEST(q1_finished);
+        BOOST_TEST_EQ(down, 1);
+        BOOST_TEST(!reached);
+        BOOST_TEST_EQ(q1_down, 1);
+        BOOST_TEST(s.resumed);
+        BOOST_TEST(!s.ec);
+    }
+
+    // Records the thread that destroys the frame holding it.
+    struct destroyed_on
+    {
+        std::thread::id* where;
+
+        explicit destroyed_on(std::thread::id& w) noexcept
+            : where(&w)
+        {
+        }
+
+        destroyed_on(destroyed_on&& o) noexcept
+            : where(std::exchange(o.where, nullptr))
+        {
+        }
+
+        ~destroyed_on()
+        {
+            if(where)
+                *where = std::this_thread::get_id();
+        }
+    };
+
+    static quitter<results<>>
+    busy_then_yield(
+        std::atomic<bool>& started,
+        std::atomic<bool>& stop_requested,
+        bool& ran_after_stop,
+        bool& reached,
+        std::thread::id& destroyed)
+    {
+        destroyed_on mark(destroyed);
+        started = true;
+        // Busy, without suspending, until the stop has been requested.
+        while(!stop_requested.load())
+            std::this_thread::yield();
+        ran_after_stop = true;
+        co_await yield_awaitable{};
+        reached = true;
+        co_return results<>{};
+    }
+
+    // A stop requested from another thread while the body runs does
+    // nothing until the body next suspends, and no frame is touched on
+    // the requesting thread.
+    void
+    testStopWhileRunning()
+    {
+        thread_pool pool(1);
+        std::stop_source ss;
+        std::atomic<bool> started{false};
+        std::atomic<bool> stop_requested{false};
+        bool ran_after_stop = false;
+        bool reached = false;
+        std::thread::id destroyed;
+        seen s;
+        completion c;
+        run_async(pool.get_executor(), ss.get_token(),
+            [&]() { c.signal(); },
+            [&](std::exception_ptr) { c.signal(); })(
+                await_into(busy_then_yield(started, stop_requested,
+                    ran_after_stop, reached, destroyed), s));
+        while(!started.load())
+            std::this_thread::yield();
+        ss.request_stop();
+        stop_requested = true;
+        c.wait();
+        BOOST_TEST(ran_after_stop);
+        BOOST_TEST(!reached);
+        BOOST_TEST(s.ec == cond::canceled);
+        BOOST_TEST(destroyed != std::thread::id());
+        BOOST_TEST(destroyed != std::this_thread::get_id());
+    }
+
+    //----------------------------------------------------------
     // run()
     //----------------------------------------------------------
 
@@ -2355,6 +2624,10 @@ struct quitter_test
         testRunStoppedPlainThrowsToParent();
         testRunStopBeforeStart();
         testQuitterShutdownExample();
+        testStopAcrossRunToTask();
+        testStopAcrossRunToQuitter();
+        testStopScopedToToken();
+        testStopWhileRunning();
     }
 };
 
