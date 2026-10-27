@@ -483,13 +483,17 @@ struct [[nodiscard]] run_awaitable
         // A quitter opens a segment of its own, so a stop on this run's
         // token never abandons the caller's segment.
         if constexpr(stops_by_abandonment<Task>)
+        {
             return inner_.await_suspend(cont, &env_);
-
-        auto h = inner_.handle();
-        auto& p = h.promise();
-        p.set_continuation(cont);
-        p.set_environment(&env_);
-        return h;
+        }
+        else
+        {
+            auto h = inner_.handle();
+            auto& p = h.promise();
+            p.set_continuation(cont);
+            p.set_environment(&env_);
+            return h;
+        }
     }
 
     // Non-copyable
