@@ -1,5 +1,6 @@
 //
 // Copyright (c) 2025 Vinnie Falco (vinnie.falco@gmail.com)
+// Copyright (c) 2026 Michael Vandeberg
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -19,9 +20,11 @@
 
 #include <atomic>
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <memory_resource>
 #include <memory>
+#include <new>
 #include <queue>
 #include <stdexcept>
 #include <string>
@@ -195,6 +198,131 @@ make_throwing_task()
     throw_test_exception("argument");
 }
 
+// Gives exactly the alignment requested and no more: a block asked
+// for less than frame_alignment starts that many bytes past a
+// frame_alignment boundary.
+struct skew_resource : std::pmr::memory_resource
+{
+    static std::size_t skew(std::size_t align) noexcept
+    {
+        return align < detail::frame_alignment ? align : 0;
+    }
+
+    void* do_allocate(std::size_t n, std::size_t align) override
+    {
+        auto* raw = static_cast<char*>(::operator new(
+            n + detail::frame_alignment,
+            std::align_val_t(detail::frame_alignment)));
+        return raw + skew(align);
+    }
+
+    void do_deallocate(
+        void* p, std::size_t, std::size_t align) override
+    {
+        ::operator delete(
+            static_cast<char*>(p) - skew(align),
+            std::align_val_t(detail::frame_alignment));
+    }
+
+    bool do_is_equal(
+        std::pmr::memory_resource const& other) const noexcept override
+    {
+        return this == &other;
+    }
+};
+
+// Counts the copies of overaligned_allocator constructed at an
+// address that is not aligned for it.
+inline int misaligned_allocators = 0;
+
+// An allocator as aligned as a frame, over std::allocator.
+template<class T>
+struct overaligned_allocator
+{
+    using value_type = T;
+
+    // As wide as its alignment, so there is no padding for MSVC to
+    // warn about (C4324). Never read, and left uninitialized so a
+    // misaligned copy is counted rather than faulting on an aligned
+    // store.
+    alignas(detail::frame_alignment)
+        unsigned char tag_[detail::frame_alignment];
+
+    overaligned_allocator() noexcept { check(); }
+
+    overaligned_allocator(overaligned_allocator const&) noexcept
+    {
+        check();
+    }
+
+    template<class U>
+    overaligned_allocator(overaligned_allocator<U> const&) noexcept
+    {
+        check();
+    }
+
+    overaligned_allocator&
+    operator=(overaligned_allocator const&) = default;
+
+    T* allocate(std::size_t n)
+    {
+        return std::allocator<T>{}.allocate(n);
+    }
+
+    void deallocate(T* p, std::size_t n) noexcept
+    {
+        std::allocator<T>{}.deallocate(p, n);
+    }
+
+    template<class U>
+    bool operator==(overaligned_allocator<U> const&) const noexcept
+    {
+        return true;
+    }
+
+private:
+    // A compiler may assume `this` is aligned; read the address back
+    // through a volatile.
+    void check() noexcept
+    {
+        volatile std::uintptr_t const address =
+            reinterpret_cast<std::uintptr_t>(this);
+        if(address % alignof(overaligned_allocator) != 0)
+            ++misaligned_allocators;
+    }
+};
+
+// Records the address of every block it hands out.
+struct address_log : std::pmr::memory_resource
+{
+    std::pmr::memory_resource* upstream;
+    std::vector<std::uintptr_t> addresses;
+
+    explicit address_log(std::pmr::memory_resource* up) noexcept
+        : upstream(up)
+    {
+    }
+
+    void* do_allocate(std::size_t n, std::size_t align) override
+    {
+        void* p = upstream->allocate(n, align);
+        addresses.push_back(reinterpret_cast<std::uintptr_t>(p));
+        return p;
+    }
+
+    void do_deallocate(
+        void* p, std::size_t n, std::size_t align) override
+    {
+        upstream->deallocate(p, n, align);
+    }
+
+    bool do_is_equal(
+        std::pmr::memory_resource const& other) const noexcept override
+    {
+        return this == &other;
+    }
+};
+
 struct run_async_test
 {
     // A task drained before it starts tears down like a parked one:
@@ -313,6 +441,63 @@ struct run_async_test
 
         BOOST_TEST_EQ(result, 42);
         BOOST_TEST_EQ(dispatch_count, 1);
+    }
+
+    void
+    testValueAllocatorAlignsFrames()
+    {
+        // A byte allocator over a resource that gives no more
+        // alignment than it is asked for: the trampoline's frame and
+        // the task's are both aligned for any frame.
+        skew_resource skewed;
+        address_log log(&skewed);
+        int dispatch_count = 0;
+        sync_executor d(dispatch_count);
+        int result = 0;
+
+        run_async(d, std::pmr::polymorphic_allocator<std::byte>(&log),
+            [&](int v) { result = v; })(returns_int());
+
+        BOOST_TEST_EQ(result, 42);
+        BOOST_TEST(log.addresses.size() >= 2);
+        for(auto a : log.addresses)
+            BOOST_TEST_EQ(a % detail::frame_alignment, 0u);
+    }
+
+    void
+    testMemoryResourceAlignsFrames()
+    {
+        // The same through a memory_resource*: the trampoline's frame
+        // and the task's ask for, and get, a frame's alignment.
+        skew_resource skewed;
+        address_log log(&skewed);
+        int dispatch_count = 0;
+        sync_executor d(dispatch_count);
+        int result = 0;
+
+        run_async(d, &log, [&](int v) { result = v; })(returns_int());
+
+        BOOST_TEST_EQ(result, 42);
+        BOOST_TEST(log.addresses.size() >= 2);
+        for(auto a : log.addresses)
+            BOOST_TEST_EQ(a % detail::frame_alignment, 0u);
+    }
+
+    void
+    testValueAllocatorStoredAligned()
+    {
+        // The trampoline keeps a copy of the allocator after its
+        // frame; that copy is aligned for the allocator's type.
+        misaligned_allocators = 0;
+        int dispatch_count = 0;
+        sync_executor d(dispatch_count);
+        int result = 0;
+
+        run_async(d, overaligned_allocator<std::byte>{},
+            [&](int v) { result = v; })(returns_int());
+
+        BOOST_TEST_EQ(result, 42);
+        BOOST_TEST_EQ(misaligned_allocators, 0);
     }
 
     void
@@ -904,6 +1089,9 @@ struct run_async_test
         testDispatchThrows();
         testTaskArgumentThrows();
         testValueAllocator();
+        testValueAllocatorAlignsFrames();
+        testValueAllocatorStoredAligned();
+        testMemoryResourceAlignsFrames();
         testValueAllocatorException();
         testResultHandler();
         testVoidTaskResultHandler();
