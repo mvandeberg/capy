@@ -235,6 +235,11 @@ struct skew_resource : std::pmr::memory_resource
 // address that is not aligned for it.
 inline int misaligned_allocators = 0;
 
+// DIAGNOSTIC (temporary): every copy and every block.
+struct diag_copy { std::uintptr_t addr; char const* kind; };
+inline std::vector<diag_copy> diag_copies;
+inline std::vector<std::pair<std::uintptr_t, std::size_t>> diag_blocks;
+
 // An allocator as aligned as a frame, over std::allocator.
 template<class T>
 struct overaligned_allocator
@@ -248,17 +253,17 @@ struct overaligned_allocator
     alignas(detail::frame_alignment)
         unsigned char tag_[detail::frame_alignment];
 
-    overaligned_allocator() noexcept { check(); }
+    overaligned_allocator() noexcept { check("default"); }
 
     overaligned_allocator(overaligned_allocator const&) noexcept
     {
-        check();
+        check("copy");
     }
 
     template<class U>
     overaligned_allocator(overaligned_allocator<U> const&) noexcept
     {
-        check();
+        check("rebind");
     }
 
     overaligned_allocator&
@@ -266,7 +271,10 @@ struct overaligned_allocator
 
     T* allocate(std::size_t n)
     {
-        return std::allocator<T>{}.allocate(n);
+        T* p = std::allocator<T>{}.allocate(n);
+        diag_blocks.push_back({
+            reinterpret_cast<std::uintptr_t>(p), n * sizeof(T)});
+        return p;
     }
 
     void deallocate(T* p, std::size_t n) noexcept
@@ -283,12 +291,13 @@ struct overaligned_allocator
 private:
     // A compiler may assume `this` is aligned; read the address back
     // through a volatile.
-    void check() noexcept
+    void check(char const* kind) noexcept
     {
         volatile std::uintptr_t const address =
             reinterpret_cast<std::uintptr_t>(this);
         if(address % alignof(overaligned_allocator) != 0)
             ++misaligned_allocators;
+        diag_copies.push_back({address, kind});
     }
 };
 
@@ -489,12 +498,50 @@ struct run_async_test
         // The trampoline keeps a copy of the allocator after its
         // frame; that copy is aligned for the allocator's type.
         misaligned_allocators = 0;
+        diag_copies.clear();
+        diag_blocks.clear();
         int dispatch_count = 0;
         sync_executor d(dispatch_count);
         int result = 0;
 
         run_async(d, overaligned_allocator<std::byte>{},
             [&](int v) { result = v; })(returns_int());
+
+        volatile std::uintptr_t const stack_ref =
+            reinterpret_cast<std::uintptr_t>(&result);
+        std::printf(
+            "DIAG frame_alignment=%zu new_align=%zu max_align=%zu "
+            "alignof(alloc)=%zu sizeof(alloc)=%zu alignof(unit)=%zu "
+            "sizeof(unit)=%zu stack_ref%%16=%zu\n",
+            std::size_t(detail::frame_alignment),
+            std::size_t(__STDCPP_DEFAULT_NEW_ALIGNMENT__),
+            alignof(std::max_align_t),
+            alignof(overaligned_allocator<std::byte>),
+            sizeof(overaligned_allocator<std::byte>),
+            alignof(detail::frame_unit),
+            sizeof(detail::frame_unit),
+            std::size_t(stack_ref % 16));
+        for(auto const& b : diag_blocks)
+            std::printf("DIAG block addr%%16=%zu bytes=%zu\n",
+                std::size_t(b.first % 16), b.second);
+        for(auto const& c : diag_copies)
+        {
+            long long off = -1;
+            std::size_t bytes = 0;
+            for(auto const& b : diag_blocks)
+                if(c.addr >= b.first && c.addr < b.first + b.second)
+                {
+                    off = static_cast<long long>(c.addr - b.first);
+                    bytes = b.second;
+                }
+            long long dist = static_cast<long long>(c.addr) -
+                static_cast<long long>(stack_ref);
+            std::printf(
+                "DIAG copy %-7s addr%%16=%zu block_off=%lld/%zu "
+                "dist_from_stack_ref=%lld\n",
+                c.kind, std::size_t(c.addr % 16), off, bytes, dist);
+        }
+        std::fflush(stdout);
 
         BOOST_TEST_EQ(result, 42);
         BOOST_TEST_EQ(misaligned_allocators, 0);
